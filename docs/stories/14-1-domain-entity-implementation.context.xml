@@ -33,7 +33,7 @@
   <artifacts>
     <docs>
       <doc path="docs/tech-spec.md" title="Domain Entity Technical Specification" section="The Change" snippet="Currently, the domain_id field exists in multiple tables as a manually-entered UUID string without any database-level constraints, relationships, or validation. Implement a proper Domain entity with full relational database design." />
-      <doc path="docs/product-brief-Boilerplate-2025-11-04.md" title="Boilerplate Product Brief" section="Executive Summary" snippet="Boilerplate is a production-ready, enterprise-grade NestJS boilerplate for all company backend projects. Reduces new project setup from 1 week to 1 day." />
+      <doc path="README.md" title="Community Events Backend" section="Quick Start" snippet="Community Events urunu icin NestJS tabanli backend API. Hizli baslangic ve temel calistirma adimlari repository root README dosyasinda yer alir." />
       <doc path="docs/PRD.md" title="Product Requirements Document" section="Project Classification" snippet="Technical Type: API/Backend Framework (Boilerplate). This project is a backend API boilerplate positioned as an internal developer productivity tool." />
       <doc path="README.md" title="Project Documentation" section="Environment Setup" snippet="This project uses environment variables for configuration. Configure database, JWT, AWS S3, SendGrid, Redis, and other services via .env file." />
       <doc path="docs/archive/architecture.md" title="System Architecture" section="Architecture Overview" snippet="NestJS-based backend with modular architecture, Prisma ORM, PostgreSQL/MongoDB support, comprehensive testing infrastructure." />

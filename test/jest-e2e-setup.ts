@@ -53,3 +53,7 @@ if (!process.env.SENDGRID_API_KEY) {
 if (!process.env.MAIL_FROM) {
   process.env.MAIL_FROM = 'test@example.com';
 }
+
+if (!process.env.REDIS_PASSWORD) {
+  process.env.REDIS_PASSWORD = 'test-redis-password';
+}

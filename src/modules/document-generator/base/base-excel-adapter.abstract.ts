@@ -38,7 +38,7 @@ export abstract class BaseExcelAdapter implements IExcelAdapter {
    */
   async generate(data: any, lang: string): Promise<Buffer> {
     const workbook = new Workbook();
-    workbook.creator = 'Boilerplate Document Generator';
+    workbook.creator = 'Community Events Document Generator';
 
     await this.buildWorkbook(workbook, data, lang);
 

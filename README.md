@@ -1,80 +1,76 @@
 # Community Events Backend
 
-NestJS tabanli backend baslangic projesi. Bu repo, etkinlik ve topluluk odakli bir urunun API altyapisini hizli baslatmak icin hazirlandi.
+Community Events urunu icin NestJS tabanli backend API.
 
-## Teknolojiler
+## Stack
 
 - NestJS
 - TypeScript
 - Prisma
 - PostgreSQL
 - Redis
-- Swagger (`/api/docs`)
+- Swagger
 
-## Hizli Baslangic
+## Quick Start
 
 ```bash
 npm install
 cp .env.example .env
+cp .env.test.example .env.test
 ```
 
-`.env` icinde en az su alanlari guncelle:
+En az su alanlari guncellenmeli:
 
 - `DATABASE_URL`
 - `JWT_SECRET`
 - `AES_SECRET_KEY`
 - `CHAT_ENCRYPTION_KEY`
 
-Ardindan uygulamayi baslat:
+Gelistirme ortamini baslat:
 
 ```bash
 npm run dev
 ```
 
-## Varsayilan Gelistirme Ayarlari
+## Local URLs
 
 - API: `http://localhost:3000`
 - Swagger: `http://localhost:3000/api/docs`
-- PostgreSQL veritabani adi: `community_events`
-- Test veritabani adi: `community_events_test`
+- PostgreSQL: `community_events`
+- Test database: `community_events_test`
 
-## Test Ortami
+## Seed Data
 
-Yerel integration ve e2e testleri icin:
-
-```bash
-cp .env.test.example .env.test
-```
-
-Sonra test veritabanini hazirlayip testleri calistir:
-
-```bash
-npm test
-```
-
-## Seed
-
-Ornek admin kullanicisi:
+Varsayilan admin hesabi:
 
 - `admin@communityevents.local`
 - `Admin123!`
 
-Seed calistirmak icin:
+Seed komutu:
 
 ```bash
 npm run prisma:seed
 ```
 
-## Docker
+## Useful Commands
 
-Production image almak icin:
+```bash
+npm run dev
+npm run test
+npm run test:e2e
+npm run prisma:migrate
+npm run prisma:seed
+```
+
+## Docker
 
 ```bash
 npm run docker:build:prod
-```
-
-Container calistirmak icin:
-
-```bash
 npm run docker:run:prod
 ```
+
+## Project Notes
+
+- Uygulama varsayilan olarak `main` branch uzerinden ilerler.
+- Detayli teknik dokumanlar `docs/` altindadir.
+- Editor ve ekip kurulumu notlari icin `SETUP.md` dosyasina bak.

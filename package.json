@@ -1,10 +1,18 @@
 {
   "name": "community-events-backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Backend API for the Community Events platform.",
+  "author": "Ayse Yalcinkaya",
   "private": true,
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ayse0yalcinkaya/community-events-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ayse0yalcinkaya/community-events-backend/issues"
+  },
+  "homepage": "https://github.com/ayse0yalcinkaya/community-events-backend#readme",
   "bin": {
     "community-events-cli": "./bin/index.ts"
   },

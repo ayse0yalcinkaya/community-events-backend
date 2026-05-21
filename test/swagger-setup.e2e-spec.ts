@@ -45,8 +45,8 @@ describe('Swagger Setup (e2e) - Story 8.1', () => {
     // Configure Swagger based on environment variable (AC-8.1.2, 8.1.3, 8.1.4, 8.1.5)
     if (process.env.SWAGGER_ENABLED === 'true') {
       const config = new DocumentBuilder()
-        .setTitle('Boilerplate API')
-        .setDescription('Production-ready NestJS Boilerplate API')
+        .setTitle('Community Events API')
+        .setDescription('Backend API for the community events platform')
         .setVersion('1.0')
         .addBearerAuth(
           {
@@ -141,13 +141,13 @@ describe('Swagger Setup (e2e) - Story 8.1', () => {
       expect(openApiDoc.openapi).toMatch(/^3\.\d+\.\d+$/);
     });
 
-    it('should include configured metadata: title "Boilerplate API"', async () => {
+    it('should include configured metadata: title "Community Events API"', async () => {
       const response = await request(app.getHttpServer()).get('/api/docs-json');
 
       const openApiDoc = response.body;
 
       expect(openApiDoc.info).toBeDefined();
-      expect(openApiDoc.info.title).toBe('Boilerplate API');
+      expect(openApiDoc.info.title).toBe('Community Events API');
     });
 
     it('should include configured metadata: description', async () => {
@@ -155,7 +155,7 @@ describe('Swagger Setup (e2e) - Story 8.1', () => {
 
       const openApiDoc = response.body;
 
-      expect(openApiDoc.info.description).toBe('Production-ready NestJS Boilerplate API');
+      expect(openApiDoc.info.description).toBe('Backend API for the community events platform');
     });
 
     it('should include configured metadata: version "1.0"', async () => {
