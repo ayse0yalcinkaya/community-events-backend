@@ -1,0 +1,267 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>4</storyId>
+    <title>Token Refresh</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-4-token-refresh.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>refresh token ile yeni access token alabilmek</iWant>
+    <soThat>oturum sürekli açık kalabilsin ve access token expire olduğunda tekrar login yapmak zorunda kalmayayım</soThat>
+    <tasks>
+      - Task 1: RefreshTokenDto oluştur (AC: 2)
+      - Task 2: TokenService.refreshTokens() method implement et (AC: 3, 4, 5, 6, 7, 11)
+      - Task 3: AuthController.refresh() endpoint oluştur (AC: 1, 7, 8, 9, 10)
+      - Task 4: Unit test yaz (AC: All)
+      - Task 5: Integration test yaz (AC: 1, 7, 8, 9, 10, 11)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC-2.4.1: POST /auth/refresh endpoint oluşturulmuş ve çalışıyor
+    2. AC-2.4.2: RefreshTokenDto validation yapılıyor (refreshToken UUID format)
+    3. AC-2.4.3: Refresh token database'de validate ediliyor (exists, not expired, valid user)
+    4. AC-2.4.4: Valid refresh token → Yeni access token (JWT) generate ediliyor
+    5. AC-2.4.5: Valid refresh token → Yeni refresh token (UUID) generate ediliyor (rotation)
+    6. AC-2.4.6: Eski refresh token database'den siliniyor (invalidate)
+    7. AC-2.4.7: Response döndürülüyor: { accessToken, refreshToken (new), expiresIn }
+    8. AC-2.4.8: Invalid refresh token → 401 Unauthorized
+    9. AC-2.4.9: Expired refresh token → 401 Unauthorized
+    10. AC-2.4.10: Non-existent refresh token → 401 Unauthorized
+    11. AC-2.4.11: Token rotation atomik yapılıyor (delete old + create new transaction)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>Story 2.4: Token Refresh - Acceptance Criteria</section>
+        <snippet>Token refresh mechanism with rotation pattern. Valid refresh token generates new access+refresh token pair, old token invalidated. Includes atomicity requirements via Prisma transaction.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>Flow 4: Token Refresh</section>
+        <snippet>Complete token refresh flow: validate refresh token, check expiration, generate new tokens (rotation), delete old token. Database transaction ensures atomicity.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>Refresh Token Security</section>
+        <snippet>Token rotation security: single-use refresh tokens, database-backed for revocation. UUID format, 7-30 day expiry, rotation on every refresh.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>POST /auth/refresh - API Specification</section>
+        <snippet>Endpoint: POST /auth/refresh. Request: { refreshToken: UUID }. Response: { accessToken, refreshToken (new), expiresIn }. Errors: 401 Unauthorized for invalid/expired tokens.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boilerplate - Epic Breakdown</title>
+        <section>Story 2.4: Token Refresh</section>
+        <snippet>User story for token refresh: refresh token ile yeni access token alabilmek. Includes token rotation, database validation, and atomicity requirements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Authentication & Authorization - Token Architecture</section>
+        <snippet>Hybrid token architecture: JWT access tokens (stateless, 15-60 min) + database-stored refresh tokens (revokable, 7-30 days). Token rotation for security.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/2-3-login-token-generation.md</path>
+        <title>Story 2.3: Admin Login & Token Generation</title>
+        <section>Dev Notes - TokenService Implementation</section>
+        <snippet>TokenService methods available: generateAccessToken(), generateRefreshToken(), generateTokens(). JwtService, PrismaService, ConfigService injected. parseExpiration() handles '15m', '7d' formats.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/modules/auth/services/token.service.ts</path>
+        <kind>service</kind>
+        <symbol>TokenService</symbol>
+        <lines>1-115</lines>
+        <reason>Contains generateAccessToken(), generateRefreshToken() methods to reuse. JwtService, PrismaService, ConfigService already injected. Need to add refreshTokens() method here.</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/auth.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>AuthController</symbol>
+        <lines>1-83</lines>
+        <reason>Existing auth endpoints (register, login/admin). Need to add POST /auth/refresh endpoint following same pattern (@Public() decorator, response format).</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public</symbol>
+        <lines>all</lines>
+        <reason>@Public() decorator to bypass JWT guard for /auth/refresh endpoint (no JWT required, refresh token used instead).</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/dto/auth-response.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>AuthResponseDto</symbol>
+        <lines>all</lines>
+        <reason>Response DTO pattern for login endpoints. Token refresh response similar but without user field: { accessToken, refreshToken, expiresIn }.</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/dto/login-admin.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>LoginAdminDto</symbol>
+        <lines>all</lines>
+        <reason>DTO pattern example with class-validator decorators. RefreshTokenDto follows same pattern with @IsUUID(), @IsNotEmpty().</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/services/token.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>TokenService unit tests</symbol>
+        <lines>all</lines>
+        <reason>Existing unit tests for TokenService. Need to add refreshTokens() method tests following same mocking pattern (PrismaService, JwtService, ConfigService).</reason>
+      </file>
+      <file>
+        <path>test/auth-login-admin.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>Admin login E2E tests</symbol>
+        <lines>all</lines>
+        <reason>E2E test pattern for auth endpoints. Token refresh E2E tests follow same structure: create user, login, use refresh token, verify response.</reason>
+      </file>
+      <file>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>all</lines>
+        <reason>Database service for RefreshToken CRUD operations. Methods: refreshToken.findUnique(), refreshToken.delete(), refreshToken.create(), $transaction().</reason>
+      </file>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/jwt" version="^11.0.1" />
+        <package name="@nestjs/passport" version="^11.0.5" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="class-validator" version="^0.14.2" />
+        <package name="class-transformer" version="^0.5.1" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="passport-jwt" version="^4.0.1" />
+      </nodejs>
+      <nodejs_dev>
+        <package name="@types/uuid" version="^10.0.0" />
+        <package name="@types/passport-jwt" version="^4.0.1" />
+        <package name="jest" version="^30.0.0" />
+        <package name="ts-jest" version="^29.2.5" />
+        <package name="supertest" version="^7.0.0" />
+      </nodejs_dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. **DTO Validation**: RefreshTokenDto must use class-validator decorators (@IsUUID, @IsNotEmpty) following existing pattern in LoginAdminDto
+    2. **Response Format**: All auth endpoints return { success: true, data: {...} } structure (hrsync-backend pattern)
+    3. **Error Handling**: Use UnauthorizedException for all token validation failures (401 status), generic error messages
+    4. **Token Rotation**: Old refresh token MUST be deleted before/during new token creation (single-use pattern)
+    5. **Atomicity**: Token rotation MUST use Prisma transaction to ensure delete+create is atomic
+    6. **No JWT Guard**: /auth/refresh endpoint uses @Public() decorator (refresh token validation, not JWT)
+    7. **Reuse Existing Methods**: Use TokenService.generateAccessToken() and generateRefreshToken() from Story 2.3
+    8. **Database Queries**: Use prisma.refreshToken.findUnique({ where: { token }, include: { user: true } }) for single-query pattern
+    9. **Security**: Generic error messages for all failures ("Invalid refresh token", "Refresh token expired"), no credential disclosure
+    10. **Testing Pattern**: Follow existing test patterns (mock PrismaService, JwtService, ConfigService in unit tests)
+    11. **File Location**: New DTO at src/modules/auth/dto/refresh-token.dto.ts
+    12. **Method Location**: New refreshTokens() method in src/modules/auth/services/token.service.ts
+    13. **Endpoint Location**: New POST /auth/refresh in src/modules/auth/auth.controller.ts
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /auth/refresh</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /auth/refresh - Request: { refreshToken: string (UUID) } - Response: { success: boolean, data: { accessToken: string, refreshToken: string, expiresIn: number } }</signature>
+      <path>src/modules/auth/auth.controller.ts</path>
+    </interface>
+    <interface>
+      <name>TokenService.refreshTokens()</name>
+      <kind>service method</kind>
+      <signature>async refreshTokens(refreshToken: string): Promise&lt;{ accessToken: string; refreshToken: string; expiresIn: number }&gt;</signature>
+      <path>src/modules/auth/services/token.service.ts</path>
+    </interface>
+    <interface>
+      <name>TokenService.generateAccessToken()</name>
+      <kind>service method</kind>
+      <signature>async generateAccessToken(user: User): Promise&lt;string&gt;</signature>
+      <path>src/modules/auth/services/token.service.ts:60-73</path>
+    </interface>
+    <interface>
+      <name>TokenService.generateRefreshToken()</name>
+      <kind>service method</kind>
+      <signature>async generateRefreshToken(user: User): Promise&lt;string&gt;</signature>
+      <path>src/modules/auth/services/token.service.ts:80-97</path>
+    </interface>
+    <interface>
+      <name>RefreshToken Entity (Prisma)</name>
+      <kind>database entity</kind>
+      <signature>model RefreshToken { id: String @id @default(uuid()), userID: String, domainID: String, token: String @unique, expiresAt: DateTime, createdAt: DateTime @default(now()) }</signature>
+      <path>prisma/schema.prisma</path>
+    </interface>
+    <interface>
+      <name>PrismaService RefreshToken Methods</name>
+      <kind>database service</kind>
+      <signature>refreshToken.findUnique({ where, include }), refreshToken.delete({ where }), refreshToken.create({ data }), $transaction([...])</signature>
+      <path>src/database/prisma.service.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows NestJS + Jest patterns established in Epic 1 and Story 2.1-2.3. Unit tests use mocked dependencies (PrismaService, JwtService, ConfigService). E2E tests use test database with real Prisma client. Test files: *.spec.ts for unit tests, *.e2e-spec.ts for integration tests. Coverage target: >80% for services, >70% for controllers. Mock pattern: jest.fn() for methods, mock return values for database queries. E2E setup: Create test user → login → use tokens → verify response → cleanup.
+    </standards>
+    <locations>
+      - Unit tests: src/modules/auth/services/token.service.spec.ts
+      - E2E tests: test/auth-refresh-token.e2e-spec.ts
+      - Test database setup: test/jest-e2e-setup.ts
+      - Test utilities: test/test-helpers.ts (if exists)
+    </locations>
+    <ideas>
+      <test ac="AC-2.4.1, AC-2.4.2, AC-2.4.7">
+        E2E: POST /auth/refresh with valid token → 200 OK, returns { success: true, data: { accessToken, refreshToken, expiresIn } }
+      </test>
+      <test ac="AC-2.4.3, AC-2.4.4, AC-2.4.5">
+        Unit: TokenService.refreshTokens() with valid token → validates in database, generates new tokens, returns { accessToken, refreshToken, expiresIn }
+      </test>
+      <test ac="AC-2.4.6, AC-2.4.11">
+        Unit: TokenService.refreshTokens() → old refresh token deleted from database, new token created (verify delete call)
+      </test>
+      <test ac="AC-2.4.8, AC-2.4.10">
+        Unit: TokenService.refreshTokens() with non-existent token → throws UnauthorizedException("Invalid refresh token")
+      </test>
+      <test ac="AC-2.4.9">
+        Unit: TokenService.refreshTokens() with expired token → throws UnauthorizedException("Refresh token expired"), expired token deleted
+      </test>
+      <test ac="AC-2.4.3">
+        Unit: TokenService.refreshTokens() with deleted user → throws UnauthorizedException("Invalid user")
+      </test>
+      <test ac="AC-2.4.11">
+        Unit: Token rotation atomicity → use prisma.$transaction([delete, create]) to ensure atomic operation
+      </test>
+      <test ac="AC-2.4.6">
+        E2E: Verify old refresh token cannot be reused after refresh (401 Unauthorized on second attempt)
+      </test>
+      <test ac="AC-2.4.5, AC-2.4.7">
+        E2E: New refresh token stored in database, new access token is valid JWT (decode and verify payload)
+      </test>
+      <test ac="AC-2.4.8, AC-2.4.9, AC-2.4.10">
+        E2E: Invalid/expired/non-existent refresh tokens → 401 Unauthorized with generic error message
+      </test>
+      <test ac="AC-2.4.11">
+        E2E: Concurrent refresh requests (race condition test) → first wins, second fails
+      </test>
+      <test ac="AC-2.4.2">
+        E2E: RefreshTokenDto validation → invalid UUID format returns 400 Bad Request
+      </test>
+    </ideas>
+  </tests>
+</story-context>

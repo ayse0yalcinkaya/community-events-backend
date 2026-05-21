@@ -1,0 +1,232 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>11</epicId>
+    <storyId>3</storyId>
+    <title>CD Pipeline (Staging)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/11-3-cd-pipeline-staging.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>staging'e automated deployment</iWant>
+    <soThat>develop branch merge'de otomatik deploy olsun</soThat>
+    <tasks>Task 1: Create staging CD workflow file (AC: #1, #2)
+  - Subtask 1.1: Create .github/workflows/cd-staging.yml
+  - Subtask 1.2: Configure push to develop branch trigger
+  - Subtask 1.3: Setup Node.js 20 environment
+
+Task 2: Configure build job (AC: #3 - build)
+  - Subtask 2.1: Docker image build
+  - Subtask 2.2: Tag with staging-{commit-sha}
+  - Subtask 2.3: Push to container registry
+  - Subtask 2.4: Login to registry using DOCKER_USERNAME/PASSWORD
+
+Task 3: Configure deploy job (AC: #3 - deploy)
+  - Subtask 3.1: SSH or cloud deployment to staging
+  - Subtask 3.2: Pull new Docker image
+  - Subtask 3.3: Run database migrations (npx prisma migrate deploy)
+  - Subtask 3.4: Health check (curl http://localhost:3000/health)
+  - Subtask 3.5: Rollback on failure (previous image tag)
+
+Task 4: Environment and secrets configuration (AC: #4, #5)
+  - Subtask 4.1: Configure GitHub Environment (staging)
+  - Subtask 4.2: Setup DOCKER_USERNAME secret
+  - Subtask 4.3: Setup DOCKER_PASSWORD secret
+  - Subtask 4.4: Setup STAGING_SERVER_HOST secret</tasks>
+  </story>
+
+  <acceptanceCriteria>1. .github/workflows/cd-staging.yml oluşturulmuş
+2. Trigger: push to develop branch
+3. Jobs:
+   - build: Docker image build, Tag: staging-{sha}, Push to container registry
+   - deploy: Deploy to staging environment, Run database migrations (prisma migrate deploy), Health check (curl /health), Rollback on failure
+4. Environment: staging (GitHub Environments)
+5. Secrets: DOCKER_USERNAME, DOCKER_PASSWORD, STAGING_SERVER_HOST</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-11-cicd-deployment.md</path>
+        <title>Epic 11: CI/CD & Deployment</title>
+        <section>Story 11.3: CD Pipeline (Staging)</section>
+        <snippet>As a developer, I want staging'e automated deployment, So that develop branch merge'de otomatik deploy olsun. Acceptance Criteria: .github/workflows/cd-staging.yml oluşturulmuş, Trigger: push to develop branch, Jobs: build and deploy with health checks.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-11.md</path>
+        <title>Epic Technical Specification: CI/CD & Deployment</title>
+        <section>CD Pipeline Workflow (Staging)</section>
+        <snippet>CD Pipeline Workflow (Staging): Merge to develop branch → GitHub Actions Trigger (cd-staging) → Build Docker Image → Tag: staging-{commit-sha} → Push to Container Registry → Deploy to Staging Environment → Run Database Migrations → Health Check Validation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-11.md</path>
+        <title>Epic Technical Specification: CI/CD & Deployment</title>
+        <section>Database Migration Contract</section>
+        <snippet>Database Migration Contract: Migration command "npx prisma migrate deploy", environment: staging or production, rollbackCommand: "npx prisma migrate reset", success criteria: schemaUpdated, healthCheckPass, applicationResponsive.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/deployment-architecture.md</path>
+        <title>Deployment Architecture</title>
+        <section>CI/CD Pipeline</section>
+        <snippet>GitHub Actions (ci.yml) and Deployment (cd-production.yml) patterns. Docker image build and push, Deploy to production, Run migrations, Health check validation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/11-2-ci-pipeline-github-actions.md</path>
+        <title>Story 11.2: CI Pipeline (GitHub Actions)</title>
+        <section>Dev Notes and Architecture Patterns</section>
+        <snippet>CI Pipeline Pattern: GitHub Actions workflow for continuous integration, Automated testing on every pull request, Quality gate enforcement before merge, Parallel test execution for efficiency.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/11-1-production-dockerfile-multi-stage.md</path>
+        <title>Story 11.1: Production Dockerfile (Multi-Stage)</title>
+        <section>Docker Configuration</section>
+        <snippet>Multi-stage Dockerfile: Stage 1 (dependencies), Stage 2 (build), Stage 3 (production). Base: node:20-alpine, non-root user, health check configuration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Testing Strategy</section>
+        <snippet>Testing Strategy: Unit tests, Integration tests, E2E tests. Health check endpoints for deployment validation. Test scripts: npm run test, npm run test:integration, npm run test:e2e.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>.github/workflows/ci.yml</path>
+        <kind>GitHub Actions Workflow</kind>
+        <symbol>CI Pipeline</symbol>
+        <lines>1-196</lines>
+        <reason>Reference implementation for GitHub Actions workflow structure, Node.js 20 setup, npm ci, build process with npm run build and npx prisma generate</reason>
+      </file>
+      <file>
+        <path>docker/Dockerfile</path>
+        <kind>Dockerfile</kind>
+        <symbol>Multi-Stage Production Build</symbol>
+        <lines>1-135</lines>
+        <reason>Production Dockerfile with 3-stage build (deps, build, production). Base: node:20-alpine, npm ci, npm run build, npx prisma generate, health check configuration</reason>
+      </file>
+      <file>
+        <path>package.json</path>
+        <kind>Package Manifest</kind>
+        <symbol>Build Scripts</symbol>
+        <lines>8-44</lines>
+        <reason>Build scripts: npm run build, test commands, docker scripts. Production build: "build": "nest build", Prisma: "prisma:deploy": "prisma migrate deploy"</reason>
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem>Node.js</ecosystem>
+      <packages>
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="nestjs" version="^11.0.0" />
+        <package name="@nestjs/config" version="^4.0.2" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="prisma" version="^6.18.0" />
+        <package name="typescript" version="^5.7.3" />
+        <package name="@nestjs/cli" version="^11.0.0" />
+        <package name="jest" version="^30.0.0" />
+        <package name="winston" version="^3.18.3" />
+        <package name="@sentry/node" version="^7.120.4" />
+        <package name="@aws-sdk/client-s3" version="^3.925.0" />
+        <package name="bcrypt" version="^6.0.0" />
+      </packages>
+      <ecosystem>Docker</ecosystem>
+      <packages>
+        <package name="node" version="20-alpine" />
+      </packages>
+      <ecosystem>GitHub Actions</ecosystem>
+      <packages>
+        <package name="actions/checkout" version="v4" />
+        <package name="actions/setup-node" version="v4" />
+        <package name="docker/build-push-action" version="v4" />
+        <package name="docker/login-action" version="v2" />
+        <package name="codecov/codecov-action" version="v4" />
+      </packages>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Node.js 20.x LTS runtime - All workflows must use Node.js 20 (consistent with CI, Dockerfile, production)</constraint>
+    <constraint>Docker multi-stage build - Use 3-stage Dockerfile (deps → build → production) with node:20-alpine base</constraint>
+    <constraint>Non-root user - Docker containers must run as nestjs:1001 (security best practice)</constraint>
+    <constraint>Health check validation - Post-deployment health check to /health endpoint required (Epic 7)</constraint>
+    <constraint>Prisma migration - Database migrations via npx prisma migrate deploy (must run before app deployment)</constraint>
+    <constraint>Environment variables - Use GitHub Secrets for DOCKER_USERNAME, DOCKER_PASSWORD, STAGING_SERVER_HOST</constraint>
+    <constraint>GitHub Environments - Use staging environment for deployment isolation and protection</constraint>
+    <constraint>Image tagging - Staging images tagged as staging-{commit-sha} (unique identification)</constraint>
+    <constraint>Rollback on failure - Automatic rollback to previous image tag if deployment fails</constraint>
+    <constraint>CI/CD consistency - Build process must match CI pipeline: npm ci → npm run build → npx prisma generate</constraint>
+  </constraints>
+  <interfaces>
+    <api>
+      <name>Health Check Endpoint</name>
+      <kind>REST GET</kind>
+      <signature>GET /health</signature>
+      <path>src/health/health.controller.ts:199-218</path>
+      <description>Basic liveness check - returns {status: "ok", timestamp}</description>
+    </api>
+    <api>
+      <name>Database Health Check</name>
+      <kind>REST GET</kind>
+      <signature>GET /health/db</signature>
+      <path>src/health/health.controller.ts:23-86</path>
+      <description>Database connectivity check - returns connection status and response time</description>
+    </api>
+    <api>
+      <name>Services Health Check</name>
+      <kind>REST GET</kind>
+      <signature>GET /health/services</signature>
+      <path>src/health/health.controller.ts:88-155</path>
+      <description>Comprehensive service health (database, S3, etc.)</description>
+    </api>
+    <api>
+      <name>S3 Health Check</name>
+      <kind>REST GET</kind>
+      <signature>GET /health/s3</signature>
+      <path>src/health/health.controller.ts:157-197</path>
+      <description>S3 service connectivity check</description>
+    </api>
+    <api>
+      <name>Prisma Migrate Deploy</name>
+      <kind>CLI Command</kind>
+      <signature>npx prisma migrate deploy</signature>
+      <path>package.json:26</path>
+      <description>Production-safe database migration command (idempotent)</description>
+    </api>
+  </interfaces>
+  <tests>
+    <standards>Jest testing framework with three test levels: 1) Unit tests: jest (individual services/modules), 2) Integration tests: jest --testPathPattern=integration (API endpoints, database), 3) E2E tests: jest --config ./test/jest-e2e.json (complete workflows). CI/CD pipeline validates all tests before deployment. Test coverage threshold: 70% (enforced in CI).</standards>
+    <locations>
+      <dir>test/</dir>
+      <pattern>src/**/*.spec.ts</pattern>
+      <pattern>test/**/*.e2e-spec.ts</pattern>
+      <pattern>src/**/__tests__/*.ts</pattern>
+    </locations>
+    <ideas>
+      <test>
+        <acId>AC #3</acId>
+        <idea>CD Pipeline Workflow Test - Create test workflow file and verify trigger configuration: push to develop branch triggers workflow execution</idea>
+      </test>
+      <test>
+        <acId>AC #3 - build</acId>
+        <idea>Docker Build Test - Verify Docker image builds successfully with multi-stage Dockerfile and tags correctly as staging-{commit-sha}</idea>
+      </test>
+      <test>
+        <acId>AC #3 - deploy</acId>
+        <idea>Deployment Test - Verify application deploys to staging environment, starts successfully, and responds to health checks</idea>
+      </test>
+      <test>
+        <acId>AC #3 - deploy</acId>
+        <idea>Migration Test - Verify npx prisma migrate deploy executes successfully and database schema is updated</idea>
+      </test>
+      <test>
+        <acId>AC #3 - deploy</acId>
+        <idea>Health Check Test - Verify /health endpoint returns 200 OK after deployment with {status: "ok", timestamp}</idea>
+      </test>
+      <test>
+        <acId>AC #3 - deploy</acId>
+        <idea>Rollback Test - Simulate deployment failure and verify automatic rollback to previous image tag works correctly</idea>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

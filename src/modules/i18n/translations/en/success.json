@@ -1,0 +1,7 @@
+{
+  "OPERATION_SUCCESSFUL": "Operation successful",
+  "CREATED": "Record created successfully",
+  "UPDATED": "Record updated successfully",
+  "DELETED": "Record deleted successfully",
+  "NO_CONTENT": "Operation completed successfully"
+}

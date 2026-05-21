@@ -1,0 +1,385 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>9.5</storyId>
+    <title>Test Coverage Reporting</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-5-test-coverage-reporting.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>coverage reporting</iWant>
+    <soThat>hangi kod'un test edilmediğini görebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="9.5.1, 9.5.2, 9.5.3, 9.5.4">Verify Coverage Configuration in jest.config.js</task>
+      <task id="2" ac="9.5.1, 9.5.3, 9.5.7">Execute Coverage Tests and Verify Reports</task>
+      <task id="3" ac="9.5.2, 9.5.5">Coverage Threshold Validation</task>
+      <task id="4" ac="9.5.2, 9.5.5">Verify Threshold Enforcement</task>
+      <task id="5" ac="9.5.5">Document Coverage Gaps and Action Items</task>
+      <task id="6" ac="9.5.6">CI/CD Integration Preparation</task>
+      <task id="7" ac="9.5.7">HTML Report Accessibility Verification</task>
+      <task id="8" ac="All">Coverage Report Documentation</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="9.5.1" priority="high">
+      <title>Coverage Reports Generated</title>
+      <given>Jest konfigürasyonu coverage reporting'i destekliyor</given>
+      <when>developer `npm run test:cov` komutunu çalıştırdığında</when>
+      <then>
+        - Coverage reports generate ediliyor
+        - Console'da coverage summary gösteriliyor (text format)
+        - HTML report oluşturuluyor: `coverage/index.html`
+        - LCOV report oluşturuluyor: `coverage/lcov.info` (CI/CD integration için)
+      </then>
+    </criterion>
+    <criterion id="9.5.2" priority="high">
+      <title>Coverage Thresholds Enforced</title>
+      <given>jest.config.js'te coverage threshold'ları tanımlı</given>
+      <when>testler çalıştırıldığında</when>
+      <then>
+        - Global coverage threshold: %70 (branches, functions, lines, statements)
+        - Utilities coverage threshold: %100 (`./src/common/**/*.ts`)
+        - Services coverage threshold: %80 (`./src/**/services/**/*.ts`)
+        - Threshold'lar karşılanmazsa test suite FAIL ediyor
+        - Threshold violations console'da açıkça gösteriliyor
+      </then>
+    </criterion>
+    <criterion id="9.5.3" priority="high">
+      <title>Coverage Report Formats</title>
+      <given>coverageReporters jest.config.js'te konfigüre edilmiş</given>
+      <when>coverage reports generate edildiğinde</when>
+      <then>
+        - Text format: Console'da summary table
+        - HTML format: Interactive coverage report `coverage/index.html`'de
+        - LCOV format: `coverage/lcov.info` dosyası (CI/CD için)
+      </then>
+    </criterion>
+    <criterion id="9.5.4" priority="medium">
+      <title>Coverage Collection Configuration</title>
+      <given>collectCoverageFrom jest.config.js'te tanımlı</given>
+      <when>coverage data toplanırken</when>
+      <then>
+        - `src/**/*.(t|j)s` pattern'i ile tüm source files cover ediliyor
+        - Test files coverage'dan excluded
+        - node_modules/ ve dist/ directories ignored
+      </then>
+    </criterion>
+    <criterion id="9.5.5" priority="high">
+      <title>Coverage Threshold Validation</title>
+      <given>mevcut test suite execute edildiğinde</given>
+      <when>`npm run test:cov` çalıştırıldığında</when>
+      <then>
+        - Current codebase coverage threshold'ları karşılıyor veya exceeded ediyor
+        - Threshold fail ederse: Hangi threshold'un fail ettiği gösteriliyor
+        - Threshold pass ederse: Exit code 0 (success)
+      </then>
+    </criterion>
+    <criterion id="9.5.6" priority="medium">
+      <title>CI/CD Pipeline Integration Ready</title>
+      <given>LCOV format coverage report generate ediliyor</given>
+      <when>CI/CD pipeline kurulduğunda (Epic 11)</when>
+      <then>
+        - `coverage/lcov.info` dosyası CI/CD'de parse edilebilir
+        - Coverage badge generation için data hazır
+        - Codecov/Coveralls integration'a ready
+      </then>
+    </criterion>
+    <criterion id="9.5.7" priority="medium">
+      <title>Coverage Report Accessibility</title>
+      <given>HTML coverage report generate edilmiş</given>
+      <when>developer `coverage/index.html` dosyasını browser'da açtığında</when>
+      <then>
+        - Interactive UI ile file tree navigable
+        - Her file için detailed coverage view (covered/uncovered lines)
+        - File/folder bazında coverage percentages gösteriliyor
+      </then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Coverage Report Generation Workflow</section>
+        <snippet>7-step workflow: Test Execution → Instrumentation → Collection → Aggregation → Threshold Check → Report Generation → Exit Code. Istanbul reporter bundles with Jest, generates text/HTML/LCOV formats.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Data Models and Contracts → Test Configuration Schema</section>
+        <snippet>coverageReporters: ['text', 'html', 'lcov'], collectCoverageFrom: ['src/**/*.(t|j)s'], coverageThreshold: global 70%, utilities 100%, services 80%</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Test Strategy Summary → Coverage Strategy</section>
+        <snippet>Global threshold 70% (balanced target from PRD NFR-3.1), Utilities 100% (shared code must be well-tested), Services 80% (business logic critical). Enforcement: Tests fail on CI/CD if thresholds not met.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Non-Functional Requirements → Performance</section>
+        <snippet>Coverage collection overhead: Max 10% slower execution. Coverage report generation: &lt; 3 seconds. Full test suite: &lt; 2 minutes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Coverage Reporting</section>
+        <snippet>Jest with Istanbul reporter. Multi-format output: console summary, interactive HTML, machine-readable LCOV. Threshold enforcement prevents quality regression.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/9-1-jest-configuration-test-setup.md</path>
+        <title>Story 9.1: Jest Configuration and Test Setup</title>
+        <section>Dev Notes</section>
+        <snippet>Story 9.1 established jest.config.js with coverage configuration. Coverage reporters, thresholds, and collection patterns already configured.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/9-4-e2e-test-infrastructure.md</path>
+        <title>Story 9.4: E2E Test Infrastructure</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Test suite baseline: Unit tests (UsersService 12 cases), Integration tests (UsersController), E2E tests (Auth flow 6 cases). Test execution fast: 12 integration tests in 1.262 seconds.</snippet>
+      </doc>
+      <doc>
+        <path>docs/archive/epics.md</path>
+        <title>Epics Documentation</title>
+        <section>Story 9.5: Test Coverage Reporting</section>
+        <snippet>Coverage reports generate (`npm run test:cov`). Thresholds: Global 70%, Utilities 100%, Services 80%. Formats: Console summary, HTML (coverage/index.html), LCOV (CI/CD). CI/CD: Coverage threshold fail → build fail.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>jest.config.js</path>
+        <kind>config</kind>
+        <symbol>module.exports</symbol>
+        <lines>1-37</lines>
+        <reason>Core Jest configuration with coverage settings. Contains coverageReporters, coverageThreshold, collectCoverageFrom patterns. THIS IS THE PRIMARY FILE TO VERIFY for this story.</reason>
+      </artifact>
+      <artifact>
+        <path>jest.config.js</path>
+        <kind>config</kind>
+        <symbol>coverageReporters</symbol>
+        <lines>16</lines>
+        <reason>Configured as ['text', 'html', 'lcov'] - generates all three required report formats</reason>
+      </artifact>
+      <artifact>
+        <path>jest.config.js</path>
+        <kind>config</kind>
+        <symbol>coverageThreshold</symbol>
+        <lines>17-36</lines>
+        <reason>Defines global 70%, utilities 100%, services 80% thresholds. Story validates these thresholds are enforced correctly.</reason>
+      </artifact>
+      <artifact>
+        <path>jest.config.js</path>
+        <kind>config</kind>
+        <symbol>collectCoverageFrom</symbol>
+        <lines>9</lines>
+        <reason>Pattern: ['src/**/*.(t|j)s'] - collects coverage from all source files. Excludes test files automatically.</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>scripts.test:cov</symbol>
+        <lines>18</lines>
+        <reason>NPM script: "test:cov": "jest --coverage". This is the command to execute for coverage report generation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/services/users.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersService tests</symbol>
+        <lines>all</lines>
+        <reason>Unit test example (12 test cases from Story 9.2). Contributes to coverage baseline. Well-tested service likely exceeds 80% threshold.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/__tests__/users.controller.integration.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersController integration tests</symbol>
+        <lines>all</lines>
+        <reason>Integration test example (Story 9.3). Tests controller + service + DB. Contributes to overall coverage.</reason>
+      </artifact>
+      <artifact>
+        <path>test/auth.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>Auth E2E tests</symbol>
+        <lines>all</lines>
+        <reason>E2E test (Story 9.4). Complete auth flow coverage. 6 test cases covering registration, verification, login, protected routes, refresh, logout.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/services/__tests__/cache.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>CacheService tests</symbol>
+        <lines>all</lines>
+        <reason>Common utility test. Contributes to 100% utilities threshold (./src/common/**/*.ts)</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/services/__tests__/retry.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>RetryService tests</symbol>
+        <lines>all</lines>
+        <reason>Common utility test. Contributes to 100% utilities threshold (./src/common/**/*.ts)</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/utils/__tests__/hash.util.spec.ts</path>
+        <kind>test</kind>
+        <symbol>Hash utility tests</symbol>
+        <lines>all</lines>
+        <reason>Common utility test. Must meet 100% coverage threshold per jest.config.js</reason>
+      </artifact>
+      <artifact>
+        <path>.gitignore</path>
+        <kind>config</kind>
+        <symbol>coverage/</symbol>
+        <lines>all</lines>
+        <reason>Coverage reports should NOT be committed. Verify coverage/ directory is in .gitignore (Task 6.2)</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="jest" version="^30.0.0">Core test framework with bundled Istanbul coverage reporter</package>
+        <package name="@nestjs/testing" version="^11.0.1">NestJS test utilities (TestingModule for unit/integration tests)</package>
+        <package name="ts-jest" version="^29.2.5">TypeScript preprocessor for Jest</package>
+        <package name="@types/jest" version="^30.0.0">Jest type definitions for TypeScript</package>
+        <package name="supertest" version="^7.0.0">HTTP assertion library for E2E tests</package>
+        <package name="@types/supertest" version="^6.0.2">supertest TypeScript types</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="validation">
+      Story 9.5 is VALIDATION-focused, not configuration creation. Coverage configuration already exists in jest.config.js from Story 9.1. DO NOT create new configuration - VERIFY existing setup works correctly.
+    </constraint>
+    <constraint type="architecture">
+      Coverage reports are generated artifacts (NOT source code). coverage/ directory must be in .gitignore. CI/CD will generate fresh reports on each build.
+    </constraint>
+    <constraint type="threshold">
+      Three-tier threshold strategy:
+      - Global: 70% (all metrics: branches, functions, lines, statements)
+      - Utilities (./src/common/**/*.ts): 100% (shared code must be well-tested)
+      - Services (./src/**/services/**/*.ts): 80% (business logic critical)
+    </constraint>
+    <constraint type="performance">
+      Coverage collection overhead: Max 10% slower than normal test execution. Coverage report generation: &lt; 3 seconds. Full test suite with coverage: &lt; 2 minutes.
+    </constraint>
+    <constraint type="reporting">
+      Three required report formats:
+      1. Text: Console summary (immediate feedback)
+      2. HTML: Interactive report at coverage/index.html (developer exploration)
+      3. LCOV: Machine-readable at coverage/lcov.info (CI/CD integration)
+    </constraint>
+    <constraint type="testing-pattern">
+      Test files automatically excluded from coverage: *.spec.ts, *.integration.spec.ts, *.e2e-spec.ts. Also excluded: node_modules/, dist/. Optional exclusions: main.ts, migrations.
+    </constraint>
+    <constraint type="ci-cd">
+      Story 9.5 prepares LCOV format for Epic 11 (CI/CD pipeline). Coverage threshold enforcement will cause build failures in CI/CD if thresholds not met.
+    </constraint>
+    <constraint type="documentation">
+      If threshold violations exist, DOCUMENT them (do not fail story). This is a validation story - identify gaps, create action plan for future stories to address coverage deficiencies.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>npm run test:cov</name>
+      <kind>CLI command</kind>
+      <signature>npm run test:cov</signature>
+      <path>package.json:18</path>
+      <description>Executes Jest with --coverage flag. Generates text, HTML, and LCOV reports. Enforces thresholds (fails if &lt; configured values).</description>
+    </interface>
+    <interface>
+      <name>coverageReporters</name>
+      <kind>Jest config array</kind>
+      <signature>coverageReporters: ['text', 'html', 'lcov']</signature>
+      <path>jest.config.js:16</path>
+      <description>Defines output formats for coverage reports. Text (console), HTML (interactive), LCOV (CI/CD).</description>
+    </interface>
+    <interface>
+      <name>coverageThreshold</name>
+      <kind>Jest config object</kind>
+      <signature>coverageThreshold: { global: {...}, './src/common/**/*.ts': {...}, './src/**/services/**/*.ts': {...} }</signature>
+      <path>jest.config.js:17-36</path>
+      <description>Enforces minimum coverage percentages. Global 70%, utilities 100%, services 80%. Tests fail if thresholds not met.</description>
+    </interface>
+    <interface>
+      <name>collectCoverageFrom</name>
+      <kind>Jest config array</kind>
+      <signature>collectCoverageFrom: ['src/**/*.(t|j)s']</signature>
+      <path>jest.config.js:9</path>
+      <description>Glob pattern for files to include in coverage collection. Automatically excludes test files.</description>
+    </interface>
+    <interface>
+      <name>coverageDirectory</name>
+      <kind>Jest config string</kind>
+      <signature>coverageDirectory: 'coverage'</signature>
+      <path>jest.config.js:10</path>
+      <description>Output directory for coverage reports. Generated artifacts: index.html, lcov.info, coverage-final.json</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest v30.x with Istanbul coverage reporter (bundled). Test pattern: Arrange-Act-Assert (AAA). Coverage collected during test execution via code instrumentation. Reports generated in three formats: text (console summary), HTML (interactive browser UI), LCOV (machine-readable for CI/CD). Threshold enforcement: Tests fail if coverage &lt; configured thresholds (global 70%, utilities 100%, services 80%). Test files automatically excluded from coverage analysis.
+    </standards>
+    <locations>
+      Unit tests: src/modules/[module]/__tests__/*.spec.ts
+      Integration tests: src/modules/[module]/__tests__/*.integration.spec.ts
+      E2E tests: test/*.e2e-spec.ts
+      Coverage reports: coverage/ (NOT committed, in .gitignore)
+    </locations>
+    <ideas>
+      <idea ac="9.5.1, 9.5.3">
+        Test: Execute `npm run test:cov` and verify all three report formats generated:
+        - Assert: Console output contains coverage summary table
+        - Assert: coverage/index.html file exists and is valid HTML
+        - Assert: coverage/lcov.info file exists with valid LCOV format
+      </idea>
+      <idea ac="9.5.2, 9.5.5">
+        Test: Run coverage and check current codebase against thresholds:
+        - Parse console output for global coverage percentages
+        - Compare against 70% threshold (branches, functions, lines, statements)
+        - If &lt; 70%, document which files/folders are below threshold
+        - Create action plan for addressing gaps in future stories
+      </idea>
+      <idea ac="9.5.2, 9.5.5">
+        Test: Verify threshold enforcement mechanism:
+        - Temporarily modify jest.config.js to lower threshold (e.g., global 99%)
+        - Run `npm run test:cov` and assert exit code is 1 (failure)
+        - Assert console shows which threshold failed
+        - Restore original threshold, verify exit code 0 (success)
+      </idea>
+      <idea ac="9.5.4">
+        Test: Verify coverage collection pattern:
+        - Run coverage and check covered files list
+        - Assert all src/**/*.ts files included (except test files)
+        - Assert test files (*.spec.ts) NOT in coverage report
+        - Assert node_modules/ and dist/ excluded
+      </idea>
+      <idea ac="9.5.6">
+        Test: Verify LCOV format for CI/CD compatibility:
+        - Read coverage/lcov.info file
+        - Parse with LCOV tools (if available) or manual validation
+        - Assert format matches LCOV specification (SF:, FN:, DA: lines)
+        - Confirm ready for Codecov/Coveralls upload in Epic 11
+      </idea>
+      <idea ac="9.5.7">
+        Test: Verify HTML report accessibility:
+        - Open coverage/index.html in browser
+        - Assert file tree navigation works
+        - Click on specific file, assert line-level coverage displayed
+        - Assert color coding: green (covered), red (uncovered), yellow (partial)
+      </idea>
+      <idea ac="All">
+        Documentation: If threshold violations found, create comprehensive gap analysis:
+        - List top 5 files with lowest coverage
+        - Identify critical paths missing tests (auth, permissions, data access)
+        - Prioritize: Business-critical services > Controllers > Utilities
+        - Create action items for future stories to address gaps
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

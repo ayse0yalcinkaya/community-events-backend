@@ -1,0 +1,390 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>4.2</storyId>
+    <title>File Upload Endpoint (Single & Multiple)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/4-2-file-upload-endpoint-single-multiple.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>file upload edebilmek</iWant>
+    <soThat>dosyalarımı sisteme yükleyebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="4.2.1">Create File entity in Prisma schema</task>
+      <task id="2" ac="4.2.3, 4.2.4">Create FilesService with file validation</task>
+      <task id="3" ac="4.2.5, 4.2.6, 4.2.7">Implement uploadFiles method in FilesService</task>
+      <task id="4" ac="4.2.8">Create FileResDto response DTO</task>
+      <task id="5" ac="4.2.2">Create FilesController with upload endpoint</task>
+      <task id="6" ac="4.2.2">Register FilesModule and update exports</task>
+      <task id="7" ac="4.2.2">Add FILES.CREATE permission constant</task>
+      <task id="8" ac="4.2.3, 4.2.5, 4.2.6">Error handling and logging</task>
+      <task id="9" ac="All">Testing (unit, integration, E2E)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="4.2.1">
+      <title>File entity created in Prisma schema</title>
+      <details>
+        - File model added with fields: id, domainID, userID, filename, originalName, mimeType, size, s3Key, s3Bucket, createdAt, deletedAt
+        - Indexes on: domainID, userID, mimeType, deletedAt, s3Key
+        - Foreign key: userID → User.id (onDelete: Cascade)
+        - User entity includes `files File[]` relation
+        - Migration generated and applied successfully
+      </details>
+    </criterion>
+    <criterion id="4.2.2">
+      <title>POST /files/upload endpoint created</title>
+      <details>
+        - Route: POST /api/files/upload (multipart/form-data)
+        - Guards: JwtAuthGuard, PermissionsGuard
+        - Permission: FILES.CREATE
+        - Rate limit: 20 requests per hour per user (@Throttle decorator)
+        - Accepts 'files' field (single or multiple, max 10 files)
+      </details>
+    </criterion>
+    <criterion id="4.2.3">
+      <title>File validation implemented</title>
+      <details>
+        - Max file size: 10MB per file
+        - Max files per request: 10
+        - MIME type whitelist: image/*, application/pdf, office documents, text/*, archives
+        - File extension cross-validated with MIME type
+        - Returns 400 Bad Request with detailed error if validation fails
+      </details>
+    </criterion>
+    <criterion id="4.2.4">
+      <title>Filename sanitization implemented</title>
+      <details>
+        - Special characters removed/replaced with underscores
+        - Path traversal prevented (no ../, ./)
+        - Max filename length: 255 characters
+        - originalName preserved for user reference
+        - filename sanitized for storage
+      </details>
+    </criterion>
+    <criterion id="4.2.5">
+      <title>S3 upload logic implemented</title>
+      <details>
+        - Generates unique S3 key: {domainID}/{userID}/{timestamp}-{filename}
+        - Uploads to S3 with ACL='private'
+        - ContentType set to file's MIME type
+        - Retry logic: 3 attempts with exponential backoff (reuses S3Service from Story 4.1)
+        - Returns 503 Service Unavailable on final S3 failure
+      </details>
+    </criterion>
+    <criterion id="4.2.6">
+      <title>File metadata saved to database</title>
+      <details>
+        - Transaction: All file metadata inserted atomically
+        - On S3 upload success → Insert DB records
+        - On DB insert failure → Cleanup S3 files (compensating transaction)
+        - Returns FileResDto[] with uploaded file metadata
+      </details>
+    </criterion>
+    <criterion id="4.2.7">
+      <title>Multiple file upload supported</title>
+      <details>
+        - Endpoint accepts 1-10 files in single request
+        - Uploads processed sequentially (avoid memory overflow)
+        - Partial success handling: Returns success for uploaded files + errors for failed ones
+        - Response includes array of FileResDto (one per file)
+      </details>
+    </criterion>
+    <criterion id="4.2.8">
+      <title>Upload response format validated</title>
+      <details>
+        - Returns 201 Created on success
+        - Response: { success: true, data: FileResDto[] }
+        - FileResDto excludes: s3Key, s3Bucket, domainID, userID, deletedAt
+        - FileResDto includes: id, filename, originalName, mimeType, size, sizeFormatted, createdAt
+      </details>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-4.md</path>
+        <title>Epic Technical Specification: File Management (AWS S3)</title>
+        <section>Story 4.2: File Upload Endpoint (Single & Multiple)</section>
+        <snippet>Complete AC specifications (AC-4.2.1 through AC-4.2.8), file validation rules, S3 upload strategy, database transaction pattern, testing approach</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics Document</title>
+        <section>Story 4.2</section>
+        <snippet>User story, acceptance criteria overview, technical notes on multer, S3 upload, File entity soft-delete pattern</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/4-1-aws-s3-configuration-service.md</path>
+        <title>Previous Story: AWS S3 Configuration & Service</title>
+        <section>Entire Story</section>
+        <snippet>S3Service implementation (uploadFile, getPresignedUrl, deleteFile methods), retry logic, AWS configuration pattern, MinIO setup, health check endpoint. **CRITICAL**: Reuse S3Service - DO NOT recreate S3 client or duplicate retry logic.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/modules/files/services/s3.service.ts</path>
+        <kind>service</kind>
+        <symbol>S3Service</symbol>
+        <lines>1-217</lines>
+        <reason>Existing S3Service with uploadFile(), getPresignedUrl(), deleteFile() methods. Implements retry logic with exponential backoff (3 attempts). **MUST REUSE** for all S3 operations - inject into FilesService.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/services/s3.service.ts</path>
+        <kind>interface</kind>
+        <symbol>IS3Service</symbol>
+        <lines>15-45</lines>
+        <reason>S3Service interface contract defining uploadFile, getPresignedUrl, deleteFile, testConnection methods with parameter types and return values</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/files.module.ts</path>
+        <kind>module</kind>
+        <symbol>FilesModule</symbol>
+        <lines>1-10</lines>
+        <reason>Existing FilesModule with S3Service registered. MUST ADD: FilesService (providers), FilesController (controllers), PrismaModule (imports)</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/constants/permissions.constant.ts</path>
+        <kind>constants</kind>
+        <symbol>PERMISSIONS</symbol>
+        <lines>12-30</lines>
+        <reason>Permission constants structure. FILES permissions ALREADY DEFINED (FILES.CREATE, FILES.VIEW, FILES.DELETE, FILES.VIEW_ALL) - NO NEED TO ADD. Use existing pattern for @Permission decorator.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/permission.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Permission</symbol>
+        <lines>33-34</lines>
+        <reason>@Permission decorator usage pattern. Apply as: @Permission('FILES', ActionEnum.CREATE) on upload endpoint</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/permissions.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>PermissionsGuard</symbol>
+        <lines>1-104</lines>
+        <reason>PermissionsGuard implementation. Use with JwtAuthGuard: @UseGuards(JwtAuthGuard, PermissionsGuard). Enforces permission-based access control via AuthorizationService</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/decorators/current-user.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>CurrentUser</symbol>
+        <lines>22-27</lines>
+        <reason>@CurrentUser() decorator to extract authenticated user from request. Returns JwtPayload with sub (userID), domainID, phoneNumber, roles. Use to get userID and domainID for file operations</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>User</symbol>
+        <lines>20-50</lines>
+        <reason>User model with files relation ALREADY ADDED (line 41: files File[]). Verify when creating File entity migration</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>File</symbol>
+        <lines>187-209</lines>
+        <reason>File entity ALREADY EXISTS in Prisma schema with all required fields and indexes. Migration likely already applied. Verify before attempting to recreate.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="@nestjs/common">^11.0.1</package>
+        <package name="@nestjs/core">^11.0.1</package>
+        <package name="@nestjs/platform-express">^11.0.1</package>
+        <package name="@nestjs/config">^4.0.2</package>
+        <package name="@nestjs/passport">^11.0.5</package>
+        <package name="@nestjs/throttler">^6.4.0</package>
+        <package name="@prisma/client">^6.18.0</package>
+        <package name="class-validator">^0.14.2</package>
+        <package name="class-transformer">^0.5.1</package>
+        <package name="@aws-sdk/client-s3">^3.925.0</package>
+        <package name="@aws-sdk/s3-request-presigner">^3.925.0</package>
+        <package name="multer">^1.4.5-lts.1</package>
+      </node>
+      <node-dev>
+        <package name="@types/multer">^2.0.0</package>
+        <package name="@types/express">^5.0.0</package>
+        <package name="prisma">^6.18.0</package>
+      </node-dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      <title>File Upload Pattern</title>
+      <rule>FilesController → FilesService → S3Service (from Story 4.1) + PrismaService</rule>
+      <rule>Multipart form-data handling via Multer interceptor: @UseInterceptors(FilesInterceptor('files', 10))</rule>
+      <rule>Sequential file processing to avoid memory overflow (don't process all 10 files concurrently)</rule>
+      <rule>Validation before upload: Fail-fast approach (validate all files before uploading any)</rule>
+    </constraint>
+    <constraint type="validation">
+      <title>File Validation Rules</title>
+      <rule>MIME type whitelist: image/*, application/pdf, application/vnd.openxmlformats-officedocument.*, text/*, application/zip</rule>
+      <rule>Cross-validate MIME type with file extension (prevent bypass: .exe disguised as .jpg)</rule>
+      <rule>File size limit: 10MB per file (10 * 1024 * 1024 bytes)</rule>
+      <rule>File count limit: Max 10 files per request</rule>
+      <rule>Filename sanitization: Remove/replace special chars, prevent path traversal (../, ./), max 255 chars</rule>
+    </constraint>
+    <constraint type="s3">
+      <title>S3 Upload Strategy</title>
+      <rule>S3 key format: {domainID}/{userID}/{timestamp}-{sanitizedFilename} (ensures uniqueness)</rule>
+      <rule>Upload with ACL='private' (no public access)</rule>
+      <rule>ContentType set to file's MIME type</rule>
+      <rule>**REUSE S3Service from Story 4.1** - retry logic already implemented (3 attempts with exponential backoff)</rule>
+      <rule>DO NOT recreate AWS S3 client or duplicate retry logic</rule>
+    </constraint>
+    <constraint type="database">
+      <title>Database Transaction Pattern</title>
+      <rule>Transaction scope: All file metadata inserts (Prisma.file.createMany() in transaction)</rule>
+      <rule>On S3 upload success → Insert metadata to DB</rule>
+      <rule>On DB insert failure → Compensating transaction: Cleanup S3 files (call S3Service.deleteFile() for each)</rule>
+      <rule>Ensures data consistency: File in S3 ⟺ Metadata in DB</rule>
+    </constraint>
+    <constraint type="security">
+      <title>Permission-Based Access Control</title>
+      <rule>FILES.CREATE permission required for upload endpoint</rule>
+      <rule>PermissionsGuard enforces permission check (Epic 3 infrastructure)</rule>
+      <rule>Multi-tenancy: domainID extracted from JWT (@CurrentUser decorator)</rule>
+      <rule>Rate limiting: 20 uploads per hour per user (prevent abuse) using @Throttle decorator</rule>
+    </constraint>
+    <constraint type="response">
+      <title>Response Format</title>
+      <rule>FileResDto excludes sensitive data: s3Key, s3Bucket, domainID, userID, deletedAt</rule>
+      <rule>Includes: id, filename, originalName, mimeType, size, sizeFormatted (KB/MB), createdAt</rule>
+      <rule>ResponseTransformInterceptor wraps response: { success: true, data: FileResDto[] }</rule>
+    </constraint>
+    <constraint type="critical">
+      <title>CRITICAL: Do Not Recreate Existing Code</title>
+      <rule>**File entity ALREADY EXISTS** in prisma/schema.prisma (lines 187-209). DO NOT recreate. Verify migration status first.</rule>
+      <rule>**FILES permissions ALREADY DEFINED** in permissions.constant.ts. DO NOT add duplicate constants.</rule>
+      <rule>**S3Service ALREADY EXISTS** at src/modules/files/services/s3.service.ts. MUST REUSE - inject into FilesService.</rule>
+      <rule>**User.files relation ALREADY EXISTS** in prisma/schema.prisma (line 41). DO NOT add duplicate relation.</rule>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>IS3Service</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+        uploadFile(buffer: Buffer, key: string, mimeType: string): Promise&lt;string&gt;;
+        getPresignedUrl(key: string, expiresIn?: number): Promise&lt;string&gt;;
+        deleteFile(key: string): Promise&lt;void&gt;;
+        testConnection(): Promise&lt;boolean&gt;;
+      </signature>
+      <path>src/modules/files/services/s3.service.ts:15-45</path>
+    </interface>
+    <interface>
+      <name>POST /api/files/upload</name>
+      <kind>REST Endpoint</kind>
+      <signature>
+        Method: POST
+        Content-Type: multipart/form-data
+        Field: 'files' (array, max 10 files)
+        Guards: @UseGuards(JwtAuthGuard, PermissionsGuard)
+        Permission: @Permission('FILES', ActionEnum.CREATE)
+        Rate Limit: @Throttle({ default: { limit: 20, ttl: 3600000 } })
+        Request: FormData with 'files' field
+        Response: 201 Created { success: true, data: FileResDto[] }
+        Errors: 400 (validation), 401 (auth), 403 (permission), 413 (size), 429 (rate limit), 503 (S3 failure)
+      </signature>
+      <path>To be implemented in src/modules/files/controllers/files.controller.ts</path>
+    </interface>
+    <interface>
+      <name>FileResDto</name>
+      <kind>TypeScript DTO</kind>
+      <signature>
+        class FileResDto {
+          @Expose() id: string;
+          @Expose() filename: string;
+          @Expose() originalName: string;
+          @Expose() mimeType: string;
+          @Expose() size: number;
+          @Expose() @Transform(({ obj }) => `${(obj.size / 1024).toFixed(2)} KB`) sizeFormatted: string;
+          @Expose() createdAt: Date;
+          // Excludes: s3Key, s3Bucket, domainID, userID, deletedAt
+        }
+      </signature>
+      <path>To be created at src/modules/files/dto/response/file-res.dto.ts</path>
+    </interface>
+    <interface>
+      <name>@CurrentUser()</name>
+      <kind>NestJS Parameter Decorator</kind>
+      <signature>
+        Returns JwtPayload interface:
+        {
+          sub: string; // userID
+          phoneNumber: string;
+          domainID: string;
+          roles: string[];
+        }
+        Usage: @CurrentUser() user: JwtPayload
+      </signature>
+      <path>src/modules/auth/decorators/current-user.decorator.ts:22-27</path>
+    </interface>
+    <interface>
+      <name>@Permission(module, action)</name>
+      <kind>NestJS Method Decorator</kind>
+      <signature>
+        @Permission(module: string, action: ActionEnum)
+        Usage: @Permission('FILES', ActionEnum.CREATE)
+        Works with PermissionsGuard to enforce permission-based access
+      </signature>
+      <path>src/common/decorators/permission.decorator.ts:33-34</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      **Testing Framework:** Jest (configured in package.json)
+      **Unit Tests:** Mock external services (S3Service, PrismaService) using jest.mock()
+      **Integration Tests:** Use Supertest for HTTP endpoint testing
+      **E2E Tests:** Use MinIO for S3 testing (avoid AWS costs during development)
+      **Coverage Target:** 90%+ for services, 80%+ for controllers
+      **Test File Naming:** *.spec.ts (unit/integration), *.e2e-spec.ts (E2E)
+      **Mocking Pattern:** Create mock implementations for S3Client, PrismaService in test setup
+      **Test Data:** Use test files of various types (image, PDF, DOCX) and sizes (1KB-10MB) for validation tests
+    </standards>
+
+    <locations>
+      - src/**/*.spec.ts (unit tests co-located with source)
+      - test/**/*.e2e-spec.ts (E2E tests in test/ directory)
+      - src/modules/files/services/files.service.spec.ts (to be created)
+      - src/modules/files/controllers/files.controller.spec.ts (to be created)
+      - test/files-upload.e2e-spec.ts (to be created)
+    </locations>
+
+    <ideas>
+      <test ac="4.2.3">validateFile() with 11MB file should throw BadRequestException</test>
+      <test ac="4.2.3">validateFile() with invalid MIME type (application/exe) should throw BadRequestException</test>
+      <test ac="4.2.3">validateFile() with valid 1MB image/png should pass validation</test>
+      <test ac="4.2.4">sanitizeFilename() with "../../etc/passwd" should return "etc_passwd"</test>
+      <test ac="4.2.4">sanitizeFilename() with "my file!@#.pdf" should return "my_file___.pdf"</test>
+      <test ac="4.2.4">sanitizeFilename() with 300-char filename should truncate to 255 chars</test>
+      <test ac="4.2.5,4.2.6">uploadFiles() should call S3Service.uploadFile() and Prisma.file.createMany()</test>
+      <test ac="4.2.6">uploadFiles() with DB insert failure should call S3Service.deleteFile() for cleanup</test>
+      <test ac="4.2.7">uploadFiles() with 11 files should throw BadRequestException (count limit)</test>
+      <test ac="4.2.7">uploadFiles() with partial S3 success (5/10 fail) should return successful uploads + log errors</test>
+      <test ac="4.2.2">POST /files/upload with single file should return 201 Created with FileResDto</test>
+      <test ac="4.2.2,4.2.7">POST /files/upload with 10 files should return 201 Created with FileResDto[]</test>
+      <test ac="4.2.3">POST /files/upload with 11MB file should return 400 Bad Request</test>
+      <test ac="4.2.3">POST /files/upload with invalid MIME type (.exe) should return 400 Bad Request</test>
+      <test ac="4.2.2">POST /files/upload without FILES.CREATE permission should return 403 Forbidden</test>
+      <test ac="4.2.2">POST /files/upload without JWT should return 401 Unauthorized</test>
+      <test ac="4.2.2">POST /files/upload (21st upload in 1 hour) should return 429 Too Many Requests</test>
+      <test ac="4.2.8">FileResDto should exclude s3Key, s3Bucket, domainID, userID, deletedAt</test>
+      <test ac="4.2.8">FileResDto should include sizeFormatted in KB/MB format</test>
+      <test ac="E2E">Upload file → Verify in S3 using S3Service.getPresignedUrl()</test>
+      <test ac="E2E">Upload file → Verify metadata in database using Prisma.file.findUnique()</test>
+      <test ac="E2E">Simulate DB failure → Verify S3 cleanup (files deleted from S3)</test>
+    </ideas>
+  </tests>
+</story-context>

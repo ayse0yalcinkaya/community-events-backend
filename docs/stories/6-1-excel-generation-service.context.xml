@@ -1,0 +1,255 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>1</storyId>
+    <title>Base Excel Adapter & Interface</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-1-excel-generation-service.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>base Excel adapter abstract class ve interface</iWant>
+    <soThat>Excel adapter'ları kolayca extend edebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="6.1.1">
+        <title>IExcelAdapter Interface oluştur</title>
+        <subtasks>
+          <subtask>src/modules/document-generator/interfaces/excel-adapter.interface.ts dosyası oluştur</subtask>
+          <subtask>Interface tanımla: adapterName, generate(), buildWorkbook() methods</subtask>
+          <subtask>ExcelJS.Workbook type import et</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="6.1.2, 6.1.3">
+        <title>BaseExcelAdapter Abstract Class oluştur</title>
+        <subtasks>
+          <subtask>src/modules/document-generator/base/base-excel-adapter.abstract.ts dosyası oluştur</subtask>
+          <subtask>Abstract property adapterName: string tanımla</subtask>
+          <subtask>Abstract method buildWorkbook() tanımla</subtask>
+          <subtask>Implemented method generate() oluştur: ExcelJS Workbook instance oluştur, Creator: 'Boilerplate Document Generator', buildWorkbook() çağır, workbook.xlsx.writeBuffer() ile Buffer döndür</subtask>
+          <subtask>Helper method applyCellStyle() implement et</subtask>
+          <subtask>Helper method addFormula() implement et</subtask>
+          <subtask>Helper method applyAutoFilter() implement et</subtask>
+          <subtask>Helper method freezePanes() implement et</subtask>
+          <subtask>Helper method mergeCells() implement et</subtask>
+          <subtask>Helper method addDataValidation() implement et</subtask>
+          <subtask>Helper method setColumnWidths() implement et</subtask>
+          <subtask>Helper method createChart() placeholder implement et (future)</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="6.1.4">
+        <title>@RegisterExcelAdapter Decorator oluştur</title>
+        <subtasks>
+          <subtask>src/modules/document-generator/decorators/register-excel-adapter.decorator.ts dosyası oluştur</subtask>
+          <subtask>Reflection metadata key tanımla: EXCEL_ADAPTER_NAME_KEY</subtask>
+          <subtask>Decorator factory function oluştur: RegisterExcelAdapter(adapterName: string)</subtask>
+          <subtask>Reflection metadata set et: Reflect.defineMetadata(EXCEL_ADAPTER_NAME_KEY, normalizedName, target)</subtask>
+          <subtask>Adapter name normalization: trim, lowercase</subtask>
+        </subtasks>
+      </task>
+      <task id="4">
+        <title>ExcelJS dependency ekle</title>
+        <subtasks>
+          <subtask>package.json'a exceljs dependency ekle (^4.x)</subtask>
+          <subtask>npm install çalıştır</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="All">
+        <title>Testing</title>
+        <subtasks>
+          <subtask>Unit test IExcelAdapter interface (type checking)</subtask>
+          <subtask>Unit test BaseExcelAdapter.generate() method: Workbook oluşturuluyor mu?, buildWorkbook() çağrılıyor mu?, Buffer döndürülüyor mu?</subtask>
+          <subtask>Unit test BaseExcelAdapter helper methods: applyCellStyle(), addFormula(), applyAutoFilter(), freezePanes(), mergeCells(), addDataValidation(), setColumnWidths()</subtask>
+          <subtask>Unit test @RegisterExcelAdapter decorator: Reflection metadata set ediliyor mu?, Adapter name normalization çalışıyor mu?</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="6.1.1">
+      <title>IExcelAdapter Interface oluşturulmuş</title>
+      <description>src/modules/document-generator/interfaces/excel-adapter.interface.ts dosyası oluşturulmuş. Interface şu property ve method'ları içeriyor: readonly adapterName: string - Adapter'ın benzersiz adı, generate(data: any, lang: string): Promise&lt;Buffer&gt; - Document generation method, buildWorkbook(workbook: ExcelJS.Workbook, data: any, lang: string): Promise&lt;void&gt; - Workbook building method</description>
+    </ac>
+    <ac id="6.1.2">
+      <title>BaseExcelAdapter Abstract Class oluşturulmuş</title>
+      <description>src/modules/document-generator/base/base-excel-adapter.abstract.ts dosyası oluşturulmuş. Abstract property: adapterName: string (required). Abstract method: buildWorkbook(workbook, data, lang): Promise&lt;void&gt; (must implement). Implemented method: generate(data, lang): Promise&lt;Buffer&gt; (creates workbook, calls buildWorkbook, returns buffer). Workbook creator: 'Boilerplate Document Generator'. Buffer return: workbook.xlsx.writeBuffer()</description>
+    </ac>
+    <ac id="6.1.3">
+      <title>BaseExcelAdapter helper methods implement edilmiş</title>
+      <description>Protected helper methods: applyCellStyle(cell, style) - Apply font, fill, alignment, border, numFmt, addFormula(cell, formula) - Add Excel formula, applyAutoFilter(worksheet, range) - Enable auto-filter, freezePanes(worksheet, {row, column}) - Freeze header rows/columns, mergeCells(worksheet, range) - Merge cell range, addDataValidation(cell, validation) - Add dropdown/validation, setColumnWidths(worksheet, widths[]) - Set column widths, createChart(worksheet, config) - Chart placeholder (future)</description>
+    </ac>
+    <ac id="6.1.4">
+      <title>@RegisterExcelAdapter Decorator oluşturulmuş</title>
+      <description>src/modules/document-generator/decorators/register-excel-adapter.decorator.ts dosyası oluşturulmuş. @RegisterExcelAdapter(adapterName: string) decorator tanımlı. Reflection metadata: EXCEL_ADAPTER_NAME_KEY kullanılıyor. Auto-registration for factory discovery. Adapter name normalization: trim, lowercase</description>
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-6.md</path>
+        <title>Epic Technical Specification: Document Generation</title>
+        <section>Story 6.1: Base Excel Adapter & Interface</section>
+        <snippet>IExcelAdapter Interface ve BaseExcelAdapter Abstract Class tanımları. ExcelJS kullanımı, helper methods, decorator pattern ile auto-discovery. Adapter pattern architecture detayları.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-6-document-generation-adapter-pattern-hrsync-backend.md</path>
+        <title>Epic 6: Document Generation (Adapter Pattern)</title>
+        <section>Story 6.1: Base Excel Adapter & Interface</section>
+        <snippet>Acceptance criteria detayları, technical notes, ExcelJS library kullanımı, helper methods listesi, decorator pattern ile registration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>Module Structure, Import Organization</section>
+        <snippet>Module structure pattern: src/modules/[module-name]/ altında interfaces/, base/, decorators/ klasör yapısı. 8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Unit Tests</section>
+        <snippet>Arrange-Act-Assert pattern. Minimum coverage: 70%. Unit test pattern: describe blocks, beforeEach setup, mock dependencies, test cases with arrange-act-assert structure.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/project-structure.md</path>
+        <title>Project Structure</title>
+        <section>Document Generator Module Structure</section>
+        <snippet>document-generator modülü yapısı: base/, interfaces/, decorators/, factories/, services/ klasörleri. BaseExcelAdapter abstract class ve helper methods yapısı.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/common/decorators/permission.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>@Permission decorator</symbol>
+        <lines>1-34</lines>
+        <reason>Reflection metadata pattern örneği. SetMetadata kullanımı, decorator factory function pattern. @RegisterExcelAdapter decorator için benzer pattern kullanılacak.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>@Public decorator</symbol>
+        <lines>1-20</lines>
+        <reason>Basit decorator pattern örneği. Metadata key constant tanımı, decorator factory function. @RegisterExcelAdapter için benzer yapı kullanılacak.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/notifications/services/notification.service.ts</path>
+        <kind>service</kind>
+        <symbol>NotificationService</symbol>
+        <lines>1-700</lines>
+        <reason>Service abstraction pattern örneği. BaseExcelAdapter abstract class benzer abstraction pattern sağlar. Module structure ve service organization pattern'i.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/notifications/notifications.module.ts</path>
+        <kind>module</kind>
+        <symbol>NotificationsModule</symbol>
+        <lines>1-57</lines>
+        <reason>Module structure pattern. DocumentGeneratorModule için benzer yapı kullanılacak (Story 6.7'de oluşturulacak). Provider ve controller organization.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem>Node.js</ecosystem>
+      <packages>
+        <package name="exceljs" version="^4.x" purpose="Excel workbook generation and manipulation. Required for BaseExcelAdapter implementation." />
+        <package name="reflect-metadata" version="^0.2.2" purpose="Reflection metadata support for decorator-based adapter registration. Already in package.json." />
+        <package name="@nestjs/common" version="^11.0.1" purpose="NestJS core decorators and utilities. Injectable, abstract class support." />
+        <package name="@nestjs/core" version="^11.0.1" purpose="NestJS core framework. ModuleRef for adapter discovery (Story 6.3)." />
+      </packages>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Architecture Pattern</type>
+      <description>Adapter Pattern: BaseExcelAdapter abstract class, Excel adapter'lar için base implementation sağlar. Concrete adapter'lar BaseExcelAdapter'ı extend ederek buildWorkbook() method'unu implement eder.</description>
+      <source>docs/tech-spec-epic-6.md#Adapter-Pattern-Architecture</source>
+    </constraint>
+    <constraint>
+      <type>Decorator Pattern</type>
+      <description>@RegisterExcelAdapter decorator, adapter'ları reflection metadata ile register eder. Factory pattern ile auto-discovery sağlanır (Story 6.3'te implement edilecek). Decorator-based registration, manual registration'a göre daha maintainable.</description>
+      <source>docs/tech-spec-epic-6.md#Adapter-Factories-Auto-Discovery</source>
+    </constraint>
+    <constraint>
+      <type>Module Structure</type>
+      <description>Document generator modülü src/modules/document-generator/ altında organize edilir. Base classes: base/ klasöründe. Interfaces: interfaces/ klasöründe. Decorators: decorators/ klasöründe.</description>
+      <source>docs/tech-spec-epic-6.md#System-Architecture-Alignment</source>
+    </constraint>
+    <constraint>
+      <type>Import Organization</type>
+      <description>8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events. Tüm dosyalarda bu sıralama kullanılmalı.</description>
+      <source>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md#Import-Organization</source>
+    </constraint>
+    <constraint>
+      <type>File Naming</type>
+      <description>Files: kebab-case (excel-adapter.interface.ts). Classes: PascalCase (BaseExcelAdapter). Constants: SCREAMING_SNAKE_CASE (EXCEL_ADAPTER_NAME_KEY).</description>
+      <source>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md#File-Folder-Naming</source>
+    </constraint>
+    <constraint>
+      <type>Testing Requirements</type>
+      <description>Minimum coverage: 70%. Unit tests Arrange-Act-Assert pattern kullanır. Test files: *.spec.ts formatında, src/ altında source file ile aynı klasörde.</description>
+      <source>docs/architecture/testing-strategy.md#Test-Coverage-Requirements</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>IExcelAdapter</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface IExcelAdapter { readonly adapterName: string; generate(data: any, lang: string): Promise&lt;Buffer&gt;; buildWorkbook(workbook: ExcelJS.Workbook, data: any, lang: string): Promise&lt;void&gt;; }</signature>
+      <path>src/modules/document-generator/interfaces/excel-adapter.interface.ts (NEW)</path>
+      <usage>Excel adapter'lar için contract tanımı. BaseExcelAdapter bu interface'i implement eder. Concrete adapter'lar BaseExcelAdapter'ı extend eder.</usage>
+    </interface>
+    <interface>
+      <name>ExcelJS.Workbook</name>
+      <kind>ExcelJS library interface</kind>
+      <signature>class Workbook { creator: string; addWorksheet(name: string): Worksheet; xlsx.writeBuffer(): Promise&lt;Buffer&gt;; }</signature>
+      <path>exceljs package</path>
+      <usage>ExcelJS library'den Workbook class. BaseExcelAdapter.generate() method'unda yeni Workbook instance oluşturulur, buildWorkbook() çağrılır, writeBuffer() ile Buffer döndürülür.</usage>
+    </interface>
+    <interface>
+      <name>Reflect.defineMetadata</name>
+      <kind>Reflection metadata API</kind>
+      <signature>defineMetadata(metadataKey: string, metadataValue: any, target: Object): void</signature>
+      <path>reflect-metadata package</path>
+      <usage>@RegisterExcelAdapter decorator'da adapter name'i reflection metadata olarak kaydetmek için kullanılır. EXCEL_ADAPTER_NAME_KEY ile adapter name store edilir.</usage>
+    </interface>
+    <interface>
+      <name>SetMetadata (NestJS)</name>
+      <kind>NestJS decorator utility</kind>
+      <signature>SetMetadata(key: string, value: any): ClassDecorator | MethodDecorator | PropertyDecorator</signature>
+      <path>@nestjs/common</path>
+      <usage>NestJS metadata pattern örneği. @Permission ve @Public decorator'larında kullanılıyor. @RegisterExcelAdapter için benzer pattern kullanılabilir ama reflection-metadata direkt kullanımı tercih edilebilir.</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Unit tests Arrange-Act-Assert pattern kullanır. Minimum coverage: 70%. Test files: *.spec.ts formatında, source file ile aynı klasörde. Jest framework kullanılır. Mock dependencies: jest.fn() ve jest.mock() ile. Test structure: describe blocks, beforeEach setup, it() test cases.</standards>
+    <locations>
+      <location>src/modules/document-generator/interfaces/__tests__/excel-adapter.interface.spec.ts (NEW)</location>
+      <location>src/modules/document-generator/base/__tests__/base-excel-adapter.abstract.spec.ts (NEW)</location>
+      <location>src/modules/document-generator/decorators/__tests__/register-excel-adapter.decorator.spec.ts (NEW)</location>
+    </locations>
+    <ideas>
+      <test ac="6.1.1">
+        <title>IExcelAdapter Interface Type Checking</title>
+        <description>Interface'in doğru property ve method signature'larına sahip olduğunu verify et. TypeScript type checking test.</description>
+      </test>
+      <test ac="6.1.2">
+        <title>BaseExcelAdapter.generate() Method</title>
+        <description>generate() method'unun workbook oluşturduğunu, creator'ı set ettiğini, buildWorkbook() çağırdığını, Buffer döndürdüğünü test et. Mock buildWorkbook() method ile.</description>
+      </test>
+      <test ac="6.1.3">
+        <title>BaseExcelAdapter Helper Methods</title>
+        <description>Her helper method için unit test: applyCellStyle() style uygular, addFormula() formula ekler, applyAutoFilter() filter enable eder, freezePanes() panes freeze eder, mergeCells() cells merge eder, addDataValidation() validation ekler, setColumnWidths() column widths set eder.</description>
+      </test>
+      <test ac="6.1.4">
+        <title>@RegisterExcelAdapter Decorator</title>
+        <description>Decorator'ın reflection metadata set ettiğini test et. EXCEL_ADAPTER_NAME_KEY ile metadata'nın doğru değerle set edildiğini verify et. Adapter name normalization (trim, lowercase) test et.</description>
+      </test>
+    </ideas>
+  </tests>
+</story-context>
+

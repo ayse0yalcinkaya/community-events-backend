@@ -1,0 +1,243 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.1</storyId>
+    <title>NestJS Project Initialization</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-1-nestjs-project-initialization.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>NestJS projesini strict TypeScript ile oluşturmak</iWant>
+    <soThat>type-safe, production-ready bir başlangıç noktam olsun</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3">
+        <description>NestJS CLI ile proje oluşturma</description>
+        <subtasks>
+          <subtask id="1.1">NestJS CLI ile boilerplate projesini oluştur (`npx @nestjs/cli@latest new boilerplate --strict`)</subtask>
+          <subtask id="1.2">Proje dizinine git ve temel klasör yapısını doğrula (src/, test/, node_modules/)</subtask>
+          <subtask id="1.3">`tsconfig.json` dosyasını aç ve strict mode ayarlarını kontrol et (`strict: true` olmalı)</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="4">
+        <description>Kod kalitesi araçlarını yapılandır</description>
+        <subtasks>
+          <subtask id="2.1">`.eslintrc.js` dosyasının NestJS preset ile geldiğini doğrula</subtask>
+          <subtask id="2.2">`.prettierrc` dosyasının olduğunu doğrula (yoksa oluştur)</subtask>
+          <subtask id="2.3">ESLint ve Prettier'ın birlikte çalıştığını test et (`npm run lint`)</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="5">
+        <description>Git repository'sini yapılandır</description>
+        <subtasks>
+          <subtask id="3.1">Git initialize edildiğini doğrula (`git status` komutu çalışmalı)</subtask>
+          <subtask id="3.2">`.gitignore` dosyasını kontrol et (node_modules, dist, coverage ignore edilmeli)</subtask>
+          <subtask id="3.3">İlk commit yap (`git add .` ve `git commit -m "chore: initialize NestJS project"`)</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="3">
+        <description>Scripts klasörünü oluştur</description>
+        <subtasks>
+          <subtask id="4.1">Proje root'unda `scripts/` klasörü oluştur</subtask>
+          <subtask id="4.2">Placeholder README.md ekle (`scripts/README.md`)</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="6">
+        <description>Projeyi test et ve doğrula</description>
+        <subtasks>
+          <subtask id="5.1">Dependencies'leri yükle (`npm install`)</subtask>
+          <subtask id="5.2">Projeyi build et (`npm run build`)</subtask>
+          <subtask id="5.3">Development mode'da başlat (`npm run start:dev`)</subtask>
+          <subtask id="5.4">`http://localhost:3000` adresini tarayıcıda aç ve "Hello World!" göründüğünü doğrula</subtask>
+          <subtask id="5.5">Hot reload test: `src/app.controller.ts` dosyasında değişiklik yap ve otomatik restart'ı doğrula</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-1.1.1">
+      <description>NestJS CLI ile proje oluşturulmuş (`npx @nestjs/cli@latest new boilerplate --strict`)</description>
+      <verification>Proje klasör yapısı mevcut (src/, test/, node_modules/)</verification>
+    </criterion>
+    <criterion id="AC-1.1.2">
+      <description>TypeScript strict mode aktif (`tsconfig.json` içinde `strict: true`)</description>
+      <verification>tsconfig.json dosyasında strict: true, noImplicitAny, strictNullChecks vb. ayarlar mevcut</verification>
+    </criterion>
+    <criterion id="AC-1.1.3">
+      <description>Temel folder structure hazır (`src/`, `test/`, `scripts/`)</description>
+      <verification>src/, test/, scripts/ klasörleri mevcut</verification>
+    </criterion>
+    <criterion id="AC-1.1.4">
+      <description>ESLint + Prettier configured (`.eslintrc.js`, `.prettierrc` mevcut)</description>
+      <verification>.eslintrc.js ve .prettierrc dosyaları mevcut, npm run lint çalışıyor</verification>
+    </criterion>
+    <criterion id="AC-1.1.5">
+      <description>Git initialized, `.gitignore` configured (node_modules, dist ignored)</description>
+      <verification>.git klasörü mevcut, .gitignore node_modules ve dist'i içeriyor</verification>
+    </criterion>
+    <criterion id="AC-1.1.6">
+      <description>Proje build ve run olabiliyor (`npm run start:dev` çalışıyor, port 3000'de dinliyor)</description>
+      <verification>npm run start:dev çalışıyor, http://localhost:3000 "Hello World!" döndürüyor</verification>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Database Infrastructure & Project Setup</title>
+        <section>Story 1.1: NestJS Project Initialization</section>
+        <snippet>NestJS CLI v11.1.8 ile strict TypeScript projesi. ESLint + Prettier konfigürasyonu. Git initialization ve .gitignore yapılandırması. Hot reload development ortamı.</snippet>
+        <relevance>AC-1.1.1 - AC-1.1.6 için detaylı acceptance criteria ve implementation guidance</relevance>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.1: NestJS Project Initialization</section>
+        <snippet>As a developer, I want NestJS projesini strict TypeScript ile oluşturmak, so that type-safe, production-ready bir başlangıç noktam olsun. NestJS CLI ile proje oluşturulmuş, TypeScript strict mode aktif, temel folder structure hazır.</snippet>
+        <relevance>User story tanımı ve acceptance criteria</relevance>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Project Initialization</section>
+        <snippet>Create project with strict TypeScript: npx @nestjs/cli@latest new boilerplate --strict. Base Architectural Decisions Provided by Starter: TypeScript with strict mode enabled, Jest testing framework configured, ESLint with NestJS best practices, Module-based project structure.</snippet>
+        <relevance>Architecture foundation ve NestJS CLI initialization command</relevance>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Decision Summary</section>
+        <snippet>Core Framework: NestJS v11.1.8 | Language: TypeScript Strict v5.3+ | Testing Framework: Jest v29.x | Code Quality: ESLint + Prettier + Husky</snippet>
+        <relevance>Technology stack versions ve mandatory configurations</relevance>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Project Structure</section>
+        <snippet>boilerplate/ ├── src/ (main.ts, app.module.ts) ├── test/ (E2E tests) ├── scripts/ (utility scripts) ├── .eslintrc.js ├── .prettierrc ├── tsconfig.json</snippet>
+        <relevance>Expected folder structure post-initialization</relevance>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Technical Requirements - Development Standards</section>
+        <snippet>TypeScript strict mode mandatory across entire codebase. ESLint + Prettier enforced via pre-commit hooks. Git-based version control with conventional commits.</snippet>
+        <relevance>Coding standards ve quality requirements</relevance>
+      </doc>
+    </docs>
+    <code>
+      <!-- No existing code artifacts - this is the first story (greenfield project initialization) -->
+    </code>
+    <dependencies>
+      <node>
+        <framework>@nestjs/cli</framework>
+        <version>^11.0.10</version>
+        <purpose>Project scaffolding, build tooling</purpose>
+      </framework>
+        <framework>@nestjs/common</framework>
+        <version>^11.1.8</version>
+        <purpose>NestJS core functionality</purpose>
+      </framework>
+        <framework>@nestjs/core</framework>
+        <version>^11.1.8</version>
+        <purpose>NestJS dependency injection, modules</purpose>
+      </framework>
+        <framework>@nestjs/platform-express</framework>
+        <version>^11.1.8</version>
+        <purpose>HTTP server (Express adapter)</purpose>
+      </framework>
+        <framework>typescript</framework>
+        <version>^5.3.3</version>
+        <purpose>TypeScript compiler (strict mode)</purpose>
+      </framework>
+        <framework>ts-node</framework>
+        <version>^10.9.2</version>
+        <purpose>TypeScript execution (scripts)</purpose>
+      </framework>
+        <framework>jest</framework>
+        <version>^29.x</version>
+        <purpose>Testing framework</purpose>
+      </framework>
+        <framework>eslint</framework>
+        <version>Latest</version>
+        <purpose>Code quality linting</purpose>
+      </framework>
+        <framework>prettier</framework>
+        <version>Latest</version>
+        <purpose>Code formatting</purpose>
+      </framework>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      <description>TypeScript Strict Mode Mandatory</description>
+      <source>docs/architecture.md#Decision-Summary</source>
+      <enforcement>tsconfig.json must have strict: true, noImplicitAny: true, strictNullChecks: true, strictFunctionTypes: true, strictBindCallApply: true, strictPropertyInitialization: true, noImplicitThis: true, alwaysStrict: true</enforcement>
+    </constraint>
+    <constraint type="architecture">
+      <description>NestJS v11.1.8 Version Lock</description>
+      <source>docs/tech-spec-epic-1.md#Dependencies</source>
+      <enforcement>Use @nestjs/cli@latest but verify v11.1.8 is installed. This is the verified stable version as of 2025-11-04.</enforcement>
+    </constraint>
+    <constraint type="code-quality">
+      <description>ESLint + Prettier Integration</description>
+      <source>docs/architecture.md#Decision-Summary</source>
+      <enforcement>ESLint must be configured with NestJS preset. Prettier must be integrated with eslint-config-prettier to avoid conflicts.</enforcement>
+    </constraint>
+    <constraint type="git">
+      <description>Git Ignore Patterns</description>
+      <source>docs/tech-spec-epic-1.md#AC-1.1.5</source>
+      <enforcement>.gitignore must include: /node_modules, /dist, /coverage, .env files, IDE configs, OS files</enforcement>
+    </constraint>
+    <constraint type="folder-structure">
+      <description>Base Folder Structure</description>
+      <source>docs/architecture.md#Project-Structure</source>
+      <enforcement>Must create: src/ (app code), test/ (E2E tests), scripts/ (utility scripts). Later stories will add: config/, database/, common/, modules/</enforcement>
+    </constraint>
+    <constraint type="package-scripts">
+      <description>Required Package Scripts</description>
+      <source>docs/tech-spec-epic-1.md#Story-1.1</source>
+      <enforcement>package.json must include: build, start, start:dev, start:debug, start:prod, lint, test, test:watch, test:cov, test:e2e</enforcement>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- No interfaces to implement yet - this is project initialization -->
+    <note>This story creates the base project structure. Interfaces will be defined in subsequent stories (e.g., PrismaService in Story 1.4, AuthController in Story 2.x)</note>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <framework>Jest v29.x</framework>
+      <testTypes>Unit tests (.spec.ts files co-located with source), E2E tests (test/ folder)</testTypes>
+      <coverage>Not required for Story 1.1 - infrastructure setup story</coverage>
+      <approach>Manual testing checklist from tech-spec-epic-1.md. Automated tests will be added in Epic 9.</approach>
+      <note>NestJS starter includes example tests: src/app.controller.spec.ts (unit), test/app.e2e-spec.ts (E2E). These should remain as templates.</note>
+    </standards>
+    <locations>
+      <location>src/**/*.spec.ts</location>
+      <location>test/**/*.e2e-spec.ts</location>
+    </locations>
+    <ideas>
+      <testIdea ac="AC-1.1.2">
+        <description>Unit test: Verify TypeScript strict mode compilation</description>
+        <approach>Run `tsc --noEmit` and verify no compilation errors. Check tsconfig.json contains all strict flags.</approach>
+      </testIdea>
+      <testIdea ac="AC-1.1.4">
+        <description>Integration test: Verify ESLint + Prettier work together</description>
+        <approach>Run `npm run lint` and verify no conflicts between ESLint and Prettier rules.</approach>
+      </testIdea>
+      <testIdea ac="AC-1.1.6">
+        <description>E2E test: Application bootstrap test</description>
+        <approach>Start application with `npm run start:dev`, send GET request to http://localhost:3000, verify "Hello World!" response. Test hot reload by modifying app.controller.ts and verifying auto-restart.</approach>
+        <reference>docs/tech-spec-epic-1.md#E2E-Tests</reference>
+      </testIdea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context>
+  <metadata>
+    <story-id>13.5</story-id>
+    <story-key>13-5-environment-specific-data-transactional-seeding</story-key>
+    <epic-id>epic-13</epic-id>
+    <epic-name>Advanced Seeder Infrastructure</epic-name>
+    <status>drafted</status>
+    <date-created>2025-11-11</date-created>
+    <author>BMad</author>
+    <agent-model>Claude Code</agent-model>
+  </metadata>
+
+  <summary>
+    Story 13.5 implements environment-specific data volumes and transactional seeding with rollback capability for Epic 13: Advanced Seeder Infrastructure. Building on Stories 13.1-13.4 which established the seeder foundation, this story adds NODE_ENV-based data scaling, $transaction() wrapping for atomicity, and rollback safety. The implementation ensures development (50 users), test (5 users), and staging (25 users) environments receive appropriate data volumes with <3s performance in test environment for CI/CD optimization.
+  </summary>
+
+  <business-value>
+    Enables appropriate data scale per environment: development gets realistic datasets for testing features, test environment gets minimal data for fast CI/CD performance, staging gets medium datasets for pre-production validation. Transactional seeding with rollback ensures data consistency and prevents partial seeding failures that could corrupt the database.
+  </business-value>
+
+  <acceptance-criteria>
+    <criterion id="AC1">
+      <description>Environment-based data volume control</description>
+      <details>
+        Development: 50 users, 20 files, 100 SMS logs
+        Test: 5 users, 3 files, 10 SMS logs
+        Staging: 25 users, 10 files, 50 SMS logs
+      </details>
+      <test-strategy>Verify data counts per environment using NODE_ENV=test, NODE_ENV=development, NODE_ENV=staging</test-strategy>
+    </criterion>
+
+    <criterion id="AC2">
+      <description>Transactional seeding with $transaction() wrapper</description>
+      <details>
+        All 5 seeders wrapped in prisma.$transaction() in seed.ts main() function
+      </details>
+      <test-strategy>Review seed.ts source code to confirm $transaction usage</test-strategy>
+    </criterion>
+
+    <criterion id="AC3">
+      <description>Rollback capability for failed seeding</description>
+      <details>
+        Failed transaction automatically rolls back without leaving partial data
+      </details>
+      <test-strategy>Inject seeder failure and verify database remains empty</test-strategy>
+    </criterion>
+
+    <criterion id="AC4">
+      <description>Data integrity across all environment volumes</description>
+      <details>
+        Foreign key constraints maintained (users→roles, files→users, sms→users)
+      </details>
+      <test-strategy>Query database to verify all relationships are valid</test-strategy>
+    </criterion>
+
+    <criterion id="AC5">
+      <description>Test environment performance < 3 seconds</description>
+      <details>
+        NODE_ENV=test must complete full seeding in under 3 seconds for CI/CD speed
+      </details>
+      <test-strategy>Time seed execution with console.time() in test environment</test-strategy>
+    </criterion>
+
+    <criterion id="AC6">
+      <description>Automatic environment detection via NODE_ENV</description>
+      <details>
+        NODE_ENV environment variable automatically controls data volume without manual config
+      </details>
+      <test-strategy>Verify different NODE_ENV values produce different data volumes</test-strategy>
+    </criterion>
+
+    <criterion id="AC7">
+      <description>Seed isolation between environments</description>
+      <details>
+        No conflicts between dev/test/staging data, idempotent operations throughout
+      </details>
+      <test-strategy>Run seeding multiple times and verify no duplicate or conflicting data</test-strategy>
+    </criterion>
+  </acceptance-criteria>
+
+  <technical-context>
+    <epic-overview>
+      Epic 13 implements comprehensive seeder architecture using Prisma native seeding, factory pattern with Faker.js, and environment-based data management. Builds on Epic 1 (Database Infrastructure), Epic 3 (Users & Permissions), Epic 4 (Files), and Epic 5 (SMS).
+    </epic-overview>
+
+    <story-sequence>
+      Story 13-1: Prisma native seeding entry point (prisma/seed.ts)
+      Story 13-2: Model factory pattern with Faker.js integration
+      Story 13-3: Individual module seeders with idempotent operations
+      Story 13-4: Package.json scripts and Prisma integration
+      Story 13-5: Environment-specific data & transactional seeding (CURRENT)
+      Story 13-6: Hash password utility & test data management
+      Story 13-7: CI/CD integration automation
+      Story 13-8: Testing infrastructure for seeders
+    </story-sequence>
+
+    <current-state>
+      Stories 13-1 through 13-4 are complete. The following infrastructure exists:
+      - prisma/seed.ts: Main entry point with basic transaction structure
+      - prisma/seeders/: 5 individual seeder classes (role, permission, user, file, sms)
+      - prisma/factories/: 4 factory classes for data generation
+      - package.json: npm scripts (seed, seed:test, seed:dev, seed:reset)
+      - Prisma native seeding: Configured via prisma.seed in package.json
+    </current-state>
+
+    <required-changes>
+      1. Create prisma/config/environment.config.ts with data volume definitions
+      2. Update seed.ts to use environment config and add error handling
+      3. Modify all 5 seeders to read data volumes from environment config
+      4. Enhance transaction wrapper with proper error handling
+      5. Implement automatic NODE_ENV detection
+    </required-changes>
+  </technical-context>
+
+  <dependencies>
+    <depends-on story="13-1">
+      <reason>Uses prisma/seed.ts as entry point and main() function structure</reason>
+    </depends-on>
+
+    <depends-on story="13-2">
+      <reason>Uses factory pattern (UserFactory, FileFactory, etc.) for data generation</reason>
+    </depends-on>
+
+    <depends-on story="13-3">
+      <reason>Uses 5 individual seeder classes as transaction participants</reason>
+    </depends-on>
+
+    <depends-on story="13-4">
+      <reason>Uses npm scripts (seed, seed:test, seed:dev) which trigger seeding with NODE_ENV</reason>
+    </depends-on>
+
+    <depends-on epic="1">
+      <reason>Requires PrismaService, PrismaClient, and database entities (User, Role, Permission, File, SMS)</reason>
+    </depends-on>
+
+    <depends-on epic="12">
+      <reason>Requires TypeScript strict mode (12.4) and import organization (12.5) for type safety</reason>
+    </depends-on>
+  </dependencies>
+
+  <implementation-plan>
+    <task-group id="Task-1" name="Environment Configuration" effort="medium">
+      <tasks>
+        <task>Create environment.config.ts with NODE_ENV→data volume mapping</task>
+        <task>Update all seeders to import and use environment config</task>
+        <task>Implement default fallback to development if NODE_ENV invalid</task>
+      </tasks>
+    </task-group>
+
+    <task-group id="Task-2" name="Transaction Enhancement" effort="medium">
+      <tasks>
+        <task>Enhance seed.ts $transaction wrapper with try-catch</task>
+        <task>Add meaningful error messages and rollback notifications</task>
+        <task>Verify all 5 seeders participate in transaction</task>
+      </tasks>
+    </task-group>
+
+    <task-group id="Task-3" name="Testing & Validation" effort="medium">
+      <tasks>
+        <task>Test seeding in all 3 environments (dev, test, staging)</task>
+        <task>Verify rollback on simulated failure</task>
+        <task>Measure and optimize test environment performance</task>
+        <task>Validate data integrity across all volumes</task>
+      </tasks>
+    </task-group>
+  </implementation-plan>
+
+  <architecture>
+    <pattern>Environment-Config-Driven Seeding</pattern>
+    <description>
+      Environment config (environment.config.ts) defines data volumes per NODE_ENV.
+      All seeders read from config to determine how many records to create.
+      Transaction wrapper ensures atomicity across all seeders.
+      Automatic environment detection via NODE_ENV variable.
+    </description>
+
+    <components>
+      <component name="prisma/config/environment.config.ts" type="new">
+        <description>Environment configuration with data volume definitions per NODE_ENV</description>
+        <interfaces>
+          <interface>ENVIRONMENT_CONFIG object with development/test/staging volumes</interface>
+        </interfaces>
+      </component>
+
+      <component name="prisma/seed.ts" type="modified">
+        <description>Enhanced main() function with environment detection and error handling</description>
+        <interfaces>
+          <interface>getEnvironment() utility function</interface>
+          <interface>Enhanced $transaction with try-catch</interface>
+        </interfaces>
+      </component>
+
+      <component name="prisma/seeders/*.ts" type="modified">
+        <description>Updated to read data volumes from environment config instead of hardcoded values</description>
+        <interfaces>
+          <interface>read from ENVIRONMENT_CONFIG[env]</interface>
+        </interfaces>
+      </component>
+    </components>
+
+    <data-flow>
+      1. npm run seed (or prisma migrate dev) triggers seed.ts
+      2. seed.ts detects NODE_ENV (development|test|staging|production)
+      3. Loads environment.config.ts and reads volume settings
+      4. Wraps all 5 seeders in $transaction()
+      5. Each seeder reads config to determine record count
+      6. All seeders execute within transaction
+      7. On success: ✓ completion message
+      8. On failure: ❌ error + automatic rollback
+    </data-flow>
+  </architecture>
+
+  <constraints>
+    <constraint id="C1">
+      <description>Must use Prisma $transaction() for atomicity</description>
+      <rationale>Ensures all-or-nothing seeding, prevents partial data corruption</rationale>
+    </constraint>
+
+    <constraint id="C2">
+      <description>Test environment must seed in < 3 seconds</description>
+      <rationale>CI/CD performance requirement for fast build pipelines</rationale>
+    </constraint>
+
+    <constraint id="C3">
+      <description>All operations must be idempotent</description>
+      <rationale>Safe to re-run scripts multiple times, prevents conflicts</rationale>
+    </constraint>
+
+    <constraint id="C4">
+      <description>No breaking changes to existing Stories 13.1-13.4</description>
+      <rationale>Progressive enhancement, not replacement of existing infrastructure</rationale>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="IEnvironmentConfig">
+      <description>Configuration interface for environment-specific data volumes</description>
+      <properties>
+        <property name="users" type="number">Number of users to seed</property>
+        <property name="files" type="number">Number of files to seed</property>
+        <property name="sms" type="number">Number of SMS logs to seed</property>
+        <property name="roles" type="string[]">Roles to create (varies by environment)</property>
+      </properties>
+    </interface>
+
+    <interface name="IEnvironmentDetection">
+      <description>Utility for automatic environment detection</description>
+      <methods>
+        <method name="getEnvironment()">Returns NODE_ENV or 'development' fallback</method>
+      </methods>
+    </interface>
+  </interfaces>
+
+  <testing-strategy>
+    <test-levels>
+      <level name="Unit">
+        <description>Test environment config generation and environment detection</description>
+        <cases>
+          <case>environment.config.ts exports correct volumes per environment</case>
+          <case>getEnvironment() returns correct value for different NODE_ENV</case>
+          <case>Invalid NODE_ENV defaults to development</case>
+        </cases>
+      </level>
+
+      <level name="Integration">
+        <description>Test full seeding in different environments</description>
+        <cases>
+          <case>Seeding with NODE_ENV=test creates 5 users</case>
+          <case>Seeding with NODE_ENV=development creates 50 users</case>
+          <case>Transaction rollback on failure leaves database empty</case>
+          <case>Re-running seed produces no duplicate data (idempotent)</case>
+        </cases>
+      </level>
+
+      <level name="E2E">
+        <description>Test application functionality with seeded data</description>
+        <cases>
+          <case>Login with seeded admin user in test environment</case>
+          <case>API calls with seeded permissions work correctly</case>
+          <case>File upload references valid seeded file metadata</case>
+        </cases>
+      </level>
+    </test-levels>
+
+    <test-environments>
+      <env name="test">
+        <data-volume>Minimal (5 users, 3 files, 10 SMS)</data-volume>
+        <performance-target>&lt; 3 seconds</performance-target>
+        <use-case>CI/CD pipelines, automated testing</use-case>
+      </env>
+
+      <env name="development">
+        <data-volume>Full (50 users, 20 files, 100 SMS)</data-volume>
+        <performance-target>&lt; 10 seconds</performance-target>
+        <use-case>Local development, feature testing</use-case>
+      </env>
+
+      <env name="staging">
+        <data-volume>Medium (25 users, 10 files, 50 SMS)</data-volume>
+        <performance-target>&lt; 7 seconds</performance-target>
+        <use-case>Pre-production validation, QA testing</use-case>
+      </env>
+    </test-environments>
+  </testing-strategy>
+
+  <quality-standards>
+    <code-quality>
+      <standard>TypeScript strict mode (Epic 12.4)</standard>
+      <description>All new code must pass TypeScript strict compilation</description>
+    </code-quality>
+
+    <code-quality>
+      <standard>Import organization (Epic 12.5)</standard>
+      <description>Follow 8-category import pattern (libraries, DTOs, services, etc.)</description>
+    </code-quality>
+
+    <code-quality>
+      <standard>ESLint + Prettier (Epic 12.1-12.2)</standard>
+      <description>All code formatted and linted without errors</description>
+    </code-quality>
+
+    <performance>
+      <metric>Test environment seeding time</metric>
+      <target>&lt; 3 seconds</target>
+      <measurement>Console timing in seed.ts</measurement>
+    </performance>
+
+    <reliability>
+      <metric>Transaction success rate</metric>
+      <target>100% success or complete rollback</target>
+      <measurement>No partial data after failure</measurement>
+    </reliability>
+  </quality-standards>
+
+  <risks>
+    <risk id="R1">
+      <description>Large dataset seeding in development may timeout</description>
+      <probability>medium</probability>
+      <impact>medium</impact>
+      <mitigation>Environment-based volume limits, chunked processing if needed</mitigation>
+    </risk>
+
+    <risk id="R2">
+      <description>Foreign key constraint failures if seeding order incorrect</description>
+      <probability>low</probability>
+      <impact>high</impact>
+      <mitigation>Maintain established seeding order (roles→permissions→users→files→sms)</mitigation>
+    </risk>
+
+    <risk id="R3">
+      <description>Performance regression in test environment affects CI/CD</description>
+      <probability>medium</probability>
+      <impact>high</impact>
+      <mitigation>Monitor seed time, optimize with createMany() for bulk inserts</mitigation>
+    </risk>
+  </risks>
+
+  <documentation-references>
+    <reference type="epic-spec">
+      <path>docs/tech-spec-epic-13.md</path>
+      <section>NFR-Performance</section>
+      <description>Environment-specific data volume requirements</description>
+    </reference>
+
+    <reference type="epic-spec">
+      <path>docs/tech-spec-epic-13.md</path>
+      <section>Workflows-and-Sequencing</section>
+      <description>Transaction handling and seeding order</description>
+    </reference>
+
+    <reference type="story">
+      <path>docs/stories/13-4-package-json-scripts-prisma-integration.md</path>
+      <section>Learnings from Previous Story</section>
+      <description>NPM scripts and Prisma integration foundation</description>
+    </reference>
+
+    <reference type="architecture">
+      <path>docs/architecture/testing-strategy.md</path>
+      <section>Test-Framework</section>
+      <description>Jest testing patterns for seeders</description>
+    </reference>
+  </documentation-references>
+
+  <file-changes>
+    <file category="new">
+      <path>prisma/config/environment.config.ts</path>
+      <description>Environment configuration with data volume definitions</description>
+      <size-estimate>~1KB</size-estimate>
+    </file>
+
+    <file category="modified">
+      <path>prisma/seed.ts</path>
+      <description>Enhanced main() with environment detection and error handling</description>
+      <size-estimate>~2KB (+0.5KB from current)</size-estimate>
+    </file>
+
+    <file category="modified">
+      <path>prisma/seeders/role.seeder.ts</path>
+      <description>Update to read from environment config</description>
+      <size-estimate>~0.2KB change</size-estimate>
+    </file>
+
+    <file category="modified">
+      <path>prisma/seeders/permission.seeder.ts</path>
+      <description>Update to read from environment config</description>
+      <size-estimate>~0.2KB change</size-estimate>
+    </file>
+
+    <file category="modified">
+      <path>prisma/seeders/user.seeder.ts</path>
+      <description>Update to read from environment config</description>
+      <size-estimate>~0.2KB change</size-estimate>
+    </file>
+
+    <file category="modified">
+      <path>prisma/seeders/file.seeder.ts</path>
+      <description>Update to read from environment config</description>
+      <size-estimate>~0.2KB change</size-estimate>
+    </file>
+
+    <file category="modified">
+      <path>prisma/seeders/sms.seeder.ts</path>
+      <description>Update to read from environment config</description>
+      <size-estimate>~0.2KB change</size-estimate>
+    </file>
+  </file-changes>
+
+  <validation-checklist>
+    <check-item>
+      <description>Environment config file created with correct volumes</description>
+      <verification>Check prisma/config/environment.config.ts exists and has development/test/staging volumes</verification>
+    </check-item>
+
+    <check-item>
+      <description>All seeders read from environment config</description>
+      <verification>Verify import and usage of ENVIRONMENT_CONFIG in all 5 seeder files</verification>
+    </check-item>
+
+    <check-item>
+      <description>Transaction wrapper in seed.ts has error handling</description>
+      <verification>Check seed.ts main() function has try-catch around $transaction</verification>
+    </check-item>
+
+    <check-item>
+      <description>Test environment completes in < 3 seconds</description>
+      <verification>Run `NODE_ENV=test npm run seed` and measure time</verification>
+    </check-item>
+
+    <check-item>
+      <description>Environment detection works correctly</description>
+      <verification>Test with NODE_ENV=test, NODE_ENV=development, and unset NODE_ENV</verification>
+    </check-item>
+
+    <check-item>
+      <description>Foreign key constraints satisfied</description>
+      <verification>Query database to verify all users have roles, all files have users, etc.</verification>
+    </check-item>
+
+    <check-item>
+      <description>Rollback on failure works</description>
+      <verification>Simulate seeder failure and verify no partial data in database</verification>
+    </check-item>
+
+    <check-item>
+      <description>Idempotent operations verified</description>
+      <verification>Run seeding twice and verify no duplicate data</verification>
+    </check-item>
+
+    <check-item>
+      <description>TypeScript strict mode compliance</description>
+      <verification>Run `tsc --noEmit` and verify no errors</verification>
+    </check-item>
+
+    <check-item>
+      <description>All acceptance criteria met</description>
+      <verification>Verify AC1-AC7 are all implemented and tested</verification>
+    </check-item>
+  </validation-checklist>
+
+  <open-questions>
+    <question>
+      <text>Should production environment seed any data?</text>
+      <context>Currently planned as 0 users, 0 files, 0 SMS</context>
+      <decision-needed>Confirm production seeding should be disabled</decision-needed>
+    </question>
+
+    <question>
+      <text>Should seed isolation use domain-based multi-tenancy?</text>
+      <context>Current pattern uses single domain, but architecture supports multi-tenancy</context>
+      <decision-needed>Decide if domain isolation is needed for environment separation</decision-needed>
+    </question>
+
+    <question>
+      <text>Should we add performance monitoring/alerting for seeding?</text>
+      <context>Test environment performance is critical for CI/CD</context>
+      <decision-needed>Determine if seeding performance should be monitored beyond basic timing</decision-needed>
+    </question>
+  </open-questions>
+
+  <story-completion-criteria>
+    <criterion>All 7 acceptance criteria implemented and tested</criterion>
+    <criterion>All 7 tasks with 28 subtasks completed</criterion>
+    <criterion>Environment config created and used by all seeders</criterion>
+    <criterion>Transaction wrapper with error handling in seed.ts</criterion>
+    <criterion>Test environment performance < 3 seconds verified</criterion>
+    <criterion>Rollback capability tested and documented</criterion>
+    <criterion>Data integrity validated across all environments</criterion>
+    <criterion>TypeScript strict mode compliance verified</criterion>
+    <criterion>Code quality standards (Epic 12) met</criterion>
+    <criterion>Story ready for Senior Developer Review</criterion>
+  </story-completion-criteria>
+</story-context>

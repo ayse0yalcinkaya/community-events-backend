@@ -1,0 +1,402 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>1</storyId>
+    <title>Jest Configuration & Test Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-1-jest-configuration-test-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Jest configuration ve test setup tamamlanmış olsun</iWant>
+    <soThat>unit, integration ve E2E testler yazabileyim ve test-driven development (TDD) yapabileyim</soThat>
+    <tasks>
+      <task id="1" ac="9.1.1">
+        <title>Jest Configuration Setup</title>
+        <subtasks>
+          <subtask id="1.1">Read existing package.json jest config (Epic 8.5-4'ten devralındı)</subtask>
+          <subtask id="1.2">Create jest.config.js at project root</subtask>
+          <subtask id="1.3">Configure moduleFileExtensions, rootDir, testRegex</subtask>
+          <subtask id="1.4">Configure transform (ts-jest), testEnvironment (node)</subtask>
+          <subtask id="1.5">Configure collectCoverageFrom, coverageDirectory</subtask>
+          <subtask id="1.6">Configure testPathIgnorePatterns</subtask>
+          <subtask id="1.7">Configure moduleNameMapper for path aliases (@/)</subtask>
+          <subtask id="1.8">Configure coverageThresholds (global 70%, common 100%, services 80%)</subtask>
+          <subtask id="1.9">Configure coverage reporters (text, html, lcov)</subtask>
+          <subtask id="1.10">Remove jest config from package.json (move to jest.config.js)</subtask>
+          <subtask id="1.11">Test configuration: npm test should discover and run tests</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="9.1.2">
+        <title>E2E Test Configuration</title>
+        <subtasks>
+          <subtask id="2.1">Create test/ directory if not exists</subtask>
+          <subtask id="2.2">Read existing test/jest-e2e.json config (Epic 8.5-4'ten devralındı)</subtask>
+          <subtask id="2.3">Verify jest-e2e.json has correct configuration</subtask>
+          <subtask id="2.4">Ensure moduleNameMapper for path aliases exists</subtask>
+          <subtask id="2.5">Ensure testRegex matches .e2e-spec.ts files</subtask>
+          <subtask id="2.6">Test configuration: npm run test:e2e should work (even if no e2e tests yet)</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="9.1.3">
+        <title>Package.json Test Scripts</title>
+        <subtasks>
+          <subtask id="3.1">Verify package.json test scripts (already exist from package.json)</subtask>
+          <subtask id="3.2">Ensure "test": "jest" script exists</subtask>
+          <subtask id="3.3">Ensure "test:watch": "jest --watch" script exists</subtask>
+          <subtask id="3.4">Ensure "test:cov": "jest --coverage" script exists</subtask>
+          <subtask id="3.5">Ensure "test:e2e": "jest --config ./test/jest-e2e.json" script exists</subtask>
+          <subtask id="3.6">Test all scripts: run each script and verify no syntax errors</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="9.1.4">
+        <title>Coverage Reporting Configuration</title>
+        <subtasks>
+          <subtask id="4.1">Verify coverageReporters in jest.config.js: ['text', 'html', 'lcov']</subtask>
+          <subtask id="4.2">Run npm run test:cov to generate coverage reports</subtask>
+          <subtask id="4.3">Verify coverage/ folder is created</subtask>
+          <subtask id="4.4">Verify coverage/index.html exists (HTML report)</subtask>
+          <subtask id="4.5">Verify coverage/lcov.info exists (LCOV report)</subtask>
+          <subtask id="4.6">Verify console shows coverage summary (text reporter)</subtask>
+          <subtask id="4.7">Test coverage threshold enforcement (intentionally lower coverage → should fail)</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="9.1.5">
+        <title>Gitignore Coverage Folder</title>
+        <subtasks>
+          <subtask id="5.1">Read .gitignore file</subtask>
+          <subtask id="5.2">Check if coverage/ entry exists</subtask>
+          <subtask id="5.3">Add coverage/ to .gitignore if not exists</subtask>
+          <subtask id="5.4">Verify git status doesn't show coverage/ folder</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="9.1.6">
+        <title>Verify Sample Tests Working</title>
+        <subtasks>
+          <subtask id="6.1">Run npm test and verify execution completes</subtask>
+          <subtask id="6.2">Check test discovery (*.spec.ts files found)</subtask>
+          <subtask id="6.3">Check TypeScript compilation (ts-jest working)</subtask>
+          <subtask id="6.4">Review test output for any configuration warnings</subtask>
+          <subtask id="6.5">Document any failing tests (expected if no tests written yet)</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="9.1.7">
+        <title>Verify Module Path Aliases</title>
+        <subtasks>
+          <subtask id="7.1">Check tsconfig.json paths configuration</subtask>
+          <subtask id="7.2">Verify moduleNameMapper in jest.config.js matches tsconfig paths</subtask>
+          <subtask id="7.3">Verify moduleNameMapper in test/jest-e2e.json matches tsconfig paths</subtask>
+          <subtask id="7.4">Create sample test using @/ import to verify resolution</subtask>
+          <subtask id="7.5">Run test and verify no module resolution errors</subtask>
+        </subtasks>
+      </task>
+      <task id="8" ac="all">
+        <title>Documentation and Validation</title>
+        <subtasks>
+          <subtask id="8.1">Document test scripts usage in README (optional)</subtask>
+          <subtask id="8.2">Document coverage thresholds and rationale</subtask>
+          <subtask id="8.3">Create story completion notes</subtask>
+          <subtask id="8.4">Run full test suite: npm test &amp;&amp; npm run test:e2e &amp;&amp; npm run test:cov</subtask>
+          <subtask id="8.5">Verify all acceptance criteria met</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="9.1.1">
+      <title>Jest Configuration File Oluştur (jest.config.js)</title>
+      <given>proje root'unda jest.config.js yokken</given>
+      <when>jest.config.js dosyası oluşturulduğunda</when>
+      <then>
+        - moduleFileExtensions: ['js', 'json', 'ts']
+        - rootDir: '.'
+        - testRegex: .*\\.(spec|integration-spec)\\.ts$
+        - testPathIgnorePatterns: ['/node_modules/', '/dist/']
+        - transform: ts-jest for TypeScript
+        - collectCoverageFrom: ['src/**/*.(t|j)s']
+        - coverageDirectory: 'coverage'
+        - testEnvironment: 'node'
+        - moduleNameMapper: '^@/(.*)$': '&lt;rootDir&gt;/src/$1' (path alias support)
+        - coverageThresholds:
+          * global: { branches: 70, functions: 70, lines: 70, statements: 70 }
+          * './src/common/**/*.ts': { branches: 100, functions: 100, lines: 100, statements: 100 }
+          * './src/**/services/**/*.ts': { branches: 80, functions: 80, lines: 80, statements: 80 }
+      </then>
+    </criterion>
+    <criterion id="9.1.2">
+      <title>E2E Test Configuration Oluştur (test/jest-e2e.json)</title>
+      <given>test/ directory'si yokken</given>
+      <when>test/jest-e2e.json dosyası oluşturulduğunda</when>
+      <then>
+        - moduleFileExtensions: ['js', 'json', 'ts']
+        - rootDir: '.'
+        - testRegex: '.e2e-spec.ts$'
+        - transform: ts-jest for TypeScript
+        - testEnvironment: 'node'
+        - moduleNameMapper: path aliases (same as unit test config)
+      </then>
+    </criterion>
+    <criterion id="9.1.3">
+      <title>Package.json Test Scripts Ekle</title>
+      <given>package.json'da test scripts yokken</given>
+      <when>test scripts eklendiğinde</when>
+      <then>
+        - npm test: Tüm unit testleri çalıştır
+        - npm run test:watch: Watch mode'da test çalıştır (TDD için)
+        - npm run test:cov: Coverage report ile test çalıştır
+        - npm run test:e2e: E2E testleri çalıştır
+      </then>
+    </criterion>
+    <criterion id="9.1.4">
+      <title>Coverage Reports Konfigürasyonu</title>
+      <given>coverage reporting konfigüre edilmişken</given>
+      <when>npm run test:cov çalıştırıldığında</when>
+      <then>
+        - coverage/ klasörü oluşturulmalı
+        - Console'a coverage summary yazdırılmalı (text reporter)
+        - HTML report oluşturulmalı (coverage/index.html)
+        - LCOV format report oluşturulmalı (coverage/lcov.info) - CI/CD için
+        - Coverage thresholds enforce edilmeli (&lt; 70% global → fail)
+      </then>
+    </criterion>
+    <criterion id="9.1.5">
+      <title>Gitignore Coverage Folder</title>
+      <given>.gitignore dosyası mevcutken</given>
+      <when>coverage/ klasörü .gitignore'a eklendiğinde</when>
+      <then>
+        - coverage/ satırı .gitignore'da bulunmalı
+        - Git status'ta coverage/ klasörü görünmemeli
+        - Coverage reports commit edilmemeli
+      </then>
+    </criterion>
+    <criterion id="9.1.6">
+      <title>Sample Test Çalışıyor</title>
+      <given>jest konfigürasyonu tamamlanmışken</given>
+      <when>npm test komutu çalıştırıldığında</when>
+      <then>
+        - Mevcut test dosyaları (src/app.controller.spec.ts) bulunmalı ve çalışmalı
+        - Test execution başarılı olmalı (pass veya fail, syntax error yok)
+        - Test discovery çalışmalı (*.spec.ts dosyaları bulunmalı)
+        - TypeScript compilation çalışmalı (ts-jest)
+      </then>
+    </criterion>
+    <criterion id="9.1.7">
+      <title>Module Path Aliases Çalışıyor</title>
+      <given>tsconfig.json'da path aliases tanımlıyken</given>
+      <when>testlerde @/ ile import yapıldığında</when>
+      <then>
+        - Jest path aliases'ı resolve etmeli
+        - Import errors olmamalı
+        - Test dosyaları "import { X } from '@/common/...'" syntax'ı kullanabilmeli
+      </then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Overview &amp; Objectives</section>
+        <snippet>Epic 9 provides comprehensive test infrastructure setup using Jest v30.x and @nestjs/testing. Coverage thresholds: Global 70%, Utilities 100%, Services 80%. Test pyramid: Unit → Integration → E2E. Based on hrsync-backend proven patterns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Test pyramid implementation with folder structure: test/ for E2E configs and factories, src/modules/[module]/__test__/ for unit and integration tests. Coverage reports in coverage/ directory.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Detailed Design - Test Infrastructure Dependencies</section>
+        <snippet>jest.config.js → ts-jest (TypeScript compilation) → Test Files (*.spec.ts, *.integration-spec.ts). Test execution flow: Jest loads config, ts-jest compiles TypeScript, tests execute with TestingModule for unit tests or real DB for integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD-NFR-CodingStandards.md</path>
+        <title>PRD - Non-Functional Requirements: Coding Standards</title>
+        <section>NFR-4.1: File &amp; Folder Naming</section>
+        <snippet>Test folder naming: __test__ or __tests__. Test file naming: [module-name].service.spec.ts, [module-name].integration-spec.ts, [name].e2e-spec.ts. All files use kebab-case.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-9-testing-infrastructure.md</path>
+        <title>Epic 9: Testing Infrastructure</title>
+        <section>Story 9.1: Jest Configuration &amp; Test Setup</section>
+        <snippet>Story 9.1 configures Jest with jest.config.js including moduleFileExtensions, testRegex for spec and integration-spec files, coverage thresholds, and path aliases. Package.json test scripts: test, test:watch, test:cov, test:e2e.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/8.5-4-test-fixes.md</path>
+        <title>Story 8.5-4: Test Fixes</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Epic 8.5-4 created test utilities in test/utils/: mockI18nService.ts, mockLogger.ts, mockPrismaService.ts, responseHelpers.ts. Added moduleNameMapper to both package.json jest config and test/jest-e2e.json. 513 tests passing.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>jest configuration block</symbol>
+        <lines>103-126</lines>
+        <reason>Current Jest config in package.json to be migrated to jest.config.js. Already has moduleFileExtensions, rootDir, testRegex, transform (ts-jest), collectCoverageFrom, coverageDirectory, testEnvironment, moduleNameMapper for path aliases.</reason>
+      </artifact>
+      <artifact>
+        <path>test/jest-e2e.json</path>
+        <kind>config</kind>
+        <symbol>E2E test configuration</symbol>
+        <lines>1-20</lines>
+        <reason>Existing E2E config with moduleNameMapper, setupFiles, globalSetup/Teardown. Has testRegex for .e2e-spec.ts files. Needs verification for completeness.</reason>
+      </artifact>
+      <artifact>
+        <path>tsconfig.json</path>
+        <kind>config</kind>
+        <symbol>paths configuration</symbol>
+        <lines>22-24</lines>
+        <reason>TypeScript path aliases definition: "@/*": ["src/*"]. Jest moduleNameMapper must match this configuration.</reason>
+      </artifact>
+      <artifact>
+        <path>test/utils/mockI18nService.ts</path>
+        <kind>test-utility</kind>
+        <symbol>createMockI18nService</symbol>
+        <lines>16-20</lines>
+        <reason>Example of test utility pattern created in Epic 8.5-4. Factory function pattern for creating mocks. Use as reference for understanding existing test infrastructure.</reason>
+      </artifact>
+      <artifact>
+        <path>test/utils/mockPrismaService.ts</path>
+        <kind>test-utility</kind>
+        <symbol>createMockPrismaService</symbol>
+        <lines>25-88</lines>
+        <reason>Comprehensive Prisma mock with all models. Example of mock factory pattern. Shows how existing test utilities are structured.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app.controller.spec.ts</path>
+        <kind>test</kind>
+        <symbol>AppController test suite</symbol>
+        <lines>1-35</lines>
+        <reason>Example unit test using @nestjs/testing TestingModule pattern. Shows Arrange-Act-Assert pattern, mock injection, and beforeEach setup. Should work after Jest config migration.</reason>
+      </artifact>
+      <artifact>
+        <path>test/jest-e2e-setup.ts</path>
+        <kind>test-utility</kind>
+        <symbol>E2E setup file</symbol>
+        <lines>all</lines>
+        <reason>E2E test setup file referenced in jest-e2e.json setupFiles. Part of existing test infrastructure.</reason>
+      </artifact>
+      <artifact>
+        <path>test/jest-global-setup.ts</path>
+        <kind>test-utility</kind>
+        <symbol>Global setup</symbol>
+        <lines>all</lines>
+        <reason>Global setup for E2E tests, runs once before all tests.</reason>
+      </artifact>
+      <artifact>
+        <path>test/jest-global-teardown.ts</path>
+        <kind>test-utility</kind>
+        <symbol>Global teardown</symbol>
+        <lines>all</lines>
+        <reason>Global teardown for E2E tests, runs once after all tests.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <framework>NestJS</framework>
+        <packages>
+          <package name="jest" version="^30.0.0">Test framework and runner</package>
+          <package name="ts-jest" version="^29.2.5">TypeScript preprocessor for Jest</package>
+          <package name="@nestjs/testing" version="^11.0.1">NestJS testing utilities (TestingModule)</package>
+          <package name="@types/jest" version="^30.0.0">TypeScript definitions for Jest</package>
+          <package name="supertest" version="^7.0.0">HTTP assertion library for E2E tests</package>
+          <package name="@types/supertest" version="^6.0.2">TypeScript definitions for supertest</package>
+        </packages>
+        <scripts>
+          <script name="test">jest</script>
+          <script name="test:watch">jest --watch</script>
+          <script name="test:cov">jest --coverage</script>
+          <script name="test:e2e">jest --config ./test/jest-e2e.json</script>
+        </scripts>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <title>Jest Config Extraction from package.json</title>
+      <description>Current Jest config is in package.json lines 103-126. Must extract to jest.config.js while preserving all settings. After migration, remove jest block from package.json.</description>
+    </constraint>
+    <constraint>
+      <title>Coverage Thresholds Must Be Enforced</title>
+      <description>Coverage thresholds defined in Tech Spec: Global 70%, Common utilities 100%, Services 80%. Thresholds must fail build if not met. Use coverageThreshold config.</description>
+    </constraint>
+    <constraint>
+      <title>Path Aliases Must Match tsconfig.json</title>
+      <description>moduleNameMapper in jest.config.js and test/jest-e2e.json must match tsconfig.json paths: "@/*": "src/*". Currently package.json has correct mapping.</description>
+    </constraint>
+    <constraint>
+      <title>Test File Naming Conventions (NFR-4.1)</title>
+      <description>Unit tests: *.spec.ts, Integration tests: *.integration-spec.ts, E2E tests: *.e2e-spec.ts. testRegex must match these patterns.</description>
+    </constraint>
+    <constraint>
+      <title>Test Environment Must Be Node</title>
+      <description>Backend API tests require testEnvironment: 'node'. No jsdom or browser environment.</description>
+    </constraint>
+    <constraint>
+      <title>Coverage Reporters: text, html, lcov</title>
+      <description>Must generate three report formats: text (console output), html (coverage/index.html), lcov (coverage/lcov.info for CI/CD).</description>
+    </constraint>
+    <constraint>
+      <title>Preserve Existing Test Infrastructure</title>
+      <description>Do not modify test/utils/* files created in Epic 8.5-4. Preserve jest-e2e.json setupFiles, globalSetup, globalTeardown references.</description>
+    </constraint>
+    <constraint>
+      <title>Coverage Folder Must Be Gitignored</title>
+      <description>coverage/ directory must be added to .gitignore to prevent committing test coverage reports.</description>
+    </constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>jest.config.js exports</name>
+      <kind>Jest Configuration Object</kind>
+      <signature>module.exports = { moduleFileExtensions, rootDir, testRegex, transform, collectCoverageFrom, coverageDirectory, testEnvironment, moduleNameMapper, coverageThreshold, coverageReporters, testPathIgnorePatterns }</signature>
+      <path>jest.config.js (to be created)</path>
+    </interface>
+    <interface>
+      <name>Package.json test scripts</name>
+      <kind>NPM Scripts</kind>
+      <signature>"test": "jest", "test:watch": "jest --watch", "test:cov": "jest --coverage", "test:e2e": "jest --config ./test/jest-e2e.json"</signature>
+      <path>package.json:scripts</path>
+    </interface>
+    <interface>
+      <name>Coverage Threshold Configuration</name>
+      <kind>Jest Config Object</kind>
+      <signature>coverageThreshold: { global: { branches: 70, functions: 70, lines: 70, statements: 70 }, './src/common/**/*.ts': { branches: 100, functions: 100, lines: 100, statements: 100 }, './src/**/services/**/*.ts': { branches: 80, functions: 80, lines: 80, statements: 80 } }</signature>
+      <path>jest.config.js</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Jest v30.x with ts-jest v29.2.5 for TypeScript compilation. Unit tests use @nestjs/testing TestingModule for dependency injection. Test pattern: Arrange-Act-Assert (AAA). Mock utilities in test/utils/: createMockI18nService(), createMockPrismaService(), createMockLogger(). Coverage thresholds: Global 70%, Common 100%, Services 80%. Coverage reporters: text (console), html (coverage/index.html), lcov (coverage/lcov.info). Test environment: node (no jsdom). Path aliases via moduleNameMapper matching tsconfig.json. Test naming: *.spec.ts (unit), *.integration-spec.ts (integration), *.e2e-spec.ts (E2E).
+    </standards>
+    <locations>
+      <location>src/**/__tests__/*.spec.ts - Unit tests for modules</location>
+      <location>src/**/__test__/*.spec.ts - Alternative test folder location</location>
+      <location>src/*.spec.ts - Root level unit tests (e.g., app.controller.spec.ts)</location>
+      <location>test/*.e2e-spec.ts - E2E tests</location>
+      <location>test/*.integration-spec.ts - Integration tests</location>
+      <location>test/utils/ - Shared test utilities and mocks</location>
+      <location>coverage/ - Generated coverage reports (gitignored)</location>
+    </locations>
+    <ideas>
+      <idea ac="9.1.1">Create jest.config.js and verify jest discovers existing tests correctly</idea>
+      <idea ac="9.1.1">Test coverage threshold enforcement by temporarily modifying thresholds</idea>
+      <idea ac="9.1.2">Verify jest-e2e.json configuration with npm run test:e2e</idea>
+      <idea ac="9.1.3">Run each npm test script individually to verify functionality</idea>
+      <idea ac="9.1.4">Generate coverage reports and inspect all three formats (text, html, lcov)</idea>
+      <idea ac="9.1.5">After adding coverage/ to .gitignore, verify git status excludes it</idea>
+      <idea ac="9.1.6">Run npm test to verify sample tests execute without errors</idea>
+      <idea ac="9.1.7">Create temporary test file with @/ import to verify path alias resolution</idea>
+    </ideas>
+  </tests>
+</story-context>

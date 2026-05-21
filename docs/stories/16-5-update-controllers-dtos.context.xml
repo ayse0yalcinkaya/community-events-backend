@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>16</epicId>
+    <storyId>5</storyId>
+    <title>Update Controllers &amp; DTOs (Remove Role Field)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/16-5-update-controllers-dtos.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>controllers and DTOs updated to reflect clean design</iWant>
+    <soThat>the API is consistent with new model</soThat>
+    <tasks>
+      1. CreateUserDto: Remove @IsEnum(['admin', 'staff']) role validation
+      2. UpdateUserDto: Remove role field
+      3. UserController: Update all endpoints
+      4. Admin user management: Use UserRole for role operations
+      5. Swagger documentation updated
+      6. API responses: No role string field
+      7. Request/Response DTOs clean
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">CreateUserDto: Remove @IsEnum(['admin', 'staff']) role validation</ac>
+    <ac id="2">UpdateUserDto: Remove role field</ac>
+    <ac id="3">UserController: Update all endpoints</ac>
+    <ac id="4">Admin user management: Use UserRole for role operations</ac>
+    <ac id="5">Swagger documentation updated</ac>
+    <ac id="6">API responses: No role string field</ac>
+    <ac id="7">Request/Response DTOs clean</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-16-clean-relational-role-design.md">
+        <title>Epic 16: Clean Relational Role Design</title>
+        <section>Story 16.5: Update Controllers &amp; DTOs</section>
+        <snippet>Controllers and DTOs updated to reflect clean relational design without role string field</snippet>
+      </doc>
+      <doc path="prisma/schema/user.prisma">
+        <title>User Prisma Model</title>
+        <section>Clean Relational Design</section>
+        <snippet>User model with ONLY userRoles relation, NO role string field</snippet>
+      </doc>
+      <doc path="src/modules/auth/dto/register.dto.ts">
+        <title>RegisterDto</title>
+        <section>Updated for Story 16.4</section>
+        <snippet>Already has role field removed - used as reference</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/users/dto/create-user.dto.ts">
+        <kind>dto</kind>
+        <symbol>CreateUserDto</symbol>
+        <reason>Requires role field removal and validation update</reason>
+      </file>
+      <file path="src/modules/users/dto/update-user.dto.ts">
+        <kind>dto</kind>
+        <symbol>UpdateUserDto</symbol>
+        <reason>Requires role field removal</reason>
+      </file>
+      <file path="src/modules/users/dto/user-res.dto.ts">
+        <kind>dto</kind>
+        <symbol>UserResDto</symbol>
+        <reason>Requires role field removal from response</reason>
+      </file>
+      <file path="src/modules/users/user.controller.ts">
+        <kind>controller</kind>
+        <symbol>UserController</symbol>
+        <reason>All endpoints need updates for UserRole junction table</reason>
+      </file>
+      <file path="src/modules/users/user.service.ts">
+        <kind>service</kind>
+        <symbol>UserService</symbol>
+        <reason>Service layer for user operations with UserRole</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^10.0.0">Framework core</package>
+        <package name="@prisma/client" version="^5.0.0">Database ORM</package>
+        <package name="class-validator" version="^0.14.0">DTO validation</package>
+        <package name="class-transformer" version="^0.5.0">DTO transformation</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>No role field in any User DTOs - use UserRole junction table</constraint>
+    <constraint>All API responses must exclude role string field</constraint>
+    <constraint>Role management via separate endpoints or UserRole operations</constraint>
+    <constraint>Swagger documentation must reflect clean design</constraint>
+    <constraint>Backward compatibility: existing API consumers must be notified</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CreateUserDto">
+      <kind>TypeScript DTO</kind>
+      <signature>
+        {
+          phoneNumber: string;
+          firstName: string;
+          lastName: string;
+          email?: string;
+          // role field REMOVED
+        }
+      </signature>
+      <path>src/modules/users/dto/create-user.dto.ts</path>
+    </interface>
+    <interface name="UpdateUserDto">
+      <kind>TypeScript DTO</kind>
+      <signature>
+        {
+          firstName?: string;
+          lastName?: string;
+          email?: string;
+          isActive?: boolean;
+          // role field REMOVED
+        }
+      </signature>
+      <path>src/modules/users/dto/update-user.dto.ts</path>
+    </interface>
+    <interface name="UserResDto">
+      <kind>TypeScript DTO</kind>
+      <signature>
+        {
+          id: string;
+          phoneNumber: string;
+          firstName: string;
+          lastName: string;
+          email?: string;
+          phoneVerified: boolean;
+          isActive: boolean;
+          createdAt: Date;
+          updatedAt: Date;
+          // NO role field - roles in userRoles relation
+        }
+      </signature>
+      <path>src/modules/users/dto/user-res.dto.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Jest unit tests with @nestjs/testing, controller testing with supertest</standards>
+    <locations>
+      test/modules/users/
+      test/integration/users/
+    </locations>
+    <ideas>
+      <test idea="CreateUserDto validation excludes role field">ac:1</test>
+      <test idea="UpdateUserDto excludes role field">ac:2</test>
+      <test idea="UserController endpoints work with UserRole">ac:3</test>
+      <test idea="User response DTO has no role field">ac:6</test>
+      <test idea="Admin can manage roles via UserRole">ac:4</test>
+      <test idea="Swagger docs updated correctly">ac:5</test>
+    </ideas>
+  </tests>
+</story-context>

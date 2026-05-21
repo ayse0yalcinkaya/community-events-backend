@@ -1,0 +1,293 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>7.3</storyId>
+    <title>Structured Logging (Winston)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-3-structured-logging-winston.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>structured logging</iWant>
+    <soThat>logs are easily searchable and parseable for debugging and monitoring</soThat>
+    <tasks>
+      - Task 1: Install Winston dependencies (winston, winston-daily-rotate-file)
+      - Task 2: Create Winston logger configuration (winston.config.ts with JSON format, log levels)
+      - Task 3: Implement console transport for development (colorized, pretty-print, NODE_ENV-based)
+      - Task 4: Implement file transport with rotation (daily rotation, logs/ directory, app-%DATE%.log pattern)
+      - Task 5: Implement environment-based configuration (LOG_LEVEL env variable, defaults based on NODE_ENV)
+      - Task 6: Implement sensitive data scrubbing (password, token, secret, apiKey, creditCard, authorization)
+      - Task 7: Create WinstonLogger service (logger.service.ts, implements NestLoggerService)
+      - Task 8: Integrate logger in main.ts (app.useLogger(), log startup)
+      - Task 9: Write comprehensive tests (unit tests for config, service, scrubbing; integration tests for transports)
+      - Task 10: Documentation and verification (README updates, verify log output in dev/prod modes)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-7.3.1: Winston configured and usable globally via dependency injection
+    - WinstonModule created in src/common/logger/
+    - Logger service injectable in all modules
+    - Configured in main.ts with app.useLogger()
+
+    AC-7.3.2: Log format is JSON structured with fields: timestamp, level, message, context
+    - Consistent schema across all log entries
+    - Timestamp in ISO 8601 format (UTC)
+    - Context object includes: module, method, requestId, userId, domainId
+
+    AC-7.3.3: Log levels implemented: debug, info, warn, error
+    - Logger methods: logger.debug(), logger.info(), logger.warn(), logger.error()
+    - Log level filtering based on configuration
+
+    AC-7.3.4: Console transport configured for development environment
+    - Colorized output for better readability
+    - Pretty-printed format for development
+    - Only active when NODE_ENV=development
+
+    AC-7.3.5: File transport configured for production with daily rotation
+    - winston-daily-rotate-file package used
+    - Log files written to logs/ directory
+    - File naming: app-YYYY-MM-DD.log
+    - Automatic rotation at midnight
+    - Retention: 14 days (configurable via LOG_MAX_FILES)
+    - Max file size: 20MB (configurable via LOG_MAX_SIZE)
+
+    AC-7.3.6: Log level is environment-based (dev: debug, prod: info)
+    - LOG_LEVEL environment variable respected
+    - Default: 'debug' in development, 'info' in production
+    - Configurable without code changes
+
+    AC-7.3.7: Sensitive data (passwords, tokens) excluded from logs
+    - Automatic scrubbing of sensitive fields
+    - Fields to exclude: password, token, secret, apiKey, creditCard, authorization
+    - Sanitization applied before logging
+
+    AC-7.3.8: Log files written to logs/ directory with rotation (app-YYYY-MM-DD.log)
+    - Directory created automatically if doesn't exist
+    - File transport writes asynchronously (non-blocking)
+    - Graceful handling of file write errors
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification - Developer Infrastructure</title>
+        <section>Story 7.3: Structured Logging (Winston)</section>
+        <snippet>Winston configured for structured JSON logging with console (dev) and file (prod) transports. Log format includes timestamp, level, message, context. Sensitive data scrubbing required. Performance target: &lt;5ms overhead per request.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification - Developer Infrastructure</title>
+        <section>Data Models and Contracts - Winston Log Entry Interface</section>
+        <snippet>LogEntry interface: timestamp (ISO 8601), level (debug|info|warn|error), message (string), context (module, method, requestId, userId, domainId), stack (error traces). JSON structured for machine parsing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification - Developer Infrastructure</title>
+        <section>Services and Modules - WinstonLogger</section>
+        <snippet>WinstonLogger service provides structured logging (JSON format). Inputs: log level, message, context. Outputs: log entry to console/file. Owner: Story 7.3. Global logger set via app.useLogger() in main.ts.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification - Developer Infrastructure</title>
+        <section>Dependencies and Integrations</section>
+        <snippet>winston v3.11.0 (structured logging), winston-daily-rotate-file v4.7.1 (log rotation). Compatible with NestJS v11.x, Node.js >=18.x, TypeScript >=5.0.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification - Developer Infrastructure</title>
+        <section>Security - Sensitive Data Protection</section>
+        <snippet>Passwords, tokens, credit cards MUST be excluded from logs. Implement sensitive field detection (password, token, secret, apiKey, creditCard). Automatic scrubbing in LoggingInterceptor. Request body sanitization before logging.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification - Developer Infrastructure</title>
+        <section>Performance</section>
+        <snippet>Log entry creation: &lt;1ms overhead per request. File writes: Asynchronous (non-blocking). Winston file transport: Async writes, buffer flushing every 1 second. Target: Logging adds &lt;5ms to total request duration (p95).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification - Developer Infrastructure</title>
+        <section>Test Strategy Summary - Story 7.3 Unit Tests</section>
+        <snippet>Logger Configuration: Winston logger initializes with correct transports, console (dev), file (prod), log levels respect LOG_LEVEL env. Log Format: JSON structure, timestamp/level/message/context fields, sensitive fields excluded. Coverage target: 85%+.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 7: Developer Infrastructure</title>
+        <section>Story 7.3: Structured Logging (Winston)</section>
+        <snippet>Winston configured globally. Log format: JSON structured with timestamp, level, message, context (module, method, domainID, userID). Log levels: debug, info, warn, error. Console transport (development), File transport (production) with daily rotation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/7-2-common-utilities-decorators.md</path>
+        <title>Story 7.2: Common Utilities & Decorators</title>
+        <section>Learnings - Utility Functions Pattern</section>
+        <snippet>Pure functions established in src/common/utils/. date.util functions available for timestamp formatting. string.util functions for sanitization patterns. Testing: 100% coverage standard for utilities.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/main.ts</path>
+        <kind>application-bootstrap</kind>
+        <symbol>bootstrap</symbol>
+        <lines>6-25</lines>
+        <reason>Main application entry point. Need to add logger initialization with app.useLogger() after creating NestJS app (line 7). Also replace console.log (line 23) with logger.log().</reason>
+      </artifact>
+      <artifact>
+        <path>src/app.module.ts</path>
+        <kind>module</kind>
+        <symbol>AppModule</symbol>
+        <lines>22-59</lines>
+        <reason>Root module. Need to import LoggerModule in imports array (line 23-54) to make logger globally available across all modules.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/utils/date.util.ts</path>
+        <kind>utility</kind>
+        <symbol>formatDate, toUTC</symbol>
+        <lines>all</lines>
+        <reason>Date utility functions from Story 7.2. Can be used for timestamp formatting in logs if needed (already has formatDate function).</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/utils/string.util.ts</path>
+        <kind>utility</kind>
+        <symbol>sanitizeInput</symbol>
+        <lines>all</lines>
+        <reason>String utility with sanitizeInput() function from Story 7.2. Reference pattern for implementing sensitive data scrubbing in logger.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/utils/__tests__/hash.util.spec.ts</path>
+        <kind>test</kind>
+        <symbol>test patterns</symbol>
+        <lines>all</lines>
+        <reason>Example of unit test structure from Story 7.2. Follow same Jest patterns (describe, it, expect) for logger tests with 100% coverage target.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package>winston</package>
+        <version>^3.11.0</version>
+        <reason>Core logging library for structured logging. Provides logger instance, transports, formats.</reason>
+      </npm>
+      <package>winston-daily-rotate-file</package>
+        <version>^4.7.1</version>
+        <reason>Winston transport for daily log file rotation. Required for AC-7.3.5 (file transport with rotation).</reason>
+      </npm>
+      <package>@nestjs/common</package>
+        <version>^11.0.1</version>
+        <status>installed</status>
+        <reason>Already installed. Provides LoggerService interface that logger.service.ts must implement.</reason>
+      </npm>
+      <package>@types/node</package>
+        <version>^22.10.7</version>
+        <status>installed</status>
+        <reason>Already installed. TypeScript types for Node.js (process.env).</reason>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Winston logger MUST be configured as NestJS LoggerService implementation</constraint>
+    <constraint>Use app.useLogger() in main.ts to set Winston as global logger (all NestJS internal logs use Winston)</constraint>
+    <constraint>Log format MUST be JSON structured in production for machine parsing (ELK, CloudWatch)</constraint>
+    <constraint>Console transport MUST be colorized and pretty-printed in development (NODE_ENV !== 'production')</constraint>
+    <constraint>File transport MUST use winston-daily-rotate-file with pattern app-%DATE%.log in logs/ directory</constraint>
+    <constraint>Log level MUST be environment-based: LOG_LEVEL env var, default 'debug' (dev) or 'info' (prod)</constraint>
+    <constraint>Sensitive fields MUST be scrubbed: password, token, secret, apiKey, creditCard, authorization → '[REDACTED]'</constraint>
+    <constraint>File writes MUST be asynchronous (non-blocking) to avoid request processing delays</constraint>
+    <constraint>Performance target: Log entry creation &lt;1ms, total overhead &lt;5ms per request (p95)</constraint>
+    <constraint>Logger service MUST be @Global() and injectable in all modules without explicit import</constraint>
+    <constraint>Follow existing patterns: src/common/ for shared infrastructure, __tests__/ subdirs for test files</constraint>
+    <constraint>Test coverage MUST be 90%+ for logger configuration, 95%+ for logger service</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>LoggerService</name>
+      <kind>NestJS interface implementation</kind>
+      <signature>
+interface LoggerService {
+  log(message: string, context?: any): void;
+  error(message: string, trace?: string, context?: any): void;
+  warn(message: string, context?: any): void;
+  debug(message: string, context?: any): void;
+  verbose(message: string, context?: any): void;
+}
+      </signature>
+      <path>@nestjs/common</path>
+    </interface>
+    <interface>
+      <name>LogEntry</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface LogEntry {
+  timestamp: string;          // ISO 8601 format
+  level: 'debug' | 'info' | 'warn' | 'error';
+  message: string;
+  context?: {
+    module?: string;          // Service/Controller name
+    method?: string;          // Method name
+    requestId?: string;       // UUID
+    userId?: string;          // Authenticated user ID
+    domainId?: string;        // Multi-tenant domain ID
+    [key: string]: any;       // Additional context
+  };
+  stack?: string;             // Error stack trace (only for errors)
+}
+      </signature>
+      <path>src/common/logger/winston.config.ts</path>
+    </interface>
+    <interface>
+      <name>winston.createLogger</name>
+      <kind>Function signature</kind>
+      <signature>
+winston.createLogger({
+  level: string,                    // Log level: 'debug' | 'info' | 'warn' | 'error'
+  format: winston.Logform.Format,   // Log format (JSON, printf, etc.)
+  transports: winston.transport[]   // Array of transports (Console, File, etc.)
+}): winston.Logger
+      </signature>
+      <path>winston package</path>
+    </interface>
+    <interface>
+      <name>DailyRotateFile</name>
+      <kind>Winston transport</kind>
+      <signature>
+new DailyRotateFile({
+  dirname: string,        // Log directory path
+  filename: string,       // Filename pattern with %DATE% placeholder
+  datePattern: string,    // Date pattern for rotation (YYYY-MM-DD)
+  maxSize: string,        // Max file size before rotation (e.g., '20m')
+  maxFiles: string,       // Retention period (e.g., '14d')
+  format: winston.Logform.Format
+})
+      </signature>
+      <path>winston-daily-rotate-file package</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest unit testing framework (already configured). Test files in __tests__/ subdirectories. Unit tests follow Arrange-Act-Assert pattern. Mock external dependencies (file system, winston transports). Coverage targets: 90%+ (config), 95%+ (service). Integration tests verify actual file creation and rotation. Test data: sample log entries with various contexts, sensitive data for scrubbing tests.
+    </standards>
+    <locations>
+      src/common/logger/__tests__/winston.config.spec.ts
+      src/common/logger/__tests__/logger.service.spec.ts
+    </locations>
+    <ideas>
+      AC-7.3.1: Test logger initializes with correct transports based on NODE_ENV
+      AC-7.3.2: Test JSON log format includes all required fields (timestamp, level, message, context)
+      AC-7.3.3: Test all log level methods (debug, info, warn, error) call correct winston methods
+      AC-7.3.4: Test console transport only active in development (NODE_ENV check)
+      AC-7.3.5: Test file transport configuration (dirname, filename pattern, maxSize, maxFiles)
+      AC-7.3.6: Test LOG_LEVEL env variable overrides default log level
+      AC-7.3.7: Test sensitive fields (password, token, secret) are replaced with '[REDACTED]'
+      AC-7.3.8: Integration test: Verify log files created in logs/ directory with correct filename pattern
+      Performance test: Log entry creation &lt;1ms, 1000 entries &lt;1 second
+      Edge case: Test circular reference in context object logged as [Circular]
+      Edge case: Test log directory not writable → graceful fallback to console only
+    </ideas>
+  </tests>
+</story-context>

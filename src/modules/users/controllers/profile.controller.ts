@@ -1,0 +1,151 @@
+// Libraries
+import { Body, Controller, Get, Logger, Patch, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiConsumes, ApiBody, ApiExtraModels } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
+
+// DTOs
+import { UpdateProfileDto } from '../dto/request/update-profile.dto';
+import { UserResDto } from '../dto/response/user-res.dto';
+import { UserRolePermissionsResDto } from '../dto/response/user-role-permissions.res.dto';
+
+// Services
+import { UsersService } from '../services/users.service';
+import { FilesService } from '../../files/services/files.service';
+import { PermissionsService } from '../../permissions/services/permissions.service';
+
+// Guards/Decorators
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ApiEndpoint, ApiGetOne, ApiUpdate } from '@/common/decorators';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+
+// Interfaces/Types
+import type { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
+
+@ApiTags('Profile')
+@ApiExtraModels(UserResDto)
+@Controller('users')
+@UseGuards(JwtAuthGuard)
+export class ProfileController {
+  private readonly logger = new Logger(ProfileController.name);
+
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly filesService: FilesService,
+    private readonly permissionsService: PermissionsService,
+  ) {}
+
+  /**
+   * GET /users/me
+   * Get current authenticated user's profile
+   * @param user Current authenticated user from JWT (inherited from class-level guard)
+   * @returns UserResDto with non-sensitive fields only
+   */
+  @ApiGetOne(UserResDto)
+  @Get('me')
+  async getProfile(@CurrentUser() user: JwtPayload): Promise<UserResDto> {
+    this.logger.log(`Getting profile for user: ${user.sub}`);
+
+    // Fetch user with soft-delete filtering
+    const userData = await this.usersService.findOne(user.sub);
+
+    // Transform to DTOs
+    const userDto = plainToInstance(UserResDto, userData, {
+      excludeExtraneousValues: true,
+    });
+
+    // If user has a profile image, generate a pre-signed download URL
+    if (userData.profileImageID) {
+      try {
+        // We can skip permission check here since it's the user's own profile image
+        // passing true for hasViewPermission
+        const downloadRes = await this.filesService.generateDownloadUrl(userData.profileImageID, user.sub, true);
+        userDto.profileImageUrl = downloadRes.downloadUrl;
+      } catch (error) {
+        this.logger.warn(`Failed to generate profile image URL for user ${user.sub}: ${error}`);
+        // Continue without profile image URL
+      }
+    }
+
+    return userDto;
+  }
+
+  /**
+   * GET /users/me/roles
+   * Get current user's role with permissions as CSV string
+   */
+  @ApiEndpoint('Kullanıcının kendi rol ve yetkilerini getir', { type: UserRolePermissionsResDto })
+  @Get('me/roles')
+  async getMyRolePermissions(@CurrentUser() user: JwtPayload): Promise<UserRolePermissionsResDto> {
+    this.logger.log(`Getting role permissions for user: ${user.sub}`);
+
+    const summary = await this.permissionsService.getUserRolePermissionsSummary(user.sub);
+    return plainToInstance(UserRolePermissionsResDto, summary);
+  }
+
+  /**
+   * PATCH /users/me
+   * Update current authenticated user's profile (including optional profile image)
+   * @param user Current authenticated user from JWT (inherited from class-level guard)
+   * @param updateProfileDto Fields to update
+   * @param file Optional profile image file
+   * @returns Updated UserResDto
+   */
+  @ApiUpdate(UserResDto)
+  @Patch('me')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          nullable: true,
+        },
+        firstName: { type: 'string', nullable: true },
+        lastName: { type: 'string', nullable: true },
+        phoneNumber: { type: 'string', nullable: true },
+      },
+    },
+  })
+  async updateProfile(
+    @CurrentUser() user: JwtPayload,
+    @Body() updateProfileDto: UpdateProfileDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<UserResDto> {
+    this.logger.log(`Updating profile for user: ${user.sub}`);
+
+    // 1. Update text fields if provided
+    let updatedUser = await this.usersService.updateProfile(user.sub, updateProfileDto);
+
+    // 2. Upload and assign profile image if provided
+    if (file) {
+      this.logger.log(`Uploading profile image for user: ${user.sub}`);
+      // Upload file
+      const uploadedFiles = await this.filesService.uploadFiles([file], user.sub);
+      const profileImage = uploadedFiles[0];
+
+      // Update user with new profile image
+      updatedUser = await this.usersService.updateProfileImage(user.sub, profileImage.id);
+    }
+
+    // Transform to DTO
+    const userDto = plainToInstance(UserResDto, updatedUser, {
+      excludeExtraneousValues: true,
+    });
+
+    // Generate URL for the returned user dto if image exists (it should now)
+    if (updatedUser.profileImageID) {
+      try {
+        const downloadRes = await this.filesService.generateDownloadUrl(updatedUser.profileImageID, user.sub, true);
+        userDto.profileImageUrl = downloadRes.downloadUrl;
+      } catch (error) {
+        this.logger.warn(`Failed to generate profile image URL for user ${user.sub}: ${error}`);
+      }
+    }
+
+    return userDto;
+  }
+}

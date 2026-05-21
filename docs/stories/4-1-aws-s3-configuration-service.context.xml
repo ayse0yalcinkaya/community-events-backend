@@ -1,0 +1,554 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>4.1</storyId>
+    <title>AWS S3 Configuration & Service</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/4-1-aws-s3-configuration-service.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>AWS S3 configuration ve wrapper service</iWant>
+    <soThat>S3 operations yapabileyim</soThat>
+    <tasks>
+- Task 1: Install AWS SDK v3 packages (AC: 4.1.1)
+  - Subtask 1.1: Install `@aws-sdk/client-s3` ^3.600.0
+  - Subtask 1.2: Install `@aws-sdk/s3-request-presigner` ^3.600.0
+  - Subtask 1.3: Install `multer` ^1.4.5-lts.1 and `@types/multer`
+  - Subtask 1.4: Verify no dependency conflicts with `npm install`
+
+- Task 2: Create AWS configuration file (AC: 4.1.2)
+  - Subtask 2.1: Create `src/config/aws.config.ts` with `registerAs('aws', ...)` pattern
+  - Subtask 2.2: Configure environment variables: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET
+  - Subtask 2.3: Add optional MinIO configuration: S3_ENDPOINT, S3_FORCE_PATH_STYLE
+  - Subtask 2.4: Register aws.config.ts in AppModule ConfigModule.forRoot()
+
+- Task 3: Add environment variable validation (AC: 4.1.3)
+  - Subtask 3.1: Update `src/config/env-validation.schema.ts`
+  - Subtask 3.2: Add Joi validation for AWS_REGION (required)
+  - Subtask 3.3: Add Joi validation for AWS_ACCESS_KEY_ID (required)
+  - Subtask 3.4: Add Joi validation for AWS_SECRET_ACCESS_KEY (required)
+  - Subtask 3.5: Add Joi validation for S3_BUCKET (required)
+  - Subtask 3.6: Add optional validation for S3_ENDPOINT and S3_FORCE_PATH_STYLE
+  - Subtask 3.7: Test application fails to start with clear error when AWS env vars missing
+
+- Task 4: Create S3Service with core methods (AC: 4.1.4)
+  - Subtask 4.1: Create `src/modules/files/` directory structure
+  - Subtask 4.2: Create `src/modules/files/services/s3.service.ts`
+  - Subtask 4.3: Define IS3Service interface
+  - Subtask 4.4: Implement `uploadFile(buffer: Buffer, key: string, mimeType: string): Promise&lt;string&gt;`
+  - Subtask 4.5: Implement `getPresignedUrl(key: string, expiresIn: number): Promise&lt;string&gt;` (default 900s = 15min)
+  - Subtask 4.6: Implement `deleteFile(key: string): Promise&lt;void&gt;`
+  - Subtask 4.7: Initialize S3Client with credentials from aws.config.ts (inject ConfigService)
+  - Subtask 4.8: Implement error handling (wrap S3 exceptions in BadRequestException/ServiceUnavailableException)
+  - Subtask 4.9: Add @Injectable() decorator to S3Service
+
+- Task 5: Create FilesModule and register S3Service (AC: 4.1.4)
+  - Subtask 5.1: Create `src/modules/files/files.module.ts`
+  - Subtask 5.2: Register S3Service in providers array
+  - Subtask 5.3: Export S3Service for use in other modules (if needed)
+  - Subtask 5.4: Import ConfigModule to access aws.config.ts
+  - Subtask 5.5: Import FilesModule in AppModule
+
+- Task 6: Implement S3 health check endpoint (AC: 4.1.5)
+  - Subtask 6.1: Create HealthController (or add to existing health module)
+  - Subtask 6.2: Add GET /health/s3 endpoint
+  - Subtask 6.3: Inject S3Service into HealthController
+  - Subtask 6.4: Test S3 connectivity (headBucket or listObjects with max 1 item)
+  - Subtask 6.5: Return 200 OK if S3 reachable, 503 Service Unavailable if not
+  - Subtask 6.6: Log S3 health check result at application startup (info level)
+
+- Task 7: Create MinIO Docker Compose setup (AC: 4.1.6)
+  - Subtask 7.1: Add MinIO service to `docker-compose.yml` (ports: 9000, 9001)
+  - Subtask 7.2: Configure MinIO environment variables (MINIO_ROOT_USER, MINIO_ROOT_PASSWORD)
+  - Subtask 7.3: Create `.env.development.example` with MinIO configuration
+  - Subtask 7.4: Add S3_ENDPOINT=http://localhost:9000 and S3_FORCE_PATH_STYLE=true for local dev
+  - Subtask 7.5: Document local S3 setup in README.md (section: "Local Development with MinIO")
+  - Subtask 7.6: Test application works with MinIO locally (upload, download, delete)
+
+- Task 8: Update environment configuration examples (AC: 4.1.2, 4.1.6)
+  - Subtask 8.1: Update `.env.example` with AWS S3 configuration
+  - Subtask 8.2: Add comments explaining each AWS environment variable
+  - Subtask 8.3: Document S3 bucket naming convention (e.g., boilerplate-dev, boilerplate-staging, boilerplate-prod)
+  - Subtask 8.4: Add AWS IAM policy example to docs (minimum required permissions)
+
+- Task 9: Testing (AC: All)
+  - Subtask 9.1: Unit test S3Service.uploadFile() (mock S3Client, verify PutObjectCommand)
+  - Subtask 9.2: Unit test S3Service.getPresignedUrl() (mock getSignedUrl, verify expiration)
+  - Subtask 9.3: Unit test S3Service.deleteFile() (mock DeleteObjectCommand)
+  - Subtask 9.4: Integration test health check endpoint (GET /health/s3)
+  - Subtask 9.5: Test environment variable validation (application fails to start if required vars missing)
+  - Subtask 9.6: Test S3 error handling (connection error, invalid credentials, bucket not found)
+  - Subtask 9.7: Test MinIO local development setup (docker-compose up, application connects)
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+**AC-4.1.1:** AWS S3 SDK v3 packages installed and configured
+- `@aws-sdk/client-s3` ^3.600.0 installed
+- `@aws-sdk/s3-request-presigner` ^3.600.0 installed
+- `multer` ^1.4.5-lts.1 and `@types/multer` installed
+- No dependency conflicts, `npm install` succeeds
+
+**AC-4.1.2:** AWS configuration file created with environment variable support
+- `src/config/aws.config.ts` created with `registerAs('aws', ...)` pattern
+- Reads: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET
+- Optional config: S3_ENDPOINT, S3_FORCE_PATH_STYLE (for MinIO local dev)
+- Configuration registered in AppModule imports
+
+**AC-4.1.3:** Environment variable validation added
+- Joi validation schema includes AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET (all required)
+- Application fails to start if required AWS env vars missing
+- Clear error messages for missing configuration
+
+**AC-4.1.4:** S3Service created and implements IS3Service interface
+- `src/modules/files/services/s3.service.ts` created
+- Methods: `uploadFile()`, `getPresignedUrl()`, `deleteFile()`
+- S3Client initialized with credentials from aws.config.ts
+- Injectable service, registered in FilesModule providers
+
+**AC-4.1.5:** S3 connection validated on application start
+- Health check endpoint: GET /health/s3
+- Tests S3 connectivity (listBucket or headBucket operation)
+- Returns 200 OK if S3 reachable, 503 Service Unavailable if not
+- Logged at application startup (info level)
+
+**AC-4.1.6:** Local development MinIO setup documented
+- Docker Compose configuration provided for MinIO
+- .env.development.example includes MinIO config
+- README section explains local S3 setup
+- Works without AWS account for local development
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-4.md</path>
+        <title>Epic Technical Specification: File Management (AWS S3)</title>
+        <section>Story 4.1: AWS S3 Configuration &amp; Setup</section>
+        <snippet>Complete technical specification for Epic 4 including S3Service design, IS3Service interface, AWS configuration pattern, IAM policy requirements, and MinIO local development setup.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 4: File Management (AWS S3)</title>
+        <section>Story 4.1: AWS S3 Configuration &amp; Service</section>
+        <snippet>Epic-level story breakdown with acceptance criteria for AWS S3 SDK installation, configuration file creation, S3Service methods (uploadFile, getPresignedUrl, deleteFile), and environment variable validation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Configuration Management</section>
+        <snippet>Architecture patterns for configuration management including registerAs pattern, ConfigService injection, and environment variable validation with Joi.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/config/env-validation.schema.ts</path>
+        <kind>validation schema</kind>
+        <symbol>envSchema</symbol>
+        <lines>1-24</lines>
+        <reason>Existing Joi validation schema pattern to follow when adding AWS S3 environment variable validation (AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET)</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/database.config.ts</path>
+        <kind>configuration file</kind>
+        <symbol>default export (registerAs)</symbol>
+        <lines>1-26</lines>
+        <reason>Example configuration file using registerAs('database', ...) pattern - follow same pattern for aws.config.ts with S3 credentials and bucket configuration</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/jwt.config.ts</path>
+        <kind>configuration file</kind>
+        <symbol>default export (registerAs)</symbol>
+        <lines>N/A</lines>
+        <reason>Another example of registerAs pattern for configuration - aws.config.ts should follow same structure</reason>
+      </artifact>
+      <artifact>
+        <path>src/app.module.ts</path>
+        <kind>module</kind>
+        <symbol>AppModule</symbol>
+        <lines>1-34</lines>
+        <reason>Main application module showing ConfigModule.forRoot() pattern with load array - aws.config.ts must be added to load array alongside appConfig, databaseConfig, jwtConfig. Also shows where FilesModule should be imported.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.module.ts</path>
+        <kind>module</kind>
+        <symbol>AuthModule</symbol>
+        <lines>N/A</lines>
+        <reason>Example NestJS module structure - FilesModule should follow same pattern with providers, exports, imports</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/permissions.module.ts</path>
+        <kind>module</kind>
+        <symbol>PermissionsModule</symbol>
+        <lines>N/A</lines>
+        <reason>Example module with service registration - FilesModule should register S3Service in providers array and export if needed by other modules</reason>
+      </artifact>
+      <artifact>
+        <path>src/database/prisma.module.ts</path>
+        <kind>module</kind>
+        <symbol>PrismaModule</symbol>
+        <lines>N/A</lines>
+        <reason>Example global module pattern - if FilesModule needs to be global (for S3Service usage across app), follow this pattern</reason>
+      </artifact>
+      <artifact>
+        <path>test/app.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>AppController (e2e)</symbol>
+        <lines>1-25</lines>
+        <reason>E2E test pattern using supertest - follow this pattern for S3 health check endpoint test (GET /health/s3)</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <existing>
+          <package>@nestjs/common</package>
+          <version>^11.0.1</version>
+          <usage>NestJS core decorators (@Injectable, @Module, @Controller, etc.)</usage>
+        </existing>
+        <existing>
+          <package>@nestjs/config</package>
+          <version>^4.0.2</version>
+          <usage>ConfigModule for aws.config.ts registration and ConfigService for injection</usage>
+        </existing>
+        <existing>
+          <package>@nestjs/platform-express</package>
+          <version>^11.0.1</version>
+          <usage>Express platform for file upload support (multer integration)</usage>
+        </existing>
+        <existing>
+          <package>joi</package>
+          <version>^18.0.1</version>
+          <usage>Environment variable validation - add AWS S3 env var validation to envSchema</usage>
+        </existing>
+        <existing>
+          <package>@types/node</package>
+          <version>^22.10.7</version>
+          <usage>Node.js type definitions for Buffer type used in S3Service.uploadFile()</usage>
+        </existing>
+        <toInstall>
+          <package>@aws-sdk/client-s3</package>
+          <version>^3.600.0</version>
+          <usage>AWS S3 SDK v3 for S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand</usage>
+        </toInstall>
+        <toInstall>
+          <package>@aws-sdk/s3-request-presigner</package>
+          <version>^3.600.0</version>
+          <usage>Generate pre-signed URLs for secure file downloads (getSignedUrl function)</usage>
+        </toInstall>
+        <toInstall>
+          <package>multer</package>
+          <version>^1.4.5-lts.1</version>
+          <usage>Multipart form-data parsing for file uploads (used in Story 4.2, installed here for dependency setup)</usage>
+        </toInstall>
+        <toInstall>
+          <package>@types/multer</package>
+          <version>^1.4.11</version>
+          <usage>TypeScript type definitions for multer (Express.Multer.File type)</usage>
+        </toInstall>
+      </node>
+      <docker>
+        <service>
+          <name>minio</name>
+          <image>minio/minio:latest</image>
+          <ports>9000:9000, 9001:9001</ports>
+          <usage>S3-compatible local storage for development (no AWS account required)</usage>
+        </service>
+      </docker>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+**Configuration Pattern (MANDATORY):**
+- aws.config.ts MUST use registerAs('aws', ...) pattern (consistent with database.config.ts, jwt.config.ts)
+- ConfigService MUST be injected into S3Service for type-safe configuration access
+- aws.config.ts MUST be added to ConfigModule.forRoot() load array in AppModule
+- [Source: src/config/database.config.ts, src/app.module.ts]
+
+**Environment Variable Validation (MANDATORY):**
+- All AWS env vars (AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET) MUST be validated with Joi
+- Validation MUST fail fast at application startup if required vars missing
+- Error messages MUST be clear and actionable
+- Optional MinIO vars (S3_ENDPOINT, S3_FORCE_PATH_STYLE) MUST be validated as optional strings/booleans
+- [Source: src/config/env-validation.schema.ts]
+
+**S3Service Implementation (MANDATORY):**
+- S3Service MUST implement IS3Service interface with uploadFile(), getPresignedUrl(), deleteFile() methods
+- S3Client MUST be initialized once in constructor (singleton pattern via @Injectable)
+- S3 exceptions MUST be wrapped in NestJS exceptions (BadRequestException, ServiceUnavailableException)
+- Retry logic MUST use exponential backoff (3 attempts: 1s, 2s, 4s)
+- Pre-signed URLs MUST default to 900 seconds (15 minutes) expiration
+- [Source: docs/tech-spec-epic-4.md#Services-and-Modules]
+
+**Module Structure (MANDATORY):**
+- FilesModule MUST be created in src/modules/files/ directory
+- S3Service MUST be registered in FilesModule providers array
+- FilesModule MUST be imported in AppModule
+- Follow existing module patterns (AuthModule, PermissionsModule)
+- [Source: src/app.module.ts, src/modules/auth/auth.module.ts]
+
+**Testing Requirements (MANDATORY):**
+- Unit tests MUST mock S3Client (do not make real AWS calls)
+- Integration tests MUST test health check endpoint (GET /health/s3)
+- E2E tests MUST use MinIO (docker-compose up)
+- Follow existing test patterns (supertest, @nestjs/testing)
+- [Source: test/app.e2e-spec.ts]
+
+**Security Constraints (MANDATORY):**
+- AWS credentials NEVER hardcoded (environment variables only)
+- S3 bucket MUST use private ACL (no public access)
+- AWS IAM policy MUST follow principle of least privilege (PutObject, GetObject, DeleteObject, ListBucket only)
+- Pre-signed URLs MUST have expiration (default 15 min, configurable)
+- [Source: docs/tech-spec-epic-4.md#Security]
+
+**Local Development (MANDATORY):**
+- MinIO MUST be documented as local development alternative
+- Docker Compose configuration MUST be provided
+- S3_ENDPOINT and S3_FORCE_PATH_STYLE MUST enable MinIO compatibility
+- Application MUST work without AWS account in local development
+- [Source: docs/tech-spec-epic-4.md#AWS-S3-Setup-Requirements]
+
+**TypeScript Strict Mode (MANDATORY):**
+- All code MUST pass TypeScript strict type checking
+- No 'any' types allowed
+- Buffer type MUST be used for file buffers (from @types/node)
+- Promise return types MUST be explicitly declared
+- [Source: Project-wide constraint]
+</constraints>
+
+  <interfaces>
+**IS3Service Interface:**
+```typescript
+interface IS3Service {
+  /**
+   * Upload file to S3
+   * @param buffer - File buffer
+   * @param key - S3 object key (format: {domainID}/{userID}/{timestamp}-{filename})
+   * @param mimeType - MIME type (e.g., image/png, application/pdf)
+   * @returns S3 key of uploaded file
+   */
+  uploadFile(buffer: Buffer, key: string, mimeType: string): Promise&lt;string&gt;;
+
+  /**
+   * Generate pre-signed download URL
+   * @param key - S3 object key
+   * @param expiresIn - Expiration in seconds (default 900 = 15 minutes)
+   * @returns Pre-signed URL (valid for specified duration)
+   */
+  getPresignedUrl(key: string, expiresIn?: number): Promise&lt;string&gt;;
+
+  /**
+   * Delete file from S3
+   * @param key - S3 object key
+   * @returns void (throws exception on failure)
+   */
+  deleteFile(key: string): Promise&lt;void&gt;;
+}
+```
+
+**AWS Configuration Interface:**
+```typescript
+// src/config/aws.config.ts
+export default registerAs('aws', () => ({
+  region: process.env.AWS_REGION || 'us-east-1',
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  s3: {
+    bucket: process.env.S3_BUCKET,
+    endpoint: process.env.S3_ENDPOINT, // Optional: for MinIO local dev
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', // Optional: for MinIO
+  },
+}));
+```
+
+**Health Check Endpoint:**
+```
+GET /health/s3
+
+Response (200 OK - S3 reachable):
+{
+  "status": "ok",
+  "s3": {
+    "status": "up",
+    "bucket": "boilerplate-dev",
+    "region": "us-east-1"
+  }
+}
+
+Response (503 Service Unavailable - S3 unreachable):
+{
+  "status": "error",
+  "s3": {
+    "status": "down",
+    "error": "Connection timeout to S3"
+  }
+}
+```
+
+**Environment Variables:**
+```bash
+# Required AWS S3 Configuration
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+S3_BUCKET=boilerplate-dev
+
+# Optional MinIO Local Development
+S3_ENDPOINT=http://localhost:9000
+S3_FORCE_PATH_STYLE=true
+```
+
+**ConfigService Injection Pattern:**
+```typescript
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { S3Client } from '@aws-sdk/client-s3';
+
+@Injectable()
+export class S3Service implements IS3Service {
+  private readonly s3Client: S3Client;
+  private readonly bucket: string;
+
+  constructor(private configService: ConfigService) {
+    const awsConfig = this.configService.get('aws');
+    this.bucket = awsConfig.s3.bucket;
+
+    this.s3Client = new S3Client({
+      region: awsConfig.region,
+      credentials: {
+        accessKeyId: awsConfig.accessKeyId,
+        secretAccessKey: awsConfig.secretAccessKey,
+      },
+      endpoint: awsConfig.s3.endpoint, // For MinIO
+      forcePathStyle: awsConfig.s3.forcePathStyle, // For MinIO
+    });
+  }
+
+  // ... method implementations
+}
+```
+</interfaces>
+
+  <tests>
+    <standards>
+**Unit Testing Standards:**
+- Use Jest as testing framework (existing project standard)
+- Mock external services (S3Client) to avoid real AWS calls
+- Test success paths and error scenarios
+- Verify method parameters and return values
+- Use @nestjs/testing for module and dependency injection testing
+- Coverage target: 90%+ for S3Service
+- [Pattern: Test S3Service methods in isolation with mocked S3Client]
+
+**Integration Testing Standards:**
+- Use supertest for HTTP endpoint testing
+- Test health check endpoint (GET /health/s3)
+- Verify response status codes and body structure
+- Test environment variable validation (application startup failures)
+- [Pattern: test/app.e2e-spec.ts - Test.createTestingModule with AppModule]
+
+**E2E Testing Standards:**
+- Use MinIO for S3-compatible local testing (docker-compose)
+- Test full S3 upload/download/delete flow
+- Verify pre-signed URL generation and access
+- Test application startup with MinIO configuration
+- [Pattern: Docker Compose + supertest + real MinIO instance]
+
+**Error Handling Testing:**
+- Test S3 connection errors (invalid credentials, network timeout)
+- Test invalid bucket name (bucket not found)
+- Test S3Client exception wrapping (BadRequestException, ServiceUnavailableException)
+- Verify clear error messages and proper HTTP status codes
+</standards>
+    <locations>
+**Test File Locations:**
+- Unit tests: src/modules/files/services/s3.service.spec.ts
+- Integration tests: test/health-s3.e2e-spec.ts
+- E2E tests: test/s3-minIO.e2e-spec.ts (with docker-compose)
+
+**Test Directory Structure:**
+```
+test/
+├── app.e2e-spec.ts                    # Existing E2E test pattern
+├── health-s3.e2e-spec.ts              # NEW - Health check endpoint test
+└── s3-minio.e2e-spec.ts               # NEW - Full S3 flow with MinIO
+
+src/modules/files/services/
+└── s3.service.spec.ts                 # NEW - Unit tests for S3Service
+```
+
+**Docker Compose for Testing:**
+```
+docker-compose.yml                     # Add MinIO service for local/E2E testing
+.env.development.example               # MinIO configuration template
+```
+</locations>
+    <ideas>
+**Test Ideas Mapped to Acceptance Criteria:**
+
+**AC-4.1.1 (Package Installation):**
+- Test 1: Verify @aws-sdk/client-s3 ^3.600.0 installed in package.json
+- Test 2: Verify @aws-sdk/s3-request-presigner ^3.600.0 installed
+- Test 3: Verify multer and @types/multer installed
+- Test 4: Run npm install and verify no dependency conflicts (exit code 0)
+
+**AC-4.1.2 (AWS Configuration File):**
+- Test 1: Verify aws.config.ts exists at src/config/aws.config.ts
+- Test 2: Verify registerAs('aws', ...) pattern used
+- Test 3: Verify configuration reads AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET
+- Test 4: Verify optional MinIO configuration (S3_ENDPOINT, S3_FORCE_PATH_STYLE)
+- Test 5: Verify aws.config.ts loaded in ConfigModule.forRoot() (AppModule)
+
+**AC-4.1.3 (Environment Variable Validation):**
+- Test 1: Application fails to start if AWS_REGION missing (Joi validation error)
+- Test 2: Application fails to start if AWS_ACCESS_KEY_ID missing
+- Test 3: Application fails to start if AWS_SECRET_ACCESS_KEY missing
+- Test 4: Application fails to start if S3_BUCKET missing
+- Test 5: Application starts successfully with all required AWS env vars present
+- Test 6: Verify clear error messages for missing configuration
+
+**AC-4.1.4 (S3Service Implementation):**
+- Test 1: S3Service implements IS3Service interface
+- Test 2: S3Service.uploadFile() calls S3Client.send(PutObjectCommand) with correct parameters
+- Test 3: S3Service.getPresignedUrl() generates pre-signed URL with 900s (15 min) default expiration
+- Test 4: S3Service.deleteFile() calls S3Client.send(DeleteObjectCommand)
+- Test 5: S3Client initialized with credentials from ConfigService
+- Test 6: S3 connection error wrapped in ServiceUnavailableException
+- Test 7: Invalid credentials error wrapped in BadRequestException with clear message
+- Test 8: S3Service registered in FilesModule providers array
+
+**AC-4.1.5 (S3 Health Check):**
+- Test 1: GET /health/s3 returns 200 OK when S3 reachable
+- Test 2: GET /health/s3 returns 503 Service Unavailable when S3 unreachable
+- Test 3: Health check uses HeadBucketCommand or ListObjectsCommand (minimal overhead)
+- Test 4: Health check result logged at application startup (info level)
+- Test 5: Response body includes S3 status, bucket name, region
+
+**AC-4.1.6 (MinIO Local Development):**
+- Test 1: Verify docker-compose.yml includes MinIO service (ports 9000, 9001)
+- Test 2: Verify MinIO environment variables (MINIO_ROOT_USER, MINIO_ROOT_PASSWORD)
+- Test 3: Verify .env.development.example includes MinIO configuration
+- Test 4: docker-compose up starts MinIO successfully
+- Test 5: Application connects to MinIO with S3_ENDPOINT=http://localhost:9000
+- Test 6: S3Service.uploadFile() works with MinIO
+- Test 7: S3Service.getPresignedUrl() generates valid MinIO pre-signed URL
+- Test 8: S3Service.deleteFile() deletes file from MinIO
+
+**Error Handling Test Ideas:**
+- Test 1: S3 connection timeout → Retry 3 times with exponential backoff → ServiceUnavailableException
+- Test 2: Invalid AWS credentials → Clear error message with suggestion to check credentials
+- Test 3: Bucket not found → BadRequestException with bucket name in error message
+- Test 4: Network error during upload → Retry logic → Final exception after 3 attempts
+- Test 5: Pre-signed URL generation for non-existent file → Exception with clear message
+
+**Integration Test Ideas:**
+- Test 1: Full flow: Upload file → Get pre-signed URL → Download file → Delete file (using MinIO)
+- Test 2: Health check endpoint reachable at startup (GET /health/s3)
+- Test 3: ConfigService provides aws configuration to S3Service
+- Test 4: FilesModule imported in AppModule successfully
+</ideas>
+  </tests>
+</story-context>

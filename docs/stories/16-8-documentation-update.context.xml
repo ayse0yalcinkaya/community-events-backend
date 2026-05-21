@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>16</epicId>
+    <storyId>8</storyId>
+    <title>Documentation Update &amp; Examples</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/16-8-documentation-update.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>documentation updated for clean design</iWant>
+    <soThat>team understands the new architecture</soThat>
+    <tasks>
+      1. Updated API documentation (Swagger)
+      2. Migration guide (old → new)
+      3. Developer onboarding docs
+      4. Permission system diagram
+      5. Code examples in README
+      6. Troubleshooting guide
+      7. Architecture Decision Record (ADR)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Updated API documentation (Swagger)</ac>
+    <ac id="2">Migration guide (old → new)</ac>
+    <ac id="3">Developer onboarding docs</ac>
+    <ac id="4">Permission system diagram</ac>
+    <ac id="5">Code examples in README</ac>
+    <ac id="6">Troubleshooting guide</ac>
+    <ac id="7">Architecture Decision Record (ADR)</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-16-clean-relational-role-design.md">
+        <title>Epic 16: Clean Relational Role Design</title>
+        <section>Complete documentation</section>
+        <snippet>Comprehensive documentation for clean relational role design</snippet>
+      </doc>
+      <doc path="docs/architecture/clean-role-design.md">
+        <title>Clean Role Design Architecture</title>
+        <section>Technical Specification</section>
+        <snippet>Clean relational design implementation guide</snippet>
+      </doc>
+      <doc path="README.md">
+        <title>Project README</title>
+        <section>Code Examples</section>
+        <snippet>Updated README with clean design examples</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file path="docs/architecture/clean-role-design.md">
+        <kind>documentation</kind>
+        <symbol>Clean Role Design Guide</symbol>
+        <reason>Main technical documentation for clean design</reason>
+      </file>
+      <file path="docs/migrations/clean-relational-migration-guide.md">
+        <kind>documentation</kind>
+        <symbol>Migration Guide</symbol>
+        <reason>Guide for migrating from legacy to clean design</reason>
+      </file>
+      <file path="docs/architecture/permission-system-diagram.md">
+        <kind>documentation</kind>
+        <symbol>Permission System Diagram</symbol>
+        <reason>Visual representation of permission system</reason>
+      </file>
+      <file path="docs/architecture/adr-001-clean-relational-design.md">
+        <kind>documentation</kind>
+        <symbol>Architecture Decision Record</symbol>
+        <reason>ADR for clean relational design decision</reason>
+      </file>
+      <file path="docs/troubleshooting/clean-design-troubleshooting.md">
+        <kind>documentation</kind>
+        <symbol>Troubleshooting Guide</symbol>
+        <reason>Common issues and solutions</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/swagger" version="^7.0.0">API documentation</package>
+        <package name="markdown" version="^0.1.0">Documentation format</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Documentation must be clear and beginner-friendly</constraint>
+    <constraint>Include practical code examples</constraint>
+    <constraint>Visual diagrams where helpful</constraint>
+    <constraint>Migration guide must be step-by-step</constraint>
+    <constraint>Troubleshooting guide must cover common issues</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Clean Design Architecture">
+      <kind>Markdown Documentation</kind>
+      <signature>
+        # Clean Relational Role Design
+
+        ## Overview
+        - Database schema
+        - Permission calculation algorithm
+        - Domain isolation
+        - Role management
+
+        ## Examples
+        - User creation
+        - Role assignment
+        - Permission checking
+      </signature>
+      <path>docs/architecture/clean-role-design.md</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Documentation review and validation</standards>
+    <locations>
+      docs/
+    </locations>
+    <ideas>
+      <test idea="Documentation is accurate and up-to-date">ac:1,ac:3</test>
+      <test idea="Migration guide is complete and tested">ac:2</test>
+      <test idea="Code examples are functional">ac:5</test>
+      <test idea="Permission diagram is clear">ac:4</test>
+      <test idea="Troubleshooting guide covers common issues">ac:6</test>
+      <test idea="ADR documents decision rationale">ac:7</test>
+    </ideas>
+  </tests>
+</story-context>

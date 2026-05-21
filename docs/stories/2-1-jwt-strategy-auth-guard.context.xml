@@ -1,0 +1,352 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>JWT Strategy & Auth Guard (Phone-based)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-1-jwt-strategy-auth-guard.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>phone-based JWT authentication strategy and guard</iWant>
+    <soThat>protected routes için kullanıcı kimliğini doğrulayabileyim</soThat>
+    <tasks>
+      - Task 1: Install required dependencies (@nestjs/jwt, @nestjs/passport, passport, passport-jwt, @types/passport-jwt)
+      - Task 2: Create auth module structure (src/modules/auth/ with subdirectories)
+      - Task 3: Implement JWT Strategy with phone-based validation
+      - Task 4: Create JWT payload interface and types
+      - Task 5: Implement JwtAuthGuard with @Public() support
+      - Task 6: Create @Public() decorator
+      - Task 7: Create @CurrentUser() decorator
+      - Task 8: Configure AuthModule with JWT and Passport
+      - Task 9: Create test endpoints to verify JWT guard functionality
+      - Task 10: Write unit tests for JWT strategy
+      - Task 11: Write integration tests for guard and decorators
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC-2.1.1: `src/modules/auth/strategies/jwt.strategy.ts` implements PassportStrategy with phone-based JWT validation
+    2. AC-2.1.2: JwtAuthGuard extract & validate JWT from Authorization header
+    3. AC-2.1.3: Valid token → `request.user` populated with { sub, phoneNumber, domainID, roles }
+    4. AC-2.1.4: Invalid/expired token → 401 Unauthorized
+    5. AC-2.1.5: `@Public()` decorator bypasses JwtAuthGuard
+    6. AC-2.1.6: `@CurrentUser()` decorator extracts user payload from request
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management (Phone-based)</title>
+        <section>Story 2.1: JWT Strategy & Auth Guard</section>
+        <snippet>
+          AC-2.1.1 through AC-2.1.6 define complete JWT authentication infrastructure. JwtStrategy implements PassportStrategy with phone-based validation, extracting JWT from Authorization header. Valid tokens populate request.user with { sub, phoneNumber, domainID, roles }. Invalid/expired tokens return 401 Unauthorized. @Public() decorator bypasses JwtAuthGuard, @CurrentUser() extracts user payload.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>Services and Modules</section>
+        <snippet>
+          JwtStrategy: Passport strategy for JWT token validation. Inputs: JWT token from header. Outputs: Validated user payload. Owner: modules/auth/strategies/jwt.strategy.ts. JwtAuthGuard: Route protection guard implementation. Inputs: HTTP request. Outputs: Allow/deny decision. Owner: modules/auth/guards/jwt-auth.guard.ts.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>Data Models and Contracts - JWT Payload Interface</section>
+        <snippet>
+          JwtPayload interface: { sub: string (User ID), phoneNumber: string (unique identifier), domainID: string (multi-tenancy), roles: string[] (user roles), iat: number (issued at), exp: number (expiration) }. Phone-based authentication uses phoneNumber instead of email as primary identifier.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>NFR - Security</section>
+        <snippet>
+          JWT security: HS256 signing algorithm, JWT_SECRET minimum 32 characters (validated in Epic 1), token expiration 15-60 minutes configurable, stateless validation without database hit per request. User lookup in validate() ensures deleted users cannot authenticate.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>NFR - Performance</section>
+        <snippet>
+          JWT validation performance: ~2-5ms crypto signature verification, ~5ms database user lookup (indexed by ID), total overhead per protected request &lt; 10ms. No caching needed for MVP.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>Dependencies and Integrations</section>
+        <snippet>
+          NPM packages: @nestjs/jwt ^10.2.0 (JWT generation/validation), @nestjs/passport ^10.0.3 (Passport.js integration), passport ^0.7.0 (authentication middleware), passport-jwt ^4.0.1 (JWT strategy), @types/passport-jwt ^4.0.1 (TypeScript types). Epic 1 integration: PrismaService for user lookup, ConfigModule for JWT_SECRET access.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>System Architecture Alignment - Module Structure</section>
+        <snippet>
+          Auth module structure: src/modules/auth/ contains auth.controller.ts, auth.service.ts, auth.module.ts, strategies/jwt.strategy.ts, guards/ (empty, guard in common/), decorators/public.decorator.ts, decorators/current-user.decorator.ts, interfaces/jwt-payload.interface.ts. Common guards: src/common/guards/jwt-auth.guard.ts (reusable across modules).
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>Workflows and Sequencing - JWT Token Validation Flow</section>
+        <snippet>
+          Client → Controller: GET /api/protected with Authorization: Bearer &lt;JWT&gt; → JwtAuthGuard extracts JWT → JwtStrategy validates signature (JWT_SECRET) → Check exp → PrismaService user lookup → Attach user to request (req.user = payload) → Controller accesses via @CurrentUser() decorator → Return protected data. Invalid/expired tokens return 401 Unauthorized.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication & Session Management</title>
+        <section>ADR-002: Phone-Based Authentication</section>
+        <snippet>
+          JWT payload contains phoneNumber instead of email as unique identifier. All auth endpoints accept phoneNumber as primary input. Implementation: User.phoneNumber field is unique constraint, JWT validation uses phoneNumber for user identification.
+        </snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>1-31</lines>
+        <reason>
+          PrismaService will be injected into JwtStrategy for user lookup during token validation. Extends PrismaClient, implements OnModuleInit/OnModuleDestroy lifecycle hooks. Used to query User entity by ID to verify user still exists and not deleted.
+        </reason>
+      </artifact>
+      <artifact>
+        <path>src/config/jwt.config.ts</path>
+        <kind>config</kind>
+        <symbol>jwt config factory</symbol>
+        <lines>1-23</lines>
+        <reason>
+          JWT configuration module using registerAs pattern. Exports JWT_SECRET (min 32 chars validated), JWT_ACCESS_EXPIRATION (default '15m'), JWT_REFRESH_EXPIRATION (default '7d'). Will be accessed by JwtStrategy and JwtModule configuration via ConfigService.
+        </reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>User model</symbol>
+        <lines>20-47</lines>
+        <reason>
+          User entity schema defines fields needed for JWT payload: id (UUID, sub field), email (currently unique, will add phoneNumber in Story 2.2), domainID (multi-tenancy), passwordHash, isActive, deletedAt (soft delete check in JwtStrategy.validate). RefreshToken and OTPVerification relations defined for future stories.
+        </reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>RefreshToken model</symbol>
+        <lines>53-69</lines>
+        <reason>
+          RefreshToken entity for token refresh mechanism (Story 2.4). Stores UUID token, expiresAt, userID foreign key with CASCADE delete. Indexed on token, userID, expiresAt for fast lookups.
+        </reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>OTPVerification model</symbol>
+        <lines>71-89</lines>
+        <reason>
+          OTPVerification entity for phone verification (Stories 2.2, 2.3). Stores 6-digit code, type (EMAIL/SMS), expiresAt, attempts (max 3), verified flag. Used in registration and OTP login flows.
+        </reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <existing>
+          @nestjs/common: ^11.0.1
+          @nestjs/config: ^4.0.2
+          @nestjs/core: ^11.0.1
+          @nestjs/platform-express: ^11.0.1
+          @prisma/client: ^6.18.0
+          bcrypt: ^6.0.0
+          joi: ^18.0.1
+          reflect-metadata: ^0.2.2
+          rxjs: ^7.8.1
+          uuid: ^13.0.0
+        </existing>
+        <toInstall>
+          @nestjs/jwt: ^10.2.0 (JWT token generation and validation)
+          @nestjs/passport: ^10.0.3 (Passport.js integration for NestJS)
+          passport: ^0.7.0 (Authentication middleware base)
+          passport-jwt: ^4.0.1 (JWT strategy for Passport)
+        </toInstall>
+        <devDependencies>
+          @types/passport-jwt: ^4.0.1 (TypeScript types for passport-jwt)
+        </devDependencies>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - JWT_SECRET must be minimum 32 characters (validated in Epic 1 config, Story 1.7)
+    - Token expiration configurable: access token 15-60 min (default 15m), refresh token 7-30 days (default 7d)
+    - Stateless JWT validation: no database hit per request except initial user lookup in JwtStrategy.validate()
+    - User lookup in validate() ensures deleted users (deletedAt !== null) cannot authenticate (return null → 401)
+    - JwtAuthGuard location: src/common/guards/ (shared across modules), not src/modules/auth/guards/
+    - JwtStrategy location: src/modules/auth/strategies/ (auth module specific)
+    - Decorators location: src/modules/auth/decorators/ (public.decorator.ts, current-user.decorator.ts)
+    - Phone-based authentication: JWT payload must include phoneNumber field (ADR-002)
+    - PassportStrategy extension pattern: extend PassportStrategy(Strategy, 'jwt')
+    - AuthGuard('jwt') extension pattern for guard implementation
+    - Reflector service for metadata-based guard bypass (@Public() decorator)
+    - createParamDecorator pattern for @CurrentUser() extraction
+    - ConfigService injection for JWT_SECRET access in JwtStrategy and JwtModule
+    - PrismaService injection for user lookup in JwtStrategy.validate()
+    - All routes protected by default when using @UseGuards(JwtAuthGuard), except @Public() decorated routes
+    - Invalid/expired tokens must return 401 Unauthorized (standard HTTP error)
+    - Performance target: JWT validation overhead &lt; 10ms per protected request
+    - Testing: Unit tests for JwtStrategy.validate() with mocked services, integration tests for guard with real HTTP requests
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>JwtPayload</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        export interface JwtPayload {
+          sub: string;          // User ID (UUID)
+          phoneNumber: string;  // Phone number (unique identifier, E.164: +90XXXXXXXXXX)
+          domainID: string;     // Multi-tenancy support (UUID)
+          roles: string[];      // User roles: ['admin', 'staff', 'manager']
+          iat: number;          // Issued at (Unix timestamp)
+          exp: number;          // Expiration (Unix timestamp)
+        }
+      </signature>
+      <path>src/modules/auth/interfaces/jwt-payload.interface.ts</path>
+    </interface>
+    <interface>
+      <name>JwtStrategy.validate()</name>
+      <kind>Passport strategy method</kind>
+      <signature>
+        async validate(payload: JwtPayload): Promise&lt;JwtPayload | null&gt;
+      </signature>
+      <path>src/modules/auth/strategies/jwt.strategy.ts</path>
+      <description>
+        Validates JWT payload and user existence. Returns payload if valid (user exists, not deleted), returns null if invalid (triggers 401 Unauthorized). Called automatically by Passport after JWT signature verification.
+      </description>
+    </interface>
+    <interface>
+      <name>JwtAuthGuard.canActivate()</name>
+      <kind>Guard method</kind>
+      <signature>
+        canActivate(context: ExecutionContext): boolean | Promise&lt;boolean&gt;
+      </signature>
+      <path>src/common/guards/jwt-auth.guard.ts</path>
+      <description>
+        Checks @Public() metadata using Reflector. If public, returns true (bypass). Else calls super.canActivate() for JWT validation via JwtStrategy. Returns true if valid, throws UnauthorizedException if invalid.
+      </description>
+    </interface>
+    <interface>
+      <name>@Public()</name>
+      <kind>Decorator</kind>
+      <signature>
+        export const Public = () =&gt; SetMetadata(IS_PUBLIC_KEY, true);
+      </signature>
+      <path>src/modules/auth/decorators/public.decorator.ts</path>
+      <description>
+        Metadata decorator to mark routes as public (no authentication required). Used with JwtAuthGuard to bypass JWT validation.
+      </description>
+    </interface>
+    <interface>
+      <name>@CurrentUser()</name>
+      <kind>Parameter decorator</kind>
+      <signature>
+        export const CurrentUser = createParamDecorator(
+          (data: unknown, ctx: ExecutionContext): JwtPayload =&gt; {
+            const request = ctx.switchToHttp().getRequest();
+            return request.user;
+          },
+        );
+      </signature>
+      <path>src/modules/auth/decorators/current-user.decorator.ts</path>
+      <description>
+        Parameter decorator to extract authenticated user payload from request.user (populated by JwtStrategy.validate()). Returns JwtPayload with sub, phoneNumber, domainID, roles.
+      </description>
+    </interface>
+    <interface>
+      <name>PrismaService.user.findUnique()</name>
+      <kind>Database query</kind>
+      <signature>
+        prisma.user.findUnique({ where: { id: string } }): Promise&lt;User | null&gt;
+      </signature>
+      <path>src/database/prisma.service.ts</path>
+      <description>
+        Prisma query to find user by ID. Used in JwtStrategy.validate() to verify user exists and not deleted (deletedAt check). Returns User entity or null if not found.
+      </description>
+    </interface>
+    <interface>
+      <name>ConfigService.get()</name>
+      <kind>Configuration access</kind>
+      <signature>
+        configService.get&lt;string&gt;('JWT_SECRET'): string
+        configService.get&lt;string&gt;('JWT_ACCESS_EXPIRATION'): string
+      </signature>
+      <path>@nestjs/config (Epic 1)</path>
+      <description>
+        Access JWT configuration values validated in Epic 1 Story 1.7. JWT_SECRET minimum 32 characters, JWT_ACCESS_EXPIRATION default '15m'. Used in JwtStrategy constructor and JwtModule configuration.
+      </description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      NestJS testing framework with Jest. Unit tests use mocked services (PrismaService, ConfigService) to test business logic in isolation. Integration tests use @nestjs/testing TestingModule with supertest for HTTP endpoint testing. Test files: *.spec.ts for unit tests, *.e2e-spec.ts for integration tests. Coverage target: 80%+ for critical authentication paths. Test data: Mock JWT payloads, mock users with/without deletedAt, mock config values.
+    </standards>
+    <locations>
+      - src/**/*.spec.ts (unit tests co-located with source)
+      - test/**/*.e2e-spec.ts (integration/E2E tests)
+      - Coverage reports: coverage/ directory
+    </locations>
+    <ideas>
+      <test ac="AC-2.1.1">
+        Unit test JwtStrategy.validate():
+        - Test with valid payload and existing user → returns payload
+        - Test with valid payload but non-existent user → returns null
+        - Test with valid payload but deleted user (deletedAt !== null) → returns null
+        - Test payload structure (all fields: sub, phoneNumber, domainID, roles, iat, exp)
+      </test>
+      <test ac="AC-2.1.2, AC-2.1.4">
+        Integration test JwtAuthGuard:
+        - Test protected endpoint without token → 401 Unauthorized
+        - Test protected endpoint with valid token → 200 OK, request.user populated
+        - Test protected endpoint with expired token → 401 Unauthorized
+        - Test protected endpoint with invalid signature → 401 Unauthorized
+        - Test protected endpoint with malformed token → 401 Unauthorized
+      </test>
+      <test ac="AC-2.1.3">
+        Integration test request.user population:
+        - After successful JWT validation, verify request.user contains { sub, phoneNumber, domainID, roles }
+        - Verify @CurrentUser() decorator extracts correct payload
+      </test>
+      <test ac="AC-2.1.5">
+        Integration test @Public() decorator:
+        - Test public endpoint without token → 200 OK (no authentication required)
+        - Test public endpoint with invalid token → 200 OK (bypass guard)
+      </test>
+      <test ac="AC-2.1.6">
+        Unit test @CurrentUser() decorator:
+        - Mock ExecutionContext with request.user payload
+        - Verify decorator extracts and returns JwtPayload
+        - Test with missing request.user → returns undefined (handled by guard)
+      </test>
+      <test ac="All">
+        Integration test AuthModule configuration:
+        - Verify PassportModule registered with defaultStrategy 'jwt'
+        - Verify JwtModule configured with JWT_SECRET and signOptions
+        - Verify JwtStrategy provider registered and exported
+        - Test module imports and exports
+      </test>
+    </ideas>
+  </tests>
+</story-context>

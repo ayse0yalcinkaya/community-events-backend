@@ -1,0 +1,334 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3</storyId>
+    <title>Permission Entity &amp; Constants</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-3-permission-entity-constants.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>permission tanımları ve database entity'si</iWant>
+    <soThat>granular access control yapabileyim</soThat>
+    <tasks>
+- Task 1: Prisma schema'ya Permission entity ekle (AC: 3.3.1)
+  - Subtask 1.1: prisma/schema-postgres.prisma dosyasını aç
+  - Subtask 1.2: Permission model ekle (id, module, action, description, createdAt)
+  - Subtask 1.3: Unique constraint ekle: @@unique([module, action])
+  - Subtask 1.4: Index ekle: @@index([module])
+  - Subtask 1.5: Relations tanımla: rolePermissions RolePermission[], userPermissions UserPermission[]
+  - Subtask 1.6: Placeholder junction models ekle (RolePermission, UserPermission)
+
+- Task 2: Migration oluştur ve uygula (AC: 3.3.4)
+  - Subtask 2.1: npx prisma migrate dev --name add-permission-entity komutu çalıştır
+  - Subtask 2.2: Migration dosyasını incele ve doğrula
+  - Subtask 2.3: Migration'ı apply et (test database'de)
+  - Subtask 2.4: Prisma Client'ı regenerate et
+
+- Task 3: ActionEnum oluştur (AC: 3.3.3)
+  - Subtask 3.1: src/common/enums/action.enum.ts dosyası oluştur
+  - Subtask 3.2: ActionEnum tanımla: CREATE, VIEW, UPDATE, DELETE
+  - Subtask 3.3: Export et
+  - Subtask 3.4: index.ts dosyası oluştur (barrel export)
+
+- Task 4: PERMISSIONS constant oluştur (AC: 3.3.2)
+  - Subtask 4.1: src/modules/permissions/ klasörü oluştur
+  - Subtask 4.2: src/modules/permissions/constants/ klasörü oluştur
+  - Subtask 4.3: permissions.constant.ts dosyası oluştur
+  - Subtask 4.4: PERMISSIONS object tanımla (USERS, PERMISSIONS, FILES)
+  - Subtask 4.5: Her module için actions tanımla
+  - Subtask 4.6: 'as const' ile type-safe yap
+  - Subtask 4.7: Export et
+  - Subtask 4.8: index.ts dosyası oluştur
+
+- Task 5: Story 3.2 stub constants'ını güncelle (AC: 3.3.5)
+  - Subtask 5.1: Story 3.2'deki tüm dosyaları tara
+  - Subtask 5.2: Geçici PERMISSIONS tanımlarını kaldır
+  - Subtask 5.3: Yeni PERMISSIONS constant'ını import et
+  - Subtask 5.4: ActionEnum'u import et ve kullan
+
+- Task 6: PermissionsModule oluştur (AC: 3.3.2)
+  - Subtask 6.1: permissions.module.ts dosyası oluştur
+  - Subtask 6.2: PermissionsModule sınıfı oluştur
+  - Subtask 6.3: AuthorizationService'i providers ve exports'a ekle
+  - Subtask 6.4: PrismaModule'ü imports'a ekle
+
+- Task 7: Story 3.2 entegrasyonunu doğrula (AC: 3.3.5)
+  - Subtask 7.1: UsersController decorator'larını doğrula
+  - Subtask 7.2: PermissionsGuard çalışmasını doğrula
+  - Subtask 7.3: Testlerin geçtiğini doğrula
+  - Subtask 7.4: TypeScript derlemesini doğrula
+
+- Task 8: E2E testleri çalıştır (AC: 3.3.1, 3.3.5)
+  - Subtask 8.1: Test database'i temizle
+  - Subtask 8.2: E2E testleri çalıştır
+  - Subtask 8.3: Permission check flow'u doğrula
+  - Subtask 8.4: Hata durumlarını doğrula
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC-3.3.1: Permission entity Prisma schema'ya eklenmiş
+- Fields: id (UUID), module (String), action (String), description (String?, optional), createdAt (DateTime)
+- Unique constraint on [module, action]
+- Index on [module]
+- Relations: rolePermissions[], userPermissions[]
+
+AC-3.3.2: PERMISSIONS constant tanımlanmış
+- Location: src/modules/permissions/constants/permissions.constant.ts
+- Object structure: PERMISSIONS.{MODULE}.{ACTION}
+- Format: 'MODULE.ACTION' (e.g., 'USERS.CREATE')
+- Modules: USERS, PERMISSIONS, FILES (minimum)
+- Actions: CREATE, VIEW, UPDATE, DELETE (minimum)
+- Type-safe constant (as const)
+- Export edilmiş ve kullanılabilir
+
+AC-3.3.3: ActionEnum oluşturulmuş
+- Location: src/common/enums/action.enum.ts
+- Enum values: CREATE, VIEW, UPDATE, DELETE
+- @Permission decorator'da kullanılabilir
+- Type-safe enum yapısı
+
+AC-3.3.4: Prisma migration oluşturulmuş
+- Migration dosyası PostgreSQL için generate edilmiş
+- Migration başarıyla çalıştırılabilir
+- Unique constraint ve index'ler dahil
+
+AC-3.3.5: Story 3.2'deki stub constants güncellendi
+- Geçici PERMISSIONS constants'ları replace edildi
+- Tüm permission referansları yeni constant kullanıyor
+- ActionEnum tüm decorator'larda kullanılıyor
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models and Contracts - Permission Entity</section>
+        <snippet>Permission entity with fields: id (UUID), module (String), action (String), description (optional), createdAt. Unique constraint on [module, action]. Index on [module]. Relations: rolePermissions[], userPermissions[].</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Constants - PERMISSIONS Object</section>
+        <snippet>PERMISSIONS constant structure: PERMISSIONS.{MODULE}.{ACTION} format. Type-safe with 'as const'. Modules: USERS, PERMISSIONS, FILES. Actions: CREATE, VIEW, UPDATE, DELETE.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Hybrid Enum + DB permission system: PERMISSIONS constant (code) + Permission entity (database). Module-based organization for clear permission boundaries. Dev-to-DB sync via script (Story 3.7).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Decision Summary - Permission System</section>
+        <snippet>Permission System: Hybrid Enum + DB approach with module.action format. Type safety + runtime flexibility + dev sync capability.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics Document</title>
+        <section>Story 3.3: Permission Entity &amp; Constants</section>
+        <snippet>Create Permission entity in Prisma schema. Define PERMISSIONS constant object with MODULE.ACTION format. Create ActionEnum with CREATE, VIEW, UPDATE, DELETE values.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-2-admin-user-crud.md</path>
+        <title>Story 3.2: Admin User CRUD</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>PERMISSIONS constant stub, ActionEnum stub, AuthorizationService stub already created in Story 3.2. Story 3.3 moves these to official locations and adds full PERMISSIONS object with USERS, PERMISSIONS, FILES modules.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>database-schema</kind>
+        <symbol>Permission</symbol>
+        <lines>95-109</lines>
+        <reason>Permission entity ALREADY EXISTS in schema. Has all required fields: id, module, action, description, createdAt. Unique constraint and index already defined. Relations to UserPermission and RolePermission already set up.</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>database-schema</kind>
+        <symbol>UserPermission</symbol>
+        <lines>126-142</lines>
+        <reason>Junction table for user-specific permission assignments. Already exists with proper relations and indexes.</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>database-schema</kind>
+        <symbol>RolePermission</symbol>
+        <lines>162-176</lines>
+        <reason>Junction table for role-based permission assignments. Already exists with proper relations.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/constants/permissions.constant.ts</path>
+        <kind>constant</kind>
+        <symbol>PERMISSIONS</symbol>
+        <lines>12-19</lines>
+        <reason>PERMISSIONS constant STUB from Story 3.2. Currently only has USERS module. Story 3.3 needs to ADD: PERMISSIONS and FILES modules to complete minimum requirement.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/enums/action.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>ActionEnum</symbol>
+        <lines>9-14</lines>
+        <reason>ActionEnum ALREADY EXISTS from Story 3.2. Already has CREATE, VIEW, UPDATE, DELETE values. No changes needed, already in correct location.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/permission.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Permission</symbol>
+        <lines>33-34</lines>
+        <reason>@Permission decorator from Story 3.2. Uses ActionEnum and sets metadata for PermissionsGuard. No changes needed for Story 3.3.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/permissions.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>PermissionsGuard</symbol>
+        <lines>38-103</lines>
+        <reason>PermissionsGuard from Story 3.2. Enforces permission-based authorization. Calls AuthorizationService.hasPermission(). No changes needed for Story 3.3.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/services/authorization.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthorizationService</symbol>
+        <lines>17-42</lines>
+        <reason>Authorization service STUB from Story 3.2. Currently returns TRUE for all checks. Full implementation in Story 3.5. No changes needed for Story 3.3.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/permissions.module.ts</path>
+        <kind>module</kind>
+        <symbol>PermissionsModule</symbol>
+        <lines>15-19</lines>
+        <reason>PermissionsModule from Story 3.2. Exports AuthorizationService. No changes needed for Story 3.3.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/users.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>UsersController</symbol>
+        <lines>43-97</lines>
+        <reason>UsersController uses @Permission decorator with ActionEnum. Example: @Permission('USERS', ActionEnum.VIEW). Uses constants from permissions.constant.ts. No import path changes needed.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>@nestjs/common</package>
+        <version>^11.1.8</version>
+        <usage>Decorators, Injectable, Module</usage>
+      </node>
+      <node>
+        <package>@nestjs/core</package>
+        <version>^11.1.8</version>
+        <usage>Reflector for metadata extraction</usage>
+      </node>
+      <node>
+        <package>@prisma/client</package>
+        <version>^6.16.0</version>
+        <usage>Type-safe database access for Permission entity</usage>
+      </node>
+      <node>
+        <package>prisma</package>
+        <version>^6.16.0</version>
+        <usage>Database migrations and schema management</usage>
+      </node>
+      <node>
+        <package>class-transformer</package>
+        <version>^0.5.1</version>
+        <usage>DTO transformation</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Type-safe constants: Use 'as const' for PERMISSIONS object to enable TypeScript type inference
+- Module-based organization: PERMISSIONS.{MODULE}.{ACTION} format (e.g., PERMISSIONS.USERS.CREATE = 'USERS.CREATE')
+- Permission entity ALREADY EXISTS in schema - no schema changes needed
+- PERMISSIONS constant stub exists with USERS module only - ADD PERMISSIONS and FILES modules
+- ActionEnum ALREADY COMPLETE - no changes needed
+- Maintain backward compatibility with Story 3.2 decorator usage: @Permission('USERS', ActionEnum.CREATE)
+- All paths must be project-relative (no absolute paths in code)
+- Export pattern: Use index.ts barrel exports for clean imports
+- No breaking changes to existing permission guard infrastructure
+  </constraints>
+
+  <interfaces>
+- Permission entity schema:
+  model Permission {
+    id: UUID (primary key)
+    module: String
+    action: String
+    description: String? (optional)
+    createdAt: DateTime
+    @@unique([module, action])
+    @@index([module])
+  }
+
+- PERMISSIONS constant structure:
+  export const PERMISSIONS = {
+    USERS: {
+      CREATE: 'USERS.CREATE',
+      VIEW: 'USERS.VIEW',
+      UPDATE: 'USERS.UPDATE',
+      DELETE: 'USERS.DELETE',
+    },
+    PERMISSIONS: {
+      VIEW: 'PERMISSIONS.VIEW',
+      ASSIGN: 'PERMISSIONS.ASSIGN',
+      REVOKE: 'PERMISSIONS.REVOKE',
+    },
+    FILES: {
+      CREATE: 'FILES.CREATE',
+      VIEW: 'FILES.VIEW',
+      DELETE: 'FILES.DELETE',
+      VIEW_ALL: 'FILES.VIEW_ALL',
+    },
+  } as const;
+
+- ActionEnum:
+  export enum ActionEnum {
+    CREATE = 'CREATE',
+    VIEW = 'VIEW',
+    UPDATE = 'UPDATE',
+    DELETE = 'DELETE',
+  }
+
+- @Permission decorator usage:
+  @Permission('USERS', ActionEnum.CREATE)
+  async create() { ... }
+  </interfaces>
+
+  <tests>
+    <standards>
+Story 3.3 is infrastructure setup - no unit tests required for constants/enums.
+Integration tests validate:
+1. Prisma schema: Migration applies successfully, unique constraints work
+2. PERMISSIONS constant: TypeScript compilation succeeds, type inference works
+3. Story 3.2 integration: Existing E2E tests pass with updated constants
+
+Testing frameworks (from Epic 2):
+- Jest for unit/integration tests
+- Supertest for E2E tests
+- Test database for integration tests
+- Coverage target: 80% overall (N/A for Story 3.3 - pure infrastructure)
+    </standards>
+    <locations>
+test/ (E2E tests from Story 3.2 - should still pass)
+test/users-admin.e2e-spec.ts (admin CRUD E2E tests)
+src/modules/users/controllers/users.controller.spec.ts (unit tests)
+src/modules/permissions/services/authorization.service.spec.ts (unit tests)
+    </locations>
+    <ideas>
+- AC-3.3.1: Verify Permission entity exists in schema with correct fields and constraints
+- AC-3.3.2: Verify PERMISSIONS constant includes USERS, PERMISSIONS, FILES modules
+- AC-3.3.3: Verify ActionEnum exists with CREATE, VIEW, UPDATE, DELETE values
+- AC-3.3.4: Run migration (if needed) and verify it applies successfully
+- AC-3.3.5: Run Story 3.2 E2E tests to verify integration (POST /users with permission should work)
+- Integration test: Verify TypeScript compilation succeeds with new constants
+- Integration test: Verify @Permission decorator works with new PERMISSIONS constant
+    </ideas>
+  </tests>
+</story-context>

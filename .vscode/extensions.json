@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "achilleshr.vscode-run-on-save"
+  ],
+  "unwantedRecommendations": []
+}

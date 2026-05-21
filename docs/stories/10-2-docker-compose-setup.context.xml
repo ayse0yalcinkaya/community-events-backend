@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>10</epicId>
+    <storyId>2</storyId>
+    <title>Docker Compose Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/10-2-docker-compose-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Docker Compose ile tüm servisleri başlatabilmek</iWant>
+    <soThat>local environment tek komutla ayağa kalksın</soThat>
+    <tasks>
+      1. Create docker-compose.yml file
+      2. Configure app service (build context, port mapping, volume mount, environment, depends_on)
+      3. Configure PostgreSQL service (image, environment, volume, port, health check)
+      4. Configure MongoDB service (image, environment, volume, port)
+      5. Configure Redis service (image, volume, port, command)
+      6. Add NPM scripts for Docker Compose
+      7. Test Docker Compose workflow
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. docker/docker-compose.yml dosyası oluşturulmuş
+    2. Services tanımlı: app (NestJS), postgres (PostgreSQL 15), mongodb (MongoDB 6), redis (Redis 7)
+    3. App service: depends_on postgres/mongodb, source code volume mount, environment variables, port 3000:3000
+    4. Postgres service: environment variables, named volume postgres_data, port 5432:5432, pg_isready health check
+    5. MongoDB service: environment variables, named volume mongo_data, port 27017:27017
+    6. Redis service: named volume redis_data, port 6379:6379
+    7. Commands: docker-compose up -d, docker-compose logs -f app, docker-compose down
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-10.md">
+        <title>Epic 10 Technical Specification: Development Environment</title>
+        <section>APIs and Interfaces → Docker Compose Service Interfaces</section>
+        <snippet>Epic 10, Docker tabanlı, tutarlı ve hızlı kurulabilen bir local development environment oluşturmayı hedefler. Docker Compose orchestration (app + postgres + mongodb + redis) ile tek komutla tüm servisleri başlatabilme.</snippet>
+      </doc>
+      <doc path="docs/tech-spec-epic-10.md">
+        <title>Epic 10 Technical Specification</title>
+        <section>Detailed Design → Services and Modules</section>
+        <snippet>docker-compose.yml: Multi-service orchestration. App service build context use docker/Dockerfile.dev. Named volumes for data persistence, source code volume mount with hot reload. Environment variables from .env file.</snippet>
+      </doc>
+      <doc path="docs/tech-spec-epic-10.md">
+        <title>Epic 10 Technical Specification</title>
+        <section>Dependencies and Integrations → Base Images</section>
+        <snippet>node:20-alpine (App), postgres:15-alpine (PostgreSQL), mongo:6 (MongoDB), redis:7-alpine (Redis). Official images for platform compatibility.</snippet>
+      </doc>
+      <doc path="docs/tech-spec-epic-10.md">
+        <title>Epic 10 Technical Specification</title>
+        <section>Workflows and Sequencing → Initial Setup Workflow</section>
+        <snippet>Developer workflow: docker-compose up -d → Wait for health checks → docker-compose exec app npm run prisma:generate → docker-compose exec app npm run prisma:migrate → docker-compose exec app npm run prisma:seed → Access http://localhost:3000.</snippet>
+      </doc>
+      <doc path="docs/tech-spec-epic-10.md">
+        <title>Epic 10 Technical Specification</title>
+        <section>Non-Functional Requirements → Performance</section>
+        <snippet>Container startup target: &lt; 30 seconds (first build), &lt; 10 seconds (subsequent starts). Hot reload: code change → server restart &lt; 3 seconds (p95). Total resource usage: &lt; 2.5GB RAM.</snippet>
+      </doc>
+      <doc path="docs/epics/epic-10-development-environment.md">
+        <title>Epic 10: Development Environment</title>
+        <section>Story 10.2: Docker Compose Setup</section>
+        <snippet>Docker Compose ile tüm servisleri başlatabilmek, local environment tek komutla ayağa kalksın. Named volumes for data persistence, health checks for dependencies, network: Default bridge network.</snippet>
+      </doc>
+      <doc path="docs/stories/10-1-development-dockerfile.md">
+        <title>Story 10.1: Development Dockerfile</title>
+        <section>Dev Notes → Architecture Patterns and Constraints</section>
+        <snippet>Development Dockerfile (docker/Dockerfile.dev) - Single stage, dependencies installed, source code volume mounted. Base image: node:20-alpine. Layer caching: package.json → npm ci → prisma → generate sequence.</snippet>
+      </doc>
+      <doc path="docs/stories/10-1-development-dockerfile.md">
+        <title>Story 10.1: Development Dockerfile</title>
+        <section>Source Tree Components</section>
+        <snippet>Files to Create: docker/Dockerfile.dev, .dockerignore. Volume mount pattern: Mount source, exclude node_modules. Result: Code changes trigger NestJS watch → TypeScript recompile → Server restart.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file path="docker/Dockerfile.dev">
+        <kind>dockerfile</kind>
+        <symbol>Development Dockerfile</symbol>
+        <lines>1-58</lines>
+        <reason>Base image for app service in docker-compose.yml. Build context reference. Contains node:20-alpine, npm ci, prisma generate, CMD: npm run start:dev.</reason>
+      </file>
+      <file path="package.json">
+        <kind>npm</kind>
+        <symbol>start:dev script</symbol>
+        <lines>12</lines>
+        <reason>NestJS watch mode command. Used as CMD in Dockerfile and docker-compose.yml for hot reload.</reason>
+      </file>
+      <file path="prisma/schema.prisma">
+        <kind>schema</kind>
+        <symbol>Database schema</symbol>
+        <lines>1-50</lines>
+        <reason>Prisma schema for generating Prisma Client. Referenced in Dockerfile for npx prisma generate. Database connection configuration for docker-compose services.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem>node</ecosystem>
+      <packages>
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/platform-express" version="^11.0.1" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="bcrypt" version="^6.0.0" />
+        <package name="class-validator" version="^0.14.2" />
+        <package name="class-transformer" version="^0.5.1" />
+        <package name="@nestjs/jwt" version="^11.0.1" />
+        <package name="@nestjs/passport" version="^11.0.5" />
+        <package name="passport-jwt" version="^4.0.1" />
+        <package name="@aws-sdk/client-s3" version="^3.925.0" />
+        <package name="@sendgrid/mail" version="^8.1.6" />
+        <package name="ioredis" version="^5.8.2" />
+        <package name="winston" version="^3.18.3" />
+        <package name="@sentry/node" version="^7.120.4" />
+        <package name="firebase-admin" version="^13.6.0" />
+        <package name="exceljs" version="^4.4.0" />
+        <package name="puppeteer" version="^24.29.1" />
+        <package name="ejs" version="^3.1.10" />
+      </packages>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. Docker Compose v2: Uses services: top-level key (compose v2 specification)
+    2. Dependency Management: depends_on with health checks ensures proper startup order
+    3. Volume Strategy: Named volumes for data persistence, bind mounts for source code
+    4. Network: Default bridge network enables service-to-service communication
+    5. Base image: node:20-alpine (Architecture standardı)
+    6. Port mapping: 3000 (app), 5432 (postgres), 27017 (mongodb), 6379 (redis)
+    7. Environment configuration: .env.example → .env.development (Story 10.3 prerequisite)
+    8. Multi-tenancy: Seed data domainID ile tutarlı
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>App Service</name>
+      <kind>Docker Compose Service</kind>
+      <signature>build: { context: ., dockerfile: docker/Dockerfile.dev }</signature>
+      <path>docker/docker-compose.yml</path>
+    </interface>
+    <interface>
+      <name>PostgreSQL Service</name>
+      <kind>Database Service</kind>
+      <signature>image: postgres:15-alpine, ports: [5432:5432], volumes: [postgres_data:/var/lib/postgresql/data]</signature>
+      <path>docker/docker-compose.yml</path>
+    </interface>
+    <interface>
+      <name>MongoDB Service</name>
+      <kind>Database Service</kind>
+      <signature>image: mongo:6, ports: [27017:27017], volumes: [mongo_data:/data/db]</signature>
+      <path>docker/docker-compose.yml</path>
+    </interface>
+    <interface>
+      <name>Redis Service</name>
+      <kind>Cache Service</kind>
+      <signature>image: redis:7-alpine, ports: [6379:6379], volumes: [redis_data:/data], command: redis-server --appendonly yes</signature>
+      <path>docker/docker-compose.yml</path>
+    </interface>
+    <interface>
+      <name>Health Check</name>
+      <kind>Service Health</kind>
+      <signature>test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"], interval: 10s, timeout: 5s, retries: 5</signature>
+      <path>docker/docker-compose.yml</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Manual verification required for Docker Compose infrastructure. No automated tests for container orchestration. Test procedures documented in story Dev Notes section: Test 1: Docker Compose startup, Test 2: Service dependencies, Test 3: Volume persistence, Test 4: Port accessibility, Test 5: NPM scripts. Performance benchmarks: first startup &lt; 30s, subsequent &lt; 10s, hot reload &lt; 3s, total &lt; 2.5GB RAM.</standards>
+    <locations>test/ (Jest configuration), test/*.spec.ts (unit tests), test/e2e-spec.ts (e2e tests), src/**/*.spec.ts (module tests). All tests can run inside Docker container: docker-compose exec app npm test.</locations>
+    <ideas>
+      <test>
+        <id>T10.2.1</id>
+        <description>All services start successfully</description>
+        <command>docker-compose up -d</command>
+        <expected>All 4 services running, health checks passing, no errors, &lt; 30s first start</expected>
+      </test>
+      <test>
+        <id>T10.2.2</id>
+        <description>App waits for postgres health check</description>
+        <command>docker-compose logs app</command>
+        <expected>PostgreSQL starts first, health check passes, app starts after postgres ready, no connection errors</expected>
+      </test>
+      <test>
+        <id>T10.2.3</id>
+        <description>Data persists across restarts</description>
+        <command>docker-compose down &amp;&amp; docker-compose up -d</command>
+        <expected>postgres_data, mongo_data, redis_data volumes persist, no data loss</expected>
+      </test>
+      <test>
+        <id>T10.2.4</id>
+        <description>All services accessible from host</description>
+        <command>psql -h localhost -p 5432 -U postgres, mongo --host localhost --port 27017, redis-cli -h localhost -p 6379, curl http://localhost:3000</command>
+        <expected>All connections successful, services respond to queries</expected>
+      </test>
+      <test>
+        <id>T10.2.5</id>
+        <description>All docker:* scripts work</description>
+        <command>npm run docker:up &amp;&amp; npm run docker:logs &amp;&amp; npm run docker:down</command>
+        <expected>Scripts execute without errors, expected docker-compose commands run</expected>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

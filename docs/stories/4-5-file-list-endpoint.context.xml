@@ -1,0 +1,291 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>5</storyId>
+    <title>File List Endpoint</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/4-5-file-list-endpoint.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>dosyalarımı listeleyebilmek</iWant>
+    <soThat>hangi dosyaları upload ettiğimi görebilleyim</soThat>
+    <tasks>
+- Task 1: Create QueryFilesDto with validation (AC: 4.5.1, 4.5.2, 4.5.3, 4.5.4)
+  - Subtask 1.1: Create src/modules/files/dto/request/query-files.dto.ts
+  - Subtask 1.2: Add @IsOptional() page (default: 1, min: 1, type: number)
+  - Subtask 1.3: Add @IsOptional() limit (default: 20, min: 1, max: 100, type: number)
+  - Subtask 1.4: Add @IsOptional() @IsString() mimeType (filter by MIME type)
+  - Subtask 1.5: Add @IsOptional() @IsString() search (search in originalName)
+  - Subtask 1.6: Add @IsOptional() @IsString() sortBy (default: 'createdAt')
+  - Subtask 1.7: Add @IsOptional() @IsEnum(['asc', 'desc']) sortOrder (default: 'desc')
+  - Subtask 1.8: Apply @Type(() => Number) to page and limit for proper parsing
+
+- Task 2: Add GET /files endpoint to FilesController (AC: 4.5.1)
+  - Subtask 2.1: Create listFiles() method in FilesController
+  - Subtask 2.2: Apply guard: @UseGuards(JwtAuthGuard) (NO PermissionsGuard)
+  - Subtask 2.3: Use @Query(ValidationPipe) queryDto: QueryFilesDto
+  - Subtask 2.4: Extract @CurrentUser() user (domainID, userID, permissions)
+  - Subtask 2.5: Call FilesService.listFiles(queryDto, domainID, userID, hasViewAllPermission)
+  - Subtask 2.6: Return paginated response with data and meta
+
+- Task 3: Implement listFiles() in FilesService (AC: 4.5.2, 4.5.3, 4.5.4, 4.5.5)
+  - Subtask 3.1: Create listFiles() method signature
+  - Subtask 3.2: Build base filters: domainID, deletedAt === null
+  - Subtask 3.3: Add userID filter if NOT admin (hasViewAllPermission === false)
+  - Subtask 3.4: Add mimeType filter if provided (support wildcards)
+  - Subtask 3.5: Add search filter if provided (originalName LIKE)
+  - Subtask 3.6: Validate sortBy field (allowed: createdAt, filename, size, mimeType)
+  - Subtask 3.7: Build orderBy clause
+  - Subtask 3.8: Calculate skip for pagination
+  - Subtask 3.9: Query files with Prisma findMany
+  - Subtask 3.10: Query total count with Prisma count
+  - Subtask 3.11: Calculate totalPages
+  - Subtask 3.12: Return data and meta
+
+- Task 4: Add pagination meta type (AC: 4.5.6)
+- Task 5: Error handling (AC: 4.5.4)
+- Task 6: Testing (AC: All) - 17 unit/E2E tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-4.5.1:** GET /files endpoint created
+   - Route: GET /api/files
+   - Guards: JwtAuthGuard (NO permission guard)
+   - Query parameters: page, limit, mimeType, search, sortBy, sortOrder
+   - Returns paginated FileResDto[]
+
+2. **AC-4.5.2:** Pagination implemented
+   - Default: page=1, limit=20
+   - Max limit: 100 items per page
+   - Response includes meta: { page, limit, total, totalPages }
+   - Uses Prisma skip/take for pagination
+
+3. **AC-4.5.3:** Filtering implemented
+   - mimeType filter: Supports wildcards (e.g., "image/*", "application/pdf")
+   - search filter: Searches in originalName (case-insensitive LIKE)
+   - Filters combined with AND logic
+   - All filters optional
+
+4. **AC-4.5.4:** Sorting implemented
+   - Default: sortBy='createdAt', sortOrder='desc' (newest first)
+   - Supported sort fields: createdAt, filename, size, mimeType
+   - Sort order: 'asc' or 'desc'
+   - Invalid sort fields rejected (400 Bad Request)
+
+5. **AC-4.5.5:** Access control implemented
+   - Regular user: Only sees own files (WHERE userID = currentUserID)
+   - Admin with FILES.VIEW_ALL: Sees all files in domain (no userID filter)
+   - Always filtered by domainID (WHERE domainID = currentUserDomainID)
+   - Always excludes soft-deleted files (WHERE deletedAt IS NULL)
+
+6. **AC-4.5.6:** List response validated
+   - Response: { success: true, data: FileResDto[], meta: { page, limit, total, totalPages } }
+   - FileResDto[] is array of file metadata
+   - meta.total is count of all matching files (not just current page)
+   - meta.totalPages calculated correctly: Math.ceil(total / limit)
+
+7. **AC-4.5.7:** Performance validated
+   - Query uses indexes (domainID, userID, mimeType, deletedAt)
+   - Response time < 150ms (p95) for 20 items
+   - Pagination prevents loading entire table
+   - No N+1 queries
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/tech-spec-epic-4.md</path>
+        <title>Epic Technical Specification: File Management (AWS S3)</title>
+        <section>Story 4.5: File List Endpoint (Paginated)</section>
+        <snippet>Complete AC specifications (AC-4.5.1 through AC-4.5.7), pagination using Prisma skip/take pattern, filtering with wildcard support for mimeType, sorting with field validation, access control logic (regular users see own files, admin with FILES.VIEW_ALL sees all domain files), performance targets (response time < 150ms p95).</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-4.md</path>
+        <title>Epic Technical Specification: File Management (AWS S3)</title>
+        <section>Data Models and Contracts - QueryFilesDto</section>
+        <snippet>QueryFilesDto specification with validation decorators: @IsOptional() page (default: 1), limit (default: 20, max: 100), mimeType (string filter), search (string), sortBy (default: 'createdAt'), sortOrder (enum: 'asc' | 'desc'). Uses @Type(() => Number) for numeric fields.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-4.md</path>
+        <title>Epic Technical Specification: File Management (AWS S3)</title>
+        <section>APIs and Interfaces - File List Endpoint</section>
+        <snippet>GET /files endpoint specification: JwtAuthGuard (NO PermissionsGuard), query parameters for pagination/filtering/sorting, response format with data and meta (page, limit, total, totalPages), access control logic based on FILES.VIEW_ALL permission.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-4.md</path>
+        <title>Epic Technical Specification: File Management (AWS S3)</title>
+        <section>Performance - Database Query Performance</section>
+        <snippet>File list queries use pagination (skip/take), max 100 items per page. Database indexes on File entity: [domainID], [userID], [mimeType], [deletedAt]. Compound index consideration: [domainID, userID, deletedAt] for user file list queries. Response time target: < 150ms (p95) for 20 items.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/4-4-file-deletion-soft-delete.md</path>
+        <title>Story 4.4: File Deletion (Soft Delete)</title>
+        <section>AC-4.4.6 - Soft-deleted files excluded from list endpoint</section>
+        <snippet>GET /files must exclude files with deletedAt !== null. Admin with FILES.VIEW_ALL also doesn't see soft-deleted files. Soft-delete filter pattern established: WHERE deletedAt IS NULL must be applied to all query operations.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/modules/files/controllers/files.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>FilesController</symbol>
+        <lines>existing</lines>
+        <reason>Add new GET /files endpoint with listFiles() method. Existing structure has upload, download, delete endpoints established. Apply @UseGuards(JwtAuthGuard) (NO PermissionsGuard for list).</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/services/files.service.ts</path>
+        <kind>service</kind>
+        <symbol>FilesService</symbol>
+        <lines>existing</lines>
+        <reason>Implement listFiles(queryDto: QueryFilesDto, domainID: string, userID: string, hasViewAllPermission: boolean) method. Build filters, handle pagination, sorting, access control. Return { data: File[], meta: PaginationMeta }.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/dto/response/file-res.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>FileResDto</symbol>
+        <lines>existing</lines>
+        <reason>Reuse for list response (array of FileResDto). Already excludes sensitive fields (s3Key, s3Bucket, domainID, userID, deletedAt). Includes: id, filename, originalName, mimeType, size, sizeFormatted, createdAt.</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>File model</symbol>
+        <lines>existing</lines>
+        <reason>File entity with indexes on [domainID], [userID], [mimeType], [deletedAt]. Query performance optimized for filtering and sorting. deletedAt field used for soft-delete filtering (WHERE deletedAt IS NULL).</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>existing</lines>
+        <reason>Apply to GET /files endpoint for authentication. Extract user from JWT with @CurrentUser decorator.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/current-user.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>@CurrentUser</symbol>
+        <lines>existing</lines>
+        <reason>Extract user (domainID, userID, permissions) from JWT in listFiles() controller method.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/services/authorization.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthorizationService.hasPermission</symbol>
+        <lines>existing</lines>
+        <reason>Check if user has FILES.VIEW_ALL permission to determine if they can see all domain files (admin) or only own files (regular user).</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/constants/permissions.constant.ts</path>
+        <kind>constant</kind>
+        <symbol>FILES.VIEW_ALL</symbol>
+        <lines>existing</lines>
+        <reason>Permission constant for admin access to view all domain files. Used in access control logic for listFiles().</reason>
+      </artifact>
+      <artifact>
+        <path>test/files-upload.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>E2E test suite</symbol>
+        <lines>existing</lines>
+        <reason>Add E2E tests for GET /files endpoint. Test pagination, filtering, sorting, access control, domain isolation, soft-delete exclusion.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@nestjs/platform-express" version="^11.0.1" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="class-validator" version="^0.14.2" />
+        <package name="class-transformer" version="^0.5.1" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **Pagination Pattern:** Standard pagination using Prisma skip/take. Default: page=1, limit=20. Max limit: 100 (prevent performance issues). Meta includes: page, limit, total, totalPages.
+
+- **Filtering Strategy:** mimeType with wildcard support ("image/*" → Prisma: `mimeType: { startsWith: 'image/' }`). search filter: case-insensitive LIKE on originalName (Prisma: `originalName: { contains: search, mode: 'insensitive' }`). All filters optional, combined with AND logic.
+
+- **Sorting Mechanism:** Allowed sort fields: createdAt, filename, size, mimeType (validated to prevent SQL injection). Default: sortBy='createdAt', sortOrder='desc'. Invalid sort field → 400 Bad Request.
+
+- **Access Control Logic:** Regular user sees only own files (WHERE userID = currentUserID). Admin with FILES.VIEW_ALL sees all domain files (no userID filter). Domain isolation always enforced (WHERE domainID = currentUserDomainID). Soft-delete filtering always enforced (WHERE deletedAt IS NULL). NO PermissionsGuard on endpoint (custom logic in service based on FILES.VIEW_ALL).
+
+- **Performance Optimization:** Database indexes on [domainID], [userID], [mimeType], [deletedAt]. Compound index consideration: [domainID, userID, deletedAt] for user file list queries. Pagination prevents full table scans (skip/take limits query size). Response time target: < 150ms (p95) for 20 items.
+
+- **Soft-Delete Pattern Compliance:** All queries MUST include deletedAt === null filter. Soft-deleted files treated as non-existent (excluded from list). Even admin with FILES.VIEW_ALL cannot see soft-deleted files (no restore feature in MVP).
+
+- **Error Handling:** Invalid sortBy field → BadRequestException('Invalid sort field'). Invalid page/limit values → ValidationPipe handles (400 Bad Request). No files found → Return empty array with total: 0 (not an error).
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /files</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/files?page=1&limit=20&mimeType=image/*&search=document&sortBy=createdAt&sortOrder=desc</signature>
+      <path>src/modules/files/controllers/files.controller.ts</path>
+    </interface>
+    <interface>
+      <name>QueryFilesDto</name>
+      <kind>DTO class</kind>
+      <signature>class QueryFilesDto { page?: number; limit?: number; mimeType?: string; search?: string; sortBy?: string; sortOrder?: 'asc' | 'desc'; }</signature>
+      <path>src/modules/files/dto/request/query-files.dto.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>FilesService.listFiles</name>
+      <kind>Service method</kind>
+      <signature>listFiles(queryDto: QueryFilesDto, domainID: string, userID: string, hasViewAllPermission: boolean): Promise&lt;{ data: File[], meta: { page: number, limit: number, total: number, totalPages: number } }&gt;</signature>
+      <path>src/modules/files/services/files.service.ts</path>
+    </interface>
+    <interface>
+      <name>FileResDto</name>
+      <kind>Response DTO</kind>
+      <signature>class FileResDto { id: string; filename: string; originalName: string; mimeType: string; size: number; sizeFormatted: string; createdAt: Date; }</signature>
+      <path>src/modules/files/dto/response/file-res.dto.ts (EXISTING)</path>
+    </interface>
+    <interface>
+      <name>PaginationMeta</name>
+      <kind>Meta interface</kind>
+      <signature>interface PaginationMeta { page: number; limit: number; total: number; totalPages: number; }</signature>
+      <path>src/common/interfaces/ or inline in FilesService</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing follows NestJS testing standards using Jest. Unit tests for FilesService.listFiles() with mocked PrismaService and AuthorizationService. E2E tests for GET /files endpoint using Supertest with real database (test DB or in-memory). Test coverage targets: 90%+ for services, 80%+ for controllers. All tests must verify pagination, filtering, sorting, access control, domain isolation, and soft-delete exclusion.
+    </standards>
+    <locations>
+- Unit tests: src/modules/files/services/files.service.spec.ts
+- E2E tests: test/files-upload.e2e-spec.ts
+    </locations>
+    <ideas>
+**Unit Tests (FilesService.listFiles()):**
+- AC-4.5.5: Regular user → only own files returned (userID filter applied)
+- AC-4.5.5: Admin with FILES.VIEW_ALL → all domain files returned (no userID filter)
+- AC-4.5.2: Pagination (page=2, limit=5) → correct skip (5) and take (5)
+- AC-4.5.3: Filter by mimeType ('image/*') → only images returned
+- AC-4.5.3: Filter by search ('document') → only files matching originalName
+- AC-4.5.4: Sorting (sortBy='size', sortOrder='asc') → files sorted by size ascending
+- AC-4.5.5: Soft-deleted files excluded → files with deletedAt !== null not in results
+- AC-4.5.4: Invalid sortBy field → throws BadRequestException
+- AC-4.5.2: No files → returns empty array with total: 0
+- AC-4.5.6: Meta calculation → totalPages = Math.ceil(total / limit)
+
+**E2E Tests:**
+- AC-4.5.1: GET /files (regular user) → only own files returned
+- AC-4.5.5: GET /files (admin with FILES.VIEW_ALL) → all domain files returned
+- AC-4.5.2: Pagination (page=1, limit=10) → 10 items, meta correct
+- AC-4.5.3: Filter by mimeType ('application/pdf') → only PDFs
+- AC-4.5.3: Filter by search ('test') → matching files
+- AC-4.5.4: Sorting (sortBy='createdAt', sortOrder='desc') → newest first
+- AC-4.5.5: Domain isolation → user from domainA cannot see domainB files
+- AC-4.5.5: Soft-deleted files excluded → upload → delete → list → not in results
+- AC-4.5.1: Unauthorized (no JWT) → 401 Unauthorized
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,21 @@
+{
+  "MESSAGE_BODY_REQUIRED": "Mesaj metin veya ek içermelidir",
+  "QUOTED_MESSAGE_NOT_FOUND": "Alıntılanan mesaj bulunamadı",
+  "RECEIVER_NOT_FOUND": "Alıcı bulunamadı",
+  "GROUP_NAME_REQUIRED": "Grup adı gerekli",
+  "GROUP_MEMBER_NOT_FOUND": "Grup üyesi bulunamadı",
+  "OWNER_CANNOT_BE_REMOVED": "Grup sahibi kaldırılamaz",
+  "NO_MEMBER_TO_TRANSFER": "Sahiplik devri için başka üye yok",
+  "NOT_GROUP_MEMBER": "Bu grubun üyesi değilsiniz",
+  "NOT_GROUP_ADMIN": "Bu işlemi sadece grup yöneticileri yapabilir",
+  "UNSUPPORTED_AUDIO_TYPE": "Ses dosya türü desteklenmiyor",
+  "AUDIO_TOO_LARGE": "Ses dosyası çok büyük",
+  "ATTACHMENT_NOT_FOUND": "Ek bulunamadı",
+  "CANNOT_EDIT_DELETED": "Silinmiş mesaj düzenlenemez",
+  "CANNOT_EDIT_OTHERS": "Sadece kendi mesajlarınızı düzenleyebilirsiniz",
+  "MESSAGE_NOT_FOUND": "Mesaj bulunamadı",
+  "CANNOT_DELETE_OTHERS": "Sadece kendi mesajlarınızı silebilirsiniz",
+  "INVALID_METADATA_JSON": "Geçersiz metadata JSON",
+  "INVALID_EXISTING_FILE_IDS": "Geçersiz dosya kimliği listesi",
+  "ENCRYPTION_FAILED": "Mesaj şifrelenemedi"
+}

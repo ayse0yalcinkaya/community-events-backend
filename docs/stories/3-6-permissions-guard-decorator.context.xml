@@ -1,0 +1,284 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>6</storyId>
+    <title>Permissions Guard & Decorator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-6-permissions-guard-decorator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>route-level authorization ile @Permission decorator ve PermissionsGuard</iWant>
+    <soThat>endpoint'leri granular permission check'ler ile koruyabileyim</soThat>
+    <tasks>
+      - Task 1: Create @Permission decorator (AC: 3.6.1)
+        - Subtask 1.1: Create src/modules/permissions/decorators/permissions.decorator.ts
+        - Subtask 1.2: Implement decorator with SetMetadata('permission', { module, action })
+        - Subtask 1.3: Export decorator from permissions module
+        - Subtask 1.4: Update ActionEnum from permissions.constant.ts (if needed)
+
+      - Task 2: Create PermissionsGuard (AC: 3.6.2)
+        - Subtask 2.1: Create src/modules/permissions/guards/permissions.guard.ts
+        - Subtask 2.2: Implement CanActivate interface
+        - Subtask 2.3: Inject Reflector and AuthorizationService via constructor
+        - Subtask 2.4: Extract permission metadata from handler (Reflector.get('permission', context.getHandler()))
+        - Subtask 2.5: Check @Public() decorator, if present → return true (skip check)
+        - Subtask 2.6: Extract user from request.user (userID, domainID)
+        - Subtask 2.7: Call AuthorizationService.hasPermission(userID, domainID, `${module}.${action}`)
+        - Subtask 2.8: If hasPermission returns true → return true
+        - Subtask 2.9: If hasPermission returns false → throw ForbiddenException with message including required permission
+        - Subtask 2.10: Add guard to common module exports
+
+      - Task 3: Integrate guard with controllers (AC: 3.6.3)
+        - Subtask 3.1: Add PermissionsGuard to common/guards/index.ts exports
+        - Subtask 3.2: Example usage in UsersController: @UseGuards(JwtAuthGuard, PermissionsGuard) + @Permission('USERS', ActionEnum.CREATE) on POST /users
+        - Subtask 3.3: Verify guard order: JwtAuthGuard first (authenticate), then PermissionsGuard (authorize)
+        - Subtask 3.4: Test @Public() decorator skip logic
+
+      - Task 4: Create unit tests for PermissionsGuard (AC: 3.6.2)
+        - Subtask 4.1: Create src/modules/permissions/guards/permissions.guard.spec.ts
+        - Subtask 4.2: Setup test module with mock Reflector, AuthorizationService, ExecutionContext
+        - Subtask 4.3: Test: Permission granted (hasPermission true) → canActivate returns true
+        - Subtask 4.4: Test: Permission denied (hasPermission false) → canActivate throws ForbiddenException
+        - Subtask 4.5: Test: No @Permission metadata → return true (no permission required)
+        - Subtask 4.6: Test: @Public() decorator present → return true (skip check)
+        - Subtask 4.7: Test: Missing user in request → throw UnauthorizedException
+        - Subtask 4.8: Run tests and verify coverage → ≥85% target
+
+      - Task 5: Integration testing (AC: 3.6.3)
+        - Subtask 5.1: Create integration test for protected endpoint (e.g., POST /users)
+        - Subtask 5.2: Test: User with USERS.CREATE permission → 201 Created
+        - Subtask 5.3: Test: User without USERS.CREATE permission → 403 Forbidden
+        - Subtask 5.4: Test: Missing JWT token → 401 Unauthorized (JwtAuthGuard)
+        - Subtask 5.5: Test: Invalid JWT token → 401 Unauthorized
+        - Subtask 5.6: Test: @Public() endpoint → accessible without auth
+        - Subtask 5.7: Verify all existing controller tests still pass (no regressions)
+
+      - Task 6: Update documentation and examples
+        - Subtask 6.1: Add decorator usage example to permissions module README
+        - Subtask 6.2: Document guard setup in controller files (JSDoc comments)
+        - Subtask 6.3: Update tech docs with guard flow diagram reference
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-3.6.1: @Permission decorator oluşturulmuş
+    - Decorator signature: @Permission(module: string, action: ActionEnum)
+    - PermissionsGuard için metadata set ediyor
+    - Example usage: @Permission('USERS', ActionEnum.CREATE)
+    - Module ve action bilgileri reflector metadata olarak saklanıyor
+
+    AC-3.6.2: PermissionsGuard implemented
+    - CanActivate interface extend ediyor
+    - JwtAuthGuard'dan sonra execute oluyor (user zaten authenticated)
+    - Reflector ile @Permission metadata'sını extract ediyor
+    - AuthorizationService.hasPermission(userID, domainID, permission) çağırıyor
+    - Permission granted → return true (request devam eder)
+    - Permission denied → ForbiddenException throw (403 response)
+    - @Public() decorator varsa check skip ediliyor
+
+    AC-3.6.3: Guard integration with controllers
+    - @UseGuards(JwtAuthGuard, PermissionsGuard) ile controller'lara uygulanıyor
+    - @Permission decorator ile birlikte çalışıyor
+    - Example: Admin user create endpoint has @Permission('USERS', ActionEnum.CREATE)
+    - Test: Permission olan user → 200/201 OK
+    - Test: Permission olmayan user → 403 Forbidden
+    - Test: @Public() decorator → permission check skip
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management & RBAC Permissions</title>
+        <section>Story 3.6: Permissions Guard & Decorator - Acceptance Criteria</section>
+        <snippet>
+          AC-3.6.1: @Permission decorator created with signature @Permission(module, action).
+          AC-3.6.2: PermissionsGuard implements CanActivate, calls AuthorizationService.hasPermission(), throws ForbiddenException if denied.
+          AC-3.6.3: Guard applied via @UseGuards(JwtAuthGuard, PermissionsGuard) with @Permission decorator on endpoints.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management & RBAC Permissions</title>
+        <section>Workflows and Sequencing - Permission Check Flow</section>
+        <snippet>
+          Permission Check Flow: Client → JwtAuthGuard (validate JWT) → PermissionsGuard (extract metadata, call AuthorizationService.hasPermission) → Controller (if authorized).
+          ForbiddenException thrown if permission check returns false. Cross-domain access automatically blocked via domainID filtering.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management & RBAC Permissions</title>
+        <section>Shared Components (Common Module)</section>
+        <snippet>
+          @Permission(module, action) decorator marks route permission requirement. PermissionsGuard executes permission checks.
+          Execution order: JwtAuthGuard (authentication) → PermissionsGuard (authorization). @Public() decorator allows opt-out from checks.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management & RBAC Permissions</title>
+        <section>Test Strategy Summary - Unit Tests</section>
+        <snippet>
+          PermissionsGuard unit tests: Target ≥85% coverage. Mock Reflector, AuthorizationService, ExecutionContext.
+          Test scenarios: Permission granted/denied, no metadata, @Public() present, missing user. Tools: Jest, @nestjs/testing.
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-5-authorization-service.md</path>
+        <title>Story 3.5: Authorization Service</title>
+        <section>Dev Agent Record - Completion Notes</section>
+        <snippet>
+          AuthorizationService.hasPermission() fully implemented with signature hasPermission(userID, domainID, permission): Promise&lt;boolean&gt;.
+          Optimized queries with eager loading, domainID filtering enforced. 13/13 unit tests passing with 100% coverage.
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/modules/permissions/services/authorization.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthorizationService.hasPermission</symbol>
+        <lines>38-83</lines>
+        <reason>Core method to call from PermissionsGuard - checks if user has specific permission with domainID filtering</reason>
+      </file>
+      <file>
+        <path>src/modules/permissions/constants/permissions.constant.ts</path>
+        <kind>constants</kind>
+        <symbol>PERMISSIONS, ActionEnum</symbol>
+        <lines>1-37</lines>
+        <reason>Permission constants and ActionEnum type used in @Permission decorator signature</reason>
+      </file>
+      <file>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>1-60</lines>
+        <reason>Reference for guard implementation pattern and @Public() decorator check. PermissionsGuard executes after this guard.</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public, IS_PUBLIC_KEY</symbol>
+        <lines>1-22</lines>
+        <reason>@Public() decorator constant (IS_PUBLIC_KEY) used to skip permission checks. PermissionsGuard must check for this metadata.</reason>
+      </file>
+      <file>
+        <path>src/modules/permissions/services/authorization.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthorizationService tests</symbol>
+        <lines>all</lines>
+        <reason>Reference test patterns for mocking PrismaService and testing service methods. Follow similar patterns for PermissionsGuard tests.</reason>
+      </file>
+      <file>
+        <path>src/modules/permissions/permissions.module.ts</path>
+        <kind>module</kind>
+        <symbol>PermissionsModule</symbol>
+        <lines>all</lines>
+        <reason>Module must export PermissionsGuard and @Permission decorator for use in controllers</reason>
+      </file>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="@nestjs/common" version="^11.0.1" usage="Injectable, CanActivate, ForbiddenException decorators/classes" />
+        <package name="@nestjs/core" version="^11.0.1" usage="Reflector for extracting decorator metadata" />
+        <package name="@nestjs/passport" version="^11.0.5" usage="AuthGuard base class for JwtAuthGuard" />
+        <package name="@nestjs/testing" version="devDependency" usage="Test.createTestingModule for unit tests" />
+        <package name="jest" version="devDependency" usage="Test framework for unit/integration tests" />
+        <package name="reflect-metadata" version="^0.2.2" usage="Metadata reflection support for decorators" />
+      </nodejs>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Guard must be stateless (no internal state between requests)
+    - Performance target: &lt;50ms execution time (calls optimized AuthorizationService)
+    - Error messages must include required permission in ForbiddenException for debugging
+    - @Public() decorator support is MANDATORY - must skip permission checks
+    - Guard execution order is CRITICAL: JwtAuthGuard MUST execute before PermissionsGuard
+    - Multi-tenancy: domainID must be extracted from request.user and passed to AuthorizationService
+    - Permission format: Must combine module and action as 'MODULE.ACTION' string before calling hasPermission()
+    - TypeScript strict mode: All code must compile with strict type checking
+    - No database changes allowed - pure guard/decorator logic only
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>AuthorizationService.hasPermission</name>
+      <kind>service method</kind>
+      <signature>async hasPermission(userID: string, domainID: string, permission: string): Promise&lt;boolean&gt;</signature>
+      <path>src/modules/permissions/services/authorization.service.ts</path>
+      <usage>Call from PermissionsGuard to check if authenticated user has required permission</usage>
+    </interface>
+    <interface>
+      <name>CanActivate interface</name>
+      <kind>NestJS interface</kind>
+      <signature>canActivate(context: ExecutionContext): boolean | Promise&lt;boolean&gt; | Observable&lt;boolean&gt;</signature>
+      <path>@nestjs/common</path>
+      <usage>PermissionsGuard must implement this interface to integrate with NestJS guard system</usage>
+    </interface>
+    <interface>
+      <name>@Permission decorator signature</name>
+      <kind>decorator</kind>
+      <signature>@Permission(module: string, action: ActionEnum)</signature>
+      <path>src/modules/permissions/decorators/permissions.decorator.ts (NEW)</path>
+      <usage>Decorator to mark routes with required permission. Sets metadata for PermissionsGuard to extract.</usage>
+    </interface>
+    <interface>
+      <name>Reflector.get / getAllAndOverride</name>
+      <kind>NestJS Reflector</kind>
+      <signature>get&lt;T&gt;(metadataKey: string, target: Function): T | undefined</signature>
+      <path>@nestjs/core</path>
+      <usage>Extract @Permission metadata and @Public() metadata from route handlers in PermissionsGuard</usage>
+    </interface>
+    <interface>
+      <name>ExecutionContext</name>
+      <kind>NestJS interface</kind>
+      <signature>getHandler(): Function, getRequest(): Request, etc.</signature>
+      <path>@nestjs/common</path>
+      <usage>Context parameter in canActivate() - use to extract handler metadata and request object</usage>
+    </interface>
+    <interface>
+      <name>request.user object</name>
+      <kind>JWT payload</kind>
+      <signature>{ userID: string, domainID: string, phoneNumber: string, roles: string[] }</signature>
+      <path>set by JwtAuthGuard via JwtStrategy</path>
+      <usage>Extract userID and domainID from authenticated user for permission check</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests using Jest framework with @nestjs/testing utilities.
+      Mock all dependencies (Reflector, AuthorizationService, ExecutionContext).
+      Target: ≥85% coverage for PermissionsGuard.
+      Test file location: src/modules/permissions/guards/permissions.guard.spec.ts.
+      Follow patterns from authorization.service.spec.ts for mocking and test structure.
+      Integration tests verify guard chain (JwtAuthGuard → PermissionsGuard) with real endpoints.
+    </standards>
+    <locations>
+      - src/modules/permissions/guards/permissions.guard.spec.ts (unit tests - NEW)
+      - test/ directory for integration/e2e tests
+      - Follow existing test patterns in src/modules/permissions/services/authorization.service.spec.ts
+    </locations>
+    <ideas>
+      - AC-3.6.1: Test @Permission decorator sets correct metadata (unit)
+      - AC-3.6.2: Test PermissionsGuard.canActivate returns true when hasPermission returns true (unit)
+      - AC-3.6.2: Test PermissionsGuard throws ForbiddenException when hasPermission returns false (unit)
+      - AC-3.6.2: Test PermissionsGuard returns true when no @Permission metadata present (unit)
+      - AC-3.6.2: Test PermissionsGuard returns true when @Public() decorator present (unit)
+      - AC-3.6.2: Test PermissionsGuard throws UnauthorizedException when request.user missing (unit)
+      - AC-3.6.2: Test PermissionsGuard extracts userID and domainID from request.user correctly (unit)
+      - AC-3.6.2: Test PermissionsGuard combines module and action as 'MODULE.ACTION' string (unit)
+      - AC-3.6.3: Integration test: POST /users with USERS.CREATE permission succeeds (201)
+      - AC-3.6.3: Integration test: POST /users without USERS.CREATE permission fails (403)
+      - AC-3.6.3: Integration test: Missing JWT token fails (401)
+      - AC-3.6.3: Integration test: @Public() endpoint accessible without auth (200)
+      - AC-3.6.3: Regression test: Verify all existing controller tests still pass
+    </ideas>
+  </tests>
+</story-context>

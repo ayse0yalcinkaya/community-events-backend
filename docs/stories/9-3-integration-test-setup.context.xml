@@ -1,0 +1,282 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>3</storyId>
+    <title>Integration Test Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-3-integration-test-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>integration test setup</iWant>
+    <soThat>API endpoint'lerini gerçek database ile test edebilleyim</soThat>
+    <tasks>
+      - Task 1: Test Database Setup - test/setup.ts Oluştur (AC: 9.3.1, 9.3.2)
+      - Task 2: Integration Test Infrastructure - Users Controller Test Dosyası (AC: 9.3.3)
+      - Task 3: GET /users Integration Tests (AC: 9.3.4, 9.3.8)
+      - Task 4: POST /users Integration Tests (AC: 9.3.5, 9.3.8)
+      - Task 5: PATCH /users/:id Integration Tests (AC: 9.3.6, 9.3.8)
+      - Task 6: DELETE /users/:id Integration Tests (AC: 9.3.7, 9.3.8)
+      - Task 7: Performance Validation (AC: 9.3.9)
+      - Task 8: Documentation and README Update (AC: 9.3.3)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+### AC-9.3.1: Test Database Configuration and Setup
+- Separate test database (`boilerplate_test`) configured
+- DATABASE_URL override ile test database'e bağlanılıyor
+- `beforeAll` hook'unda database connection kurulmuş
+- `afterAll` hook'unda database connection kapatılmış
+- Test environment için Prisma client instance oluşturulmuş
+
+### AC-9.3.2: Table Cleanup Between Tests
+- `beforeEach` hook'unda test database tables temizleniyor (user, permission, role, vb.)
+- Truncate veya deleteMany stratejisi ile hızlı cleanup
+- Foreign key constraints göz önünde bulundurularak doğru sırada cleanup
+- Seed data minimal tutulmuş (test-specific data)
+
+### AC-9.3.3: Integration Test Example - Users Controller
+- TestingModule ile full application context oluşturulmuş
+- Real database queries execute ediliyor (mock yok)
+- HTTP request/response validation yapılıyor
+- Test pattern: Setup → Seed → Execute → Verify DB State → Cleanup
+
+### AC-9.3.4: GET /users Endpoint Integration Test
+- Test case: "should return paginated users list"
+- Test case: "should return empty list when no users"
+- Test case: "should filter soft-deleted users"
+
+### AC-9.3.5: POST /users Endpoint Integration Test
+- Test case: "should create user successfully"
+- Test case: "should return 409 when email exists"
+- Test case: "should validate DTO fields"
+
+### AC-9.3.6: PATCH /users/:id Endpoint Integration Test
+- Test case: "should update user successfully"
+- Test case: "should return 404 when user not found"
+- Test case: "should return 409 when updating to existing phoneNumber"
+
+### AC-9.3.7: DELETE /users/:id Endpoint Integration Test
+- Test case: "should soft-delete user successfully"
+- Test case: "should return 404 when user not found for delete"
+- Test case: "should not hard-delete user"
+
+### AC-9.3.8: Database State Verification
+- PrismaService kullanarak database'den user query edilebilmeli
+- Created/Updated/Deleted users database'de verify edilebilmeli
+- Relations (user → permissions, user → roles) doğru load edilmiş
+- Test data isolation sağlanmış (test'ler birbirini etkilemiyor)
+
+### AC-9.3.9: Performance and Execution Time
+- Her integration test < 5 saniye execute edilmeli
+- Database cleanup overhead minimal (< 100ms per test)
+- Full integration test suite < 30 saniye tamamlanmalı
+- Parallel execution desteklenmeli (test isolation sayesinde)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Integration Test Pattern</section>
+        <snippet>Integration test workflow: Setup (beforeAll) → Prepare (beforeEach with cleanup) → Execute (real HTTP/DB) → Verify (response + DB state) → Cleanup (afterEach) → Teardown (afterAll). Use TestingModule with full AppModule, real PrismaService, separate test database.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Test Database Schema</section>
+        <snippet>Separate test database (boilerplate_test), same schema as production via Prisma migrations. Clean state between tests via truncate/deleteMany. Seed minimal data per test scenario.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Integration Test Workflow</section>
+        <snippet>Setup: Connect to test DB, bootstrap NestJS. Prepare: Truncate tables, seed test data. Execute: Send HTTP or call service. Verify: Assert response AND database state. Cleanup: Truncate tables. Teardown: Close connections and app.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-9-testing-infrastructure.md</path>
+        <title>Epic 9: Testing Infrastructure</title>
+        <section>Story 9.3: Integration Test Setup</section>
+        <snippet>Integration test setup for API endpoint testing with real database. Includes test DB config, table cleanup, Users controller integration test examples covering GET/POST/PATCH/DELETE endpoints with database state verification.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/9-1-jest-configuration-test-setup.md</path>
+        <title>Story 9.1: Jest Configuration & Test Setup</title>
+        <section>Completion Notes</section>
+        <snippet>Jest v30 configured with ts-jest, coverage thresholds (70% global, 80% services, 100% common), module path aliases working, test scripts functional (test, test:watch, test:cov, test:e2e).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/9-2-unit-test-examples-service-layer.md</path>
+        <title>Story 9.2: Unit Test Examples</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Unit test pattern established: AAA (Arrange-Act-Assert), TestingModule for DI, mock all dependencies. Key difference: Unit tests mock everything, integration tests use real database and services.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/modules/users/controllers/users.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>UsersController</symbol>
+        <lines></lines>
+        <reason>Controller under test - contains GET/POST/PATCH/DELETE endpoints for users that need integration testing</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/services/users.service.ts</path>
+        <kind>service</kind>
+        <symbol>UsersService</symbol>
+        <lines></lines>
+        <reason>Service layer to be invoked through real HTTP requests in integration tests (not mocked)</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/services/users.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersService unit tests</symbol>
+        <lines></lines>
+        <reason>Reference for unit test patterns with AAA structure and mocking - DO NOT replicate mocking in integration tests</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/request/create-user.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>CreateUserDto</symbol>
+        <lines></lines>
+        <reason>DTO for POST /users endpoint testing - use for valid/invalid request payloads</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/request/update-user.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>UpdateUserDto</symbol>
+        <lines></lines>
+        <reason>DTO for PATCH /users/:id endpoint testing - use for update request payloads</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/request/query-user.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>QueryUserDto</symbol>
+        <lines></lines>
+        <reason>DTO for GET /users query parameters (pagination, filtering)</reason>
+      </artifact>
+      <artifact>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines></lines>
+        <reason>Real PrismaService instance to be used for database cleanup and verification in integration tests</reason>
+      </artifact>
+      <artifact>
+        <path>jest.config.js</path>
+        <kind>config</kind>
+        <symbol>Jest configuration</symbol>
+        <lines></lines>
+        <reason>Jest test configuration with coverage thresholds, path aliases, and test patterns</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/users.module.ts</path>
+        <kind>module</kind>
+        <symbol>UsersModule</symbol>
+        <lines></lines>
+        <reason>NestJS module definition - helps understand dependencies for full app context</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/testing" version="^11.0.1" scope="devDependencies">NestJS testing utilities - TestingModule, Test class for integration test setup</package>
+        <package name="jest" version="^30.0.0" scope="devDependencies">Test framework for running integration tests</package>
+        <package name="ts-jest" version="^29.2.5" scope="devDependencies">TypeScript preprocessor for Jest</package>
+        <package name="supertest" version="^7.0.0" scope="devDependencies">HTTP assertion library for testing NestJS endpoints</package>
+        <package name="@types/supertest" version="^6.0.2" scope="devDependencies">TypeScript types for supertest</package>
+        <package name="@nestjs/common" version="^11.0.1" scope="dependencies">NestJS core - provides exception classes (NotFoundException, ConflictException)</package>
+        <package name="@nestjs/core" version="^11.0.1" scope="dependencies">NestJS core framework for bootstrapping test app</package>
+        <package name="@nestjs/platform-express" version="^11.0.1" scope="dependencies">Express adapter for NestJS (required for HTTP testing)</package>
+        <package name="@prisma/client" version="^6.18.0" scope="dependencies">Prisma client for real database operations in integration tests</package>
+        <package name="prisma" version="^6.18.0" scope="devDependencies">Prisma CLI for database migrations and schema management</package>
+        <package name="class-transformer" version="^0.5.1" scope="dependencies">DTO transformation (used in validation)</package>
+        <package name="class-validator" version="^0.14.2" scope="dependencies">DTO validation decorators</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Use separate test database (boilerplate_test), never use production database
+    - NO MOCKING in integration tests - use real PrismaService, real database, real HTTP requests
+    - Follow integration test pattern: Setup (beforeAll) → Prepare (beforeEach cleanup) → Execute → Verify DB State → Cleanup (afterEach) → Teardown (afterAll)
+    - Test file naming: *.integration.spec.ts (e.g., users.controller.integration.spec.ts)
+    - Test files in src/modules/[module]/__tests__/ directory
+    - Use TestingModule with full AppModule import (not mocked modules)
+    - Database cleanup in correct foreign key order: dependent tables first (userPermissions → permissions → users → domains)
+    - Each test must verify both HTTP response AND database state
+    - Performance requirement: < 5 seconds per test, < 30 seconds full suite
+    - Database cleanup overhead: < 100ms per test
+    - Test isolation: Tests must run independently and in parallel
+    - Seed minimal data per test (only what's needed for that specific test)
+    - Use AAA pattern from unit tests (Arrange-Act-Assert) but with real dependencies
+    - Integration tests complement unit tests (unit = mocked, integration = real)
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>GET /users</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /users?page=1&limit=10&role=admin&search=query</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+    </interface>
+    <interface>
+      <name>POST /users</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /users - Body: CreateUserDto (email, password, firstName, lastName, phone, etc.)</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+    </interface>
+    <interface>
+      <name>PATCH /users/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>PATCH /users/:id - Params: id (UUID), Body: UpdateUserDto (partial user fields)</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+    </interface>
+    <interface>
+      <name>DELETE /users/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>DELETE /users/:id - Params: id (UUID) - Soft delete (sets deletedAt)</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+    </interface>
+    <interface>
+      <name>TestingModule.createTestingModule</name>
+      <kind>NestJS testing API</kind>
+      <signature>Test.createTestingModule({ imports: [AppModule] }).compile() → TestingModule</signature>
+      <path>@nestjs/testing</path>
+    </interface>
+    <interface>
+      <name>PrismaService.user.deleteMany</name>
+      <kind>Database cleanup method</kind>
+      <signature>await prisma.user.deleteMany({}) → { count: number }</signature>
+      <path>src/database/prisma.service.ts</path>
+    </interface>
+    <interface>
+      <name>setupTestDatabase helper</name>
+      <kind>Test utility function</kind>
+      <signature>async function setupTestDatabase(prisma: PrismaService): Promise&lt;void&gt; - Cleans all tables in correct foreign key order</signature>
+      <path>test/setup.ts (TO BE CREATED)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest v30 with ts-jest for TypeScript support. Integration test pattern: TestingModule with full AppModule, real PrismaService (no mocks), supertest for HTTP assertions. AAA pattern (Arrange-Act-Assert). Test database (boilerplate_test) cleaned before each test. Verify both HTTP response AND database state. File naming: *.integration.spec.ts in src/modules/[module]/__tests__/ directory.</standards>
+    <locations>
+      - src/modules/users/__tests__/users.controller.integration.spec.ts (TO CREATE)
+      - test/setup.ts (TO CREATE - database cleanup helper)
+      - src/modules/*/controllers/*.integration.spec.ts (pattern for future integration tests)
+    </locations>
+    <ideas>
+      - AC-9.3.1: Create test database setup helper in test/setup.ts - exports setupTestDatabase(prisma) function
+      - AC-9.3.2: setupTestDatabase cleans tables in correct FK order: userPermissions, notificationPreferences, permissions, users, domains
+      - AC-9.3.3: Create users.controller.integration.spec.ts with full app bootstrap (TestingModule + AppModule)
+      - AC-9.3.4: Test GET /users - paginated list (seed 5 users), empty list, soft-delete filtering
+      - AC-9.3.5: Test POST /users - successful creation with DB verification, conflict on duplicate email, validation errors
+      - AC-9.3.6: Test PATCH /users/:id - successful update with DB verification, 404 not found, conflict on duplicate phoneNumber
+      - AC-9.3.7: Test DELETE /users/:id - soft delete with DB verification (deletedAt set), 404 not found, verify no hard delete
+      - AC-9.3.8: Every test verifies database state using prisma.user.findUnique/findMany after HTTP request
+      - AC-9.3.9: Measure and verify test execution time (< 5s per test, < 30s suite), optimize cleanup if needed
+    </ideas>
+  </tests>
+</story-context>

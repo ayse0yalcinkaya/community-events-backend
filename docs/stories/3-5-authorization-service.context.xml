@@ -1,0 +1,250 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.5</storyId>
+    <title>Authorization Service</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-5-authorization-service.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>centralized authorization service</iWant>
+    <soThat>user permission check'leri consistent ve performant olsun</soThat>
+    <tasks>
+      - Task 1: Create AuthorizationService class (AC: 3.5.1, 3.5.2)
+      - Task 2: Implement hasPermission() method (AC: 3.5.1)
+        * Extract module and action from permission string
+        * Query role-based permissions via Prisma (UserRole → RolePermission)
+        * Query direct permissions via Prisma (UserPermission)
+        * Flatten and combine role + direct permissions
+        * Check if permission exists in combined array
+        * Return boolean result
+      - Task 3: Implement getUserPermissions() method (AC: 3.5.2)
+        * Query role-based and direct permissions
+        * Flatten and combine permission arrays
+        * Deduplicate permissions using Map with key ${module}.${action}
+        * Return deduplicated permission array
+      - Task 4: Query optimization (AC: 3.5.1)
+        * Verify database indexes (already exist from Story 3.4)
+        * Test query performance (target < 50ms p95)
+      - Task 5: Create unit tests for AuthorizationService (AC: 3.5.3)
+        * Test role-based permission → true
+        * Test direct permission → true
+        * Test no permission → false
+        * Test cross-domain permission → false
+        * Test combined permissions (role + direct)
+        * Test permission deduplication
+        * Verify ≥ 85% coverage
+      - Task 6: Integration testing (AC: 3.5.1, 3.5.2)
+        * Test with real database
+        * Test combined permissions
+        * Test domainID isolation
+        * Measure query performance
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-3.5.1: AuthorizationService.hasPermission() implemented
+    - Method signature: hasPermission(userID: string, domainID: string, permission: string): Promise&lt;boolean&gt;
+    - Query role-based permissions (UserRole → RolePermission → Permission)
+    - Query direct permissions (UserPermission → Permission)
+    - Union of both sources (role + direct)
+    - Permission found → return true, not found → return false
+    - domainID filtering enforced (multi-tenancy)
+    - Single optimized query (JOIN, no N+1)
+
+    AC-3.5.2: AuthorizationService.getUserPermissions() implemented
+    - Method signature: getUserPermissions(userID: string, domainID: string): Promise&lt;Permission[]&gt;
+    - Returns combined permissions (role-based + direct)
+    - Deduplicates permissions (unique by [module, action])
+    - domainID filtering enforced
+    - Eager loading (include relations, no N+1)
+
+    AC-3.5.3: Unit tests for AuthorizationService
+    - Test: User with role-based permission → hasPermission returns true
+    - Test: User with direct permission → hasPermission returns true
+    - Test: User with no permission → hasPermission returns false
+    - Test: User with permission in different domain → hasPermission returns false
+    - Test: getUserPermissions returns union of role + direct permissions
+    - Test: getUserPermissions deduplicates permissions
+    - Test coverage: ≥ 85% for AuthorizationService
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management &amp; RBAC Permissions</title>
+        <section>Story 3.5: Authorization Service</section>
+        <snippet>Defines IAuthorizationService interface with hasPermission() and getUserPermissions() methods. Specifies hybrid permission model (role-based + direct assignment), multi-tenancy enforcement via domainID, and performance targets (&lt;50ms p95 for hasPermission).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management &amp; RBAC Permissions</title>
+        <section>Detailed Design - Services and Modules</section>
+        <snippet>AuthorizationService responsibility: Permission checking with userID, domainID, permission string inputs. Returns boolean (hasPermission) or Permission[] (getUserPermissions). Key operations include querying UserRole→RolePermission + UserPermission for combined permissions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management &amp; RBAC Permissions</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Permission entity (id, module, action, description), Role entity (id, domainID, name), UserRole junction (userID, roleID, domainID), RolePermission junction (roleID, permissionID), UserPermission direct assignment (userID, permissionID, domainID). All with proper indexes and cascade deletes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management &amp; RBAC Permissions</title>
+        <section>Workflows and Sequencing - Permission Check Flow</section>
+        <snippet>Flow diagram: User → AuthorizationService.hasPermission() → Query UserRole→RolePermission + UserPermission → Check permission in combined results → Return true/false. Emphasizes domainID filtering and single optimized query.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management &amp; RBAC Permissions</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>Permission check target: &lt;50ms (p95) - critical path. Query optimization via Prisma include for eager loading (avoid N+1). Future: Redis caching Phase 2 (TTL: 5 min, invalidate on permission change). Database indexes on UserRole, UserPermission, RolePermission for fast lookups.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management &amp; RBAC Permissions</title>
+        <section>Test Strategy Summary - Unit Tests</section>
+        <snippet>AuthorizationService unit tests: Mock PrismaService, test hasPermission() with role-based, direct, no permission, cross-domain scenarios. Test getUserPermissions() for combined permissions and deduplication. Target: 85% coverage. Tools: Jest, @nestjs/testing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boilerplate - Epic Breakdown</title>
+        <section>Story 3.5: Authorization Service</section>
+        <snippet>User story: As a developer, I want centralized authorization service, so that user permission check'leri consistent olsun. Acceptance criteria: hasPermission() method, getUserPermissions() method, unit tests with 85% coverage.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-4-role-permission-assignment-entities.md</path>
+        <title>Story 3.4: Role &amp; Permission Assignment Entities</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>All entities (Role, UserRole, RolePermission, UserPermission, Permission) already exist in schema. Indexes optimized: UserRole [userID, roleID, domainID], UserPermission [userID, permissionID, domainID], RolePermission [roleID, permissionID]. Cascade delete configured. Database 100% synchronized, ready to query.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/modules/permissions/services/authorization.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthorizationService</symbol>
+        <lines>1-42</lines>
+        <reason>STUB IMPLEMENTATION exists. Currently returns TRUE for all permission checks. Must be replaced with full implementation querying UserRole, RolePermission, UserPermission entities with Prisma.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/permissions.module.ts</path>
+        <kind>module</kind>
+        <symbol>PermissionsModule</symbol>
+        <lines>1-19</lines>
+        <reason>Already provides and exports AuthorizationService. No changes needed for this story - service implementation only.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/constants/permissions.constant.ts</path>
+        <kind>constants</kind>
+        <symbol>PERMISSIONS</symbol>
+        <lines>1-37</lines>
+        <reason>Permission constant object with format MODULE.ACTION (e.g., 'USERS.CREATE'). Used for permission string parsing in hasPermission() method.</reason>
+      </artifact>
+      <artifact>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>1-30</lines>
+        <reason>Extends PrismaClient, provides database access. Must be injected into AuthorizationService constructor for querying permission entities.</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>Permission, Role, UserRole, RolePermission, UserPermission</symbol>
+        <lines>99-181</lines>
+        <reason>Complete permission entity definitions with indexes. Permission (lines 99-113), Role (lines 115-129), UserPermission (lines 131-147), UserRole (lines 149-165), RolePermission (lines 167-181). All entities ready with proper relations and indexes.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthService unit tests</symbol>
+        <lines>1-50</lines>
+        <reason>Example test setup pattern: Test.createTestingModule() with mocked PrismaService. Shows how to mock Prisma methods (findUnique, create, etc.) for unit testing. Follow same pattern for authorization.service.spec.ts.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency name="@nestjs/common" version="^11.0.1" />
+        <dependency name="@nestjs/core" version="^11.0.1" />
+        <dependency name="@nestjs/testing" version="^11.0.1" />
+        <dependency name="@prisma/client" version="^6.18.0" />
+        <dependency name="jest" version="^30.0.0" />
+        <dependency name="ts-jest" version="^29.2.5" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Hybrid Permission Model: User permissions = role-based (UserRole→RolePermission) UNION direct (UserPermission)
+    - Multi-Tenancy Mandatory: All permission queries MUST include domainID filtering
+    - Performance Target: hasPermission() &lt; 50ms (p95), getUserPermissions() &lt; 100ms (p95)
+    - Query Optimization: Use Prisma include for eager loading, avoid N+1 queries
+    - Single Query Pattern: Combine role and direct permission queries efficiently
+    - Permission String Format: 'MODULE.ACTION' (e.g., 'USERS.CREATE', 'USERS.VIEW')
+    - Testing Standards: Unit tests with ≥85% coverage using Jest + @nestjs/testing
+    - Mock Pattern: Mock PrismaService in unit tests (jest.Mocked&lt;PrismaService&gt;)
+    - TypeScript Strict Mode: All code must comply with strict type checking
+    - NestJS Patterns: Use @Injectable() decorator, constructor injection for dependencies
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>IAuthorizationService.hasPermission</name>
+      <kind>method signature</kind>
+      <signature>hasPermission(userID: string, domainID: string, permission: string): Promise&lt;boolean&gt;</signature>
+      <path>docs/tech-spec-epic-3.md#Services-and-Modules</path>
+    </interface>
+    <interface>
+      <name>IAuthorizationService.getUserPermissions</name>
+      <kind>method signature</kind>
+      <signature>getUserPermissions(userID: string, domainID: string): Promise&lt;Permission[]&gt;</signature>
+      <path>docs/tech-spec-epic-3.md#Services-and-Modules</path>
+    </interface>
+    <interface>
+      <name>PrismaClient.userRole</name>
+      <kind>Prisma model accessor</kind>
+      <signature>prisma.userRole.findMany({ where, include })</signature>
+      <path>src/database/prisma.service.ts</path>
+    </interface>
+    <interface>
+      <name>PrismaClient.userPermission</name>
+      <kind>Prisma model accessor</kind>
+      <signature>prisma.userPermission.findMany({ where, include })</signature>
+      <path>src/database/prisma.service.ts</path>
+    </interface>
+    <interface>
+      <name>Permission Entity Type</name>
+      <kind>TypeScript type</kind>
+      <signature>{ id: string; module: string; action: string; description?: string; createdAt: Date }</signature>
+      <path>@prisma/client (generated)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests use Jest framework with @nestjs/testing utilities. Mock PrismaService using jest.Mocked&lt;T&gt; pattern. Test file naming: *.spec.ts. Tests located in same directory as source files. Use Test.createTestingModule() to create isolated test modules. Mock all external dependencies (PrismaService). Coverage target: ≥85% for services. Run tests: npm test, coverage: npm run test:cov.
+    </standards>
+    <locations>
+      - src/modules/permissions/services/authorization.service.spec.ts (NEW - this story)
+      - src/**/*.spec.ts (existing test pattern)
+    </locations>
+    <ideas>
+      - AC-3.5.1: Test hasPermission() returns true when user has role-based permission (mock UserRole with nested RolePermission)
+      - AC-3.5.1: Test hasPermission() returns true when user has direct permission (mock UserPermission)
+      - AC-3.5.1: Test hasPermission() returns false when user has no permission (mock empty arrays)
+      - AC-3.5.1: Test hasPermission() returns false for cross-domain permission (mock permission with different domainID)
+      - AC-3.5.1: Test hasPermission() correctly parses permission string 'USERS.CREATE' into module='USERS', action='CREATE'
+      - AC-3.5.2: Test getUserPermissions() returns combined role + direct permissions
+      - AC-3.5.2: Test getUserPermissions() deduplicates permissions when same permission exists in both role and direct
+      - AC-3.5.2: Test getUserPermissions() enforces domainID filtering
+      - AC-3.5.3: Integration test: hasPermission() with real database (seed User, Role, Permissions, assignments)
+      - AC-3.5.3: Integration test: Measure query performance (< 50ms target)
+    </ideas>
+  </tests>
+</story-context>

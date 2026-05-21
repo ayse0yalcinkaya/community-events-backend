@@ -1,0 +1,135 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6.5</epicId>
+    <storyId>6.5.1</storyId>
+    <title>Common Cache Service (SHA-256 Hash-Based)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6.5-1-common-cache-service-sha-256-hash-based.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>proje genelinde kullanılabilir hash-based caching system</iWant>
+    <soThat>tüm modüllerde cache ihtiyacı olan operasyonlar için reusable cache servisi kullanabilirim</soThat>
+    <tasks>
+      <task id="1" ac="6.5.1">CacheService class oluştur</task>
+      <task id="2" ac="6.5.2">generateCacheKey() Method implement et</task>
+      <task id="3" ac="6.5.3">get&lt;T&gt;() Method implement et</task>
+      <task id="4" ac="6.5.4">set&lt;T&gt;() Method implement et</task>
+      <task id="5" ac="6.5.5">delete() Method implement et</task>
+      <task id="6" ac="6.5.6">clear() Method implement et</task>
+      <task id="7" ac="6.5.7">SHA-256 Hash Generation implement et</task>
+      <task id="8" ac="6.5.8">NestJS Cache Module Integration implement et</task>
+      <task id="9" ac="6.5.9">CommonModule Export implement et</task>
+      <task id="10" ac="6.5.10">Unit Tests implement et</task>
+      <task id="11" ac="6.5.11">Integration Tests implement et</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="6.5.1">CacheService oluşturulmuş - src/common/services/cache.service.ts, Dependencies: NestJS @nestjs/cache-manager, Cache instance (injected via CACHE_MANAGER), Default TTL: 1 hour (3600000ms), Generic type support</ac>
+    <ac id="6.5.2">generateCacheKey() Method implement edilmiş - Method signature: generateCacheKey(prefix: string, ...parts: any[]): string, Generic key generation: {prefix}:{hash(parts)}, SHA-256 hash, Consistent hash</ac>
+    <ac id="6.5.3">get&lt;T&gt;() Method implement edilmiş - Method signature: get&lt;T&gt;(key: string): Promise&lt;T | null&gt;, Retrieve cached value, Cache miss durumunda null return</ac>
+    <ac id="6.5.4">set&lt;T&gt;() Method implement edilmiş - Method signature: set&lt;T&gt;(key: string, value: T, ttl?: number): Promise&lt;void&gt;, Store value with optional TTL, Default TTL: 3600000ms</ac>
+    <ac id="6.5.5">delete() Method implement edilmiş - Method signature: delete(key: string): Promise&lt;void&gt;, Invalidate cache entry, Idempotent</ac>
+    <ac id="6.5.6">clear() Method implement edilmiş - Method signature: clear(): Promise&lt;void&gt;, Clear all cache entries</ac>
+    <ac id="6.5.7">SHA-256 Hash Generation implement edilmiş - generateDataHash() private method, sortObjectKeys() private method, Recursive key sorting, SHA-256 hash (64 hex characters)</ac>
+    <ac id="6.5.8">NestJS Cache Module Integration implement edilmiş - Global CacheModule.register(), Redis store configuration, Environment variables, Connection pooling</ac>
+    <ac id="6.5.9">CommonModule Export implement edilmiş - CacheService exported from src/common/services/index.ts, Available to all modules</ac>
+    <ac id="6.5.10">Unit Tests implement edilmiş - Test file: src/common/services/__tests__/cache.service.spec.ts, Coverage: &gt; 80%</ac>
+    <ac id="6.5.11">Integration Tests implement edilmiş - CacheModule registration test, CommonModule export/import test, Redis mock/container integration test</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-6.5.md" title="Epic Technical Specification: Common Cache &amp; Retry Services" section="Services and Modules">
+        Epic 6.5 technical specification covering CacheService and RetryService design, APIs, workflows, and integration points.
+      </doc>
+      <doc path="docs/epics/epic-6.5-document-generator-cache-retry.md" title="Epic 6.5: Common Cache &amp; Retry Services" section="Story 6.5">
+        Epic-level story breakdown with acceptance criteria, technical notes, and usage examples for CacheService.
+      </doc>
+      <doc path="docs/stories/6-4-document-generation-endpoints.md" title="Story 6.4: Document Generator Service" section="Learnings from Previous Story">
+        Previous story learnings including CacheService placeholder interface, cache key format, and TTL defaults.
+      </doc>
+      <doc path="docs/architecture/project-structure.md" title="Project Structure" section="common">
+        Project structure documentation showing common module organization and service location patterns.
+      </doc>
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Module Structure">
+        Mandatory patterns for module structure, import organization (8-group order), and service patterns.
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests">
+        Testing standards including Arrange-Act-Assert pattern, coverage requirements (80%+), and test structure.
+      </doc>
+      <doc path="docs/stories/6.5-1-common-cache-service-sha-256-hash-based.md" title="Story 6.5.1: Common Cache Service" section="Dev Notes">
+        Story document with architecture patterns, constraints, source tree components, and testing standards.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/document-generator/interfaces/cache-service.interface.ts" kind="interface" symbol="ICacheService" lines="1-43" reason="Placeholder interface for CacheService that will be implemented in this story. Shows expected method signatures: generateCacheKey(), get(), set()" />
+      <file path="src/modules/document-generator/services/document-generator.service.ts" kind="service" symbol="DocumentGeneratorService" lines="50-68" reason="DocumentGeneratorService uses CacheService via injection token CACHE_SERVICE_TOKEN. Shows how CacheService will be integrated" />
+      <file path="src/common/logger/logger.module.ts" kind="module" symbol="LoggerModule" lines="1-17" reason="Example of Global module pattern. CacheService will be exported via CommonModule similarly" />
+      <file path="src/database/prisma.module.ts" kind="module" symbol="PrismaModule" lines="1-12" reason="Example of Global module pattern with service export. CommonModule should follow similar pattern" />
+      <file path="src/app.module.ts" kind="module" symbol="AppModule" lines="33-75" reason="AppModule shows how to register global modules. CacheModule.register() should be added here" />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/cache-manager" note="Required for CacheService - NestJS cache manager integration" />
+        <package name="cache-manager" note="Required for CacheService - Cache store interface" />
+        <package name="cache-manager-redis-store" note="Required for CacheService - Redis store adapter" />
+        <package name="ioredis" note="Required for CacheService - Redis client" />
+        <package name="@nestjs/common" version="^11.0.1" note="NestJS core - Injectable, Inject decorators" />
+        <package name="@nestjs/core" version="^11.0.1" note="NestJS core framework" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Service Pattern: CacheService must use NestJS dependency injection with CACHE_MANAGER token</constraint>
+    <constraint>Module Structure: CacheService must be located at src/common/services/cache.service.ts</constraint>
+    <constraint>Export Pattern: CacheService must be exported from src/common/services/index.ts and available via CommonModule</constraint>
+    <constraint>Hash Algorithm: SHA-256 hash must use Node.js crypto.createHash('sha256')</constraint>
+    <constraint>Key Format: Cache keys must follow pattern {prefix}:{hash(parts)} with 64 hex character hash</constraint>
+    <constraint>Consistent Hash: sortObjectKeys() must ensure {a:1, b:2} and {b:2, a:1} produce same hash</constraint>
+    <constraint>Error Handling: Cache miss must return null (no error thrown), cache failures gracefully handled</constraint>
+    <constraint>TTL Default: Default TTL must be 3600000ms (1 hour), configurable per operation</constraint>
+    <constraint>Import Organization: Must follow 8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events</constraint>
+    <constraint>Testing: Unit tests must achieve &gt; 80% coverage, use Arrange-Act-Assert pattern</constraint>
+    <constraint>Redis Config: Redis configuration must use environment variables (REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB)</constraint>
+    <constraint>Generic Types: All methods must support generic type &lt;T&gt; for any TypeScript type</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="ICacheService" kind="TypeScript interface" signature="export interface ICacheService { generateCacheKey(documentType: string, templateName: string, data: any): string; get(key: string): Promise&lt;string | null&gt;; set(key: string, value: string, ttl?: number): Promise&lt;void&gt;; }" path="src/modules/document-generator/interfaces/cache-service.interface.ts" />
+    <interface name="CACHE_MANAGER" kind="NestJS injection token" signature="CACHE_MANAGER token from @nestjs/cache-manager" path="NestJS framework" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests must follow Arrange-Act-Assert pattern. Test coverage target: &gt; 80%. Use Jest testing framework. Mock CacheManager using jest.fn(). Test all methods: generateCacheKey(), get&lt;T&gt;(), set&lt;T&gt;(), delete(), clear(). Test hash consistency, generic type support, TTL behavior, cache miss scenarios, and error handling.
+    </standards>
+    <locations>
+      Unit tests: src/common/services/__tests__/cache.service.spec.ts
+      Integration tests: test/ directory (to be created)
+    </locations>
+    <ideas>
+      <test ac="6.5.2">Test generateCacheKey() with various input types (string, number, object, array)</test>
+      <test ac="6.5.2">Test hash consistency: {a:1, b:2} and {b:2, a:1} produce same hash</test>
+      <test ac="6.5.3">Test get&lt;T&gt;() cache hit scenario - returns cached value</test>
+      <test ac="6.5.3">Test get&lt;T&gt;() cache miss scenario - returns null (no error)</test>
+      <test ac="6.5.4">Test set&lt;T&gt;() with TTL - value stored with specified TTL</test>
+      <test ac="6.5.4">Test set&lt;T&gt;() with default TTL - value stored with default 3600000ms</test>
+      <test ac="6.5.5">Test delete() cache invalidation - entry removed</test>
+      <test ac="6.5.5">Test delete() idempotent behavior - no error on cache miss</test>
+      <test ac="6.5.6">Test clear() - all cache entries cleared</test>
+      <test ac="6.5.7">Test sortObjectKeys() recursive sorting with nested objects and arrays</test>
+      <test ac="6.5.10">Test generic type support - string, number, object, array types</test>
+      <test ac="6.5.10">Test cache failures gracefully handled - no errors thrown</test>
+      <test ac="6.5.11">Test CacheModule registration in AppModule</test>
+      <test ac="6.5.11">Test CommonModule export/import - service available to other modules</test>
+      <test ac="6.5.11">Test Redis mock/container integration</test>
+    </ideas>
+  </tests>
+</story-context>
+

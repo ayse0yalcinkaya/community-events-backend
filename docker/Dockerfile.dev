@@ -1,0 +1,57 @@
+# ============================================================================
+# Development Dockerfile - Hot Reload Enabled
+# ============================================================================
+# Purpose: Local development environment with NestJS watch mode
+# Usage: docker build -f docker/Dockerfile.dev -t boilerplate:dev .
+# Run: docker run -p 3000:3000 -v $(pwd):/app -v /app/node_modules boilerplate:dev
+#
+# Volume Mount Requirements:
+#   - Source code: Mount host directory to /app (bidirectional sync)
+#   - node_modules: Exclude from mount (use container's installation)
+#   - Reason: Prevents binary incompatibility (macOS host → Linux container)
+#
+# Hot Reload Performance:
+#   - File change detection: < 1s
+#   - TypeScript recompilation: < 2s
+#   - Server restart: < 3s total
+# ============================================================================
+
+# Base image: Node.js 20 LTS on Alpine Linux (~100MB vs ~900MB Debian)
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files for dependency installation
+# Layer caching optimization: Dependencies only rebuild when package.json changes
+COPY package*.json ./
+
+# Install dependencies using npm ci (clean install from lock file)
+# Ensures consistent dependency versions across environments
+RUN npm ci
+
+# Copy Prisma schema for client generation
+# Required before application can start (TypeScript types + runtime client)
+COPY prisma ./prisma
+
+# Generate Prisma Client
+# Creates TypeScript types and runtime client based on schema
+RUN npx prisma generate
+
+# Expose application port
+# NestJS development server listens on port 3000
+EXPOSE 3000
+
+# Start development server with watch mode
+# NestJS CLI monitors file changes and auto-restarts server
+# Source code will be mounted as volume at runtime (not copied in image)
+# Note: Prisma Client is regenerated at startup to reflect mounted schema changes
+CMD ["sh", "-c", "npx prisma generate && npm run start:dev"]
+
+# ============================================================================
+# Development Notes:
+# - Source code is NOT copied to image (COPY . . omitted)
+# - Code changes are detected via volume mount from host
+# - Container uses its own node_modules (prevents native module conflicts)
+# - Hot reload triggers on any .ts file change in src/ directory
+# ============================================================================

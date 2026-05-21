@@ -1,0 +1,185 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.7</storyId>
+    <title>Permission Sync Script (Dev Environment)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-7-permission-sync-script-dev-environment.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>permission constant'larını code'dan database'e sync edecek bir script</iWant>
+    <soThat>development environment'ta kod değişikliklerini database'e manuel olarak girmek zorunda kalmayayım</soThat>
+    <tasks>
+- Task 1: Create permission sync script (AC: 3.7.1)
+  - Subtask 1.1: Create `scripts/permission-sync.ts` file
+  - Subtask 1.2: Import PrismaService and PERMISSIONS constant
+  - Subtask 1.3: Implement permission extraction logic (iterate PERMISSIONS object)
+  - Subtask 1.4: For each permission, implement Prisma upsert with unique constraint [module, action]
+  - Subtask 1.5: Handle upsert results (track new vs existing)
+  - Subtask 1.6: Verify idempotency (can run multiple times safely)
+
+- Task 2: Add environment protection (AC: 3.7.2)
+  - Subtask 2.1: Check process.env.NODE_ENV at script start
+  - Subtask 2.2: Allow only 'development' or 'local' environments
+  - Subtask 2.3: Throw descriptive error if production/staging detected
+  - Subtask 2.4: Log warning message before sync execution
+
+- Task 3: Implement console logging (AC: 3.7.3)
+  - Subtask 3.1: Count new and existing permissions during sync
+  - Subtask 3.2: Log each newly created permission with module and action
+  - Subtask 3.3: Log summary: "Synced X permissions: Y new, Z existing"
+  - Subtask 3.4: Log success message on completion
+
+- Task 4: Add npm script and documentation (AC: 3.7.4)
+  - Subtask 4.1: Add "permission:sync" script to package.json
+  - Subtask 4.2: Script command: "ts-node scripts/permission-sync.ts"
+  - Subtask 4.3: Verify script executes via `npm run permission:sync`
+  - Subtask 4.4: Add script comment in package.json: "// Dev only - syncs code permissions to DB"
+
+- Task 5: Testing (AC: 3.7.1, 3.7.2)
+  - Subtask 5.1: Test script with empty database (all permissions should be created)
+  - Subtask 5.2: Test idempotency (run twice, second run should find all existing)
+  - Subtask 5.3: Test environment check (should fail if NODE_ENV=production)
+  - Subtask 5.4: Test partial sync (add new permission to PERMISSIONS constant, run script, verify only new one created)
+  - Subtask 5.5: Verify console output format and accuracy
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-3.7.1:** scripts/permission-sync.ts created
+   - PERMISSIONS constant'ını code'dan okur
+   - Tüm module ve action'ları iterate eder
+   - Her permission için upsert yapar (yeni ise insert, varsa skip)
+   - Prisma upsert kullanır ([module, action] unique constraint ile)
+   - Idempotent (birden fazla kez güvenle çalıştırılabilir)
+
+2. **AC-3.7.2:** Environment check enforced
+   - NODE_ENV kontrolü: Sadece 'development' veya 'local'da çalışır
+   - 'production' veya 'staging'de çalıştırılırsa error throw eder
+   - Sync öncesi warning loglar
+
+3. **AC-3.7.3:** Console output
+   - Log: "Synced X permissions: Y new, Z existing"
+   - Eklenen her yeni permission loglanır
+   - Success message ile tamamlanır
+
+4. **AC-3.7.4:** package.json script added
+   - Script: "permission:sync": "ts-node scripts/permission-sync.ts"
+   - Çalıştırılabilir: npm run permission:sync
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-3.md" title="Epic 3 Technical Specification" section="Story 3.7: Permission Sync Script">
+        Complete AC specifications (AC-3.7.1 through AC-3.7.4), Permission Sync Script Flow diagram, environment protection requirements
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture - Boilerplate" section="Decision Summary">
+        Prisma ORM v6.16.0 usage, TypeScript Strict Mode, module organization patterns
+      </doc>
+      <doc path="docs/stories/3-3-permission-entity-constants.md" title="Story 3.3: Permission Entity & Constants" section="Completion Notes">
+        PERMISSIONS constant created with MODULE.ACTION format, Permission entity with unique constraint on [module, action]
+      </doc>
+      <doc path="docs/stories/3-4-role-permission-assignment-entities.md" title="Story 3.4: Role & Permission Assignment Entities" section="Completion Notes">
+        Permission table exists with unique constraint [module, action], ready for upsert operations
+      </doc>
+      <doc path="docs/stories/3-6-permissions-guard-decorator.md" title="Story 3.6: Permissions Guard & Decorator" section="Learnings from Previous Story">
+        PERMISSIONS constant location and format confirmed, testing infrastructure established, ts-node already in devDependencies
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/modules/permissions/constants/permissions.constant.ts" kind="constant" symbol="PERMISSIONS" lines="12-30" reason="Source constant that needs to be synced to database - contains all permission modules and actions">
+        export const PERMISSIONS = { USERS: { CREATE, VIEW, UPDATE, DELETE }, PERMISSIONS: { VIEW, ASSIGN, REVOKE }, FILES: { CREATE, VIEW, DELETE, VIEW_ALL } }
+      </artifact>
+      <artifact path="src/database/prisma.service.ts" kind="service" symbol="PrismaService" lines="1-30" reason="Reference for how to instantiate and use PrismaClient in standalone scripts">
+        PrismaService extends PrismaClient, implements OnModuleInit/OnModuleDestroy lifecycle hooks
+      </artifact>
+      <artifact path="scripts/migrate.ts" kind="script" symbol="runMigration" lines="1-68" reason="Example script pattern - shows error handling, console output, and ts-node execution pattern">
+        Reference script demonstrating: error handling with try/catch, console logging with emoji indicators, process.exit patterns, NODE_ENV checking pattern
+      </artifact>
+      <artifact path="prisma/schema.prisma" kind="schema" symbol="Permission" lines="95-109" reason="Target database table with unique constraint [module, action] for upsert operations">
+        model Permission { module String, action String, @@unique([module, action]), @@index([module]) }
+      </artifact>
+      <artifact path="package.json" kind="config" symbol="scripts" lines="8-26" reason="Location to add permission:sync script, shows existing script patterns like prisma:seed">
+        Existing scripts use ts-node for TypeScript execution without build step
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@prisma/client" version="^6.18.0" reason="Database access for upsert operations"/>
+        <package name="prisma" version="^6.18.0" dev="true" reason="Prisma CLI for migrations"/>
+        <package name="ts-node" version="^10.9.2" dev="true" reason="Execute TypeScript scripts without build step"/>
+        <package name="typescript" version="^5.7.3" dev="true" reason="TypeScript compiler for type checking"/>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Script MUST check NODE_ENV and only run in 'development' or 'local' environments - throw descriptive error for production/staging</constraint>
+    <constraint>Script MUST be idempotent - running multiple times should not create duplicate permissions (use Prisma upsert)</constraint>
+    <constraint>Script MUST use Prisma unique constraint [module, action] for upsert where clause</constraint>
+    <constraint>Script MUST instantiate PrismaClient directly (no NestJS dependency injection) - standalone script pattern</constraint>
+    <constraint>Script MUST provide clear console output with counts (X total synced, Y new, Z existing) and success/error messages</constraint>
+    <constraint>Script MUST use ts-node execution (no build step required) - add to package.json scripts section</constraint>
+    <constraint>Script MUST iterate all modules in PERMISSIONS constant and extract module/action pairs</constraint>
+    <constraint>Script MUST gracefully handle database connection failures with clear error messages</constraint>
+    <constraint>Script MUST log warning message before starting sync operation</constraint>
+    <constraint>Script MUST log each newly created permission (module and action)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="PERMISSIONS constant" kind="TypeScript const object" signature="{ [MODULE]: { [ACTION]: 'MODULE.ACTION' } }">
+      <path>src/modules/permissions/constants/permissions.constant.ts</path>
+      <description>Source of truth for permission definitions - iterate modules and actions to extract permission pairs</description>
+    </interface>
+    <interface name="Prisma.permission.upsert()" kind="Prisma ORM method" signature="upsert({ where: { module_action: { module, action } }, update: {}, create: { module, action, description } })">
+      <path>@prisma/client</path>
+      <description>Upsert method with composite unique key - insert if new, skip if exists (idempotent)</description>
+    </interface>
+    <interface name="PrismaClient" kind="TypeScript class" signature="new PrismaClient()">
+      <path>@prisma/client</path>
+      <description>Direct Prisma client instantiation for standalone scripts (no DI needed)</description>
+    </interface>
+    <interface name="process.env.NODE_ENV" kind="Environment variable" signature="string | undefined">
+      <description>Environment check - must be 'development' or 'local', error if 'production' or 'staging'</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Integration Testing (Script Execution):
+      - Test with empty database (all permissions should be created)
+      - Test idempotency (run twice, second run should find all existing)
+      - Test environment check (should fail if NODE_ENV=production)
+      - Test partial sync (add new permission to PERMISSIONS constant, run script, verify only new one created)
+      - Verify console output format and counts accuracy
+
+      Manual Testing Checklist:
+      - Run `npm run permission:sync` in fresh database
+      - Verify all PERMISSIONS constant entries in DB
+      - Run again, verify "0 new, X existing" output
+      - Test NODE_ENV=production → Script fails with clear error
+      - Add new permission to constant, sync, verify only new one added
+
+      Testing Tools: Manual script execution, database inspection, console output verification
+      Coverage Target: Integration tests cover all AC requirements (AC-3.7.1 through AC-3.7.4)
+    </standards>
+    <locations>
+      <location>scripts/permission-sync.ts (standalone script - manual testing)</location>
+      <location>Manual test: Run script and verify database state via Prisma Studio or SQL queries</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-3.7.1">Test: Run script with empty Permission table → Verify all PERMISSIONS entries created in DB</idea>
+      <idea ac="AC-3.7.1">Test: Run script twice → Second run should log "0 new, X existing" (idempotency)</idea>
+      <idea ac="AC-3.7.1">Test: Add new permission to PERMISSIONS constant → Run script → Verify only new one created</idea>
+      <idea ac="AC-3.7.2">Test: Set NODE_ENV=production → Run script → Should throw error with descriptive message</idea>
+      <idea ac="AC-3.7.2">Test: Set NODE_ENV=development → Run script → Should execute successfully</idea>
+      <idea ac="AC-3.7.3">Test: Verify console output format matches "Synced X permissions: Y new, Z existing"</idea>
+      <idea ac="AC-3.7.3">Test: Verify each new permission logged with module and action</idea>
+      <idea ac="AC-3.7.4">Test: Run `npm run permission:sync` → Verify script executes via npm command</idea>
+    </ideas>
+  </tests>
+</story-context>

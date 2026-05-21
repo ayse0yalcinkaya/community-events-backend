@@ -1,0 +1,160 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>13</epicId>
+    <storyId>2</storyId>
+    <title>Model Factory Pattern & Faker Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/13-2-model-factory-pattern-faker-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>realistic test data generate edebilmek için factory pattern</iWant>
+    <soThat>Faker.js ile Turkish test data kolayca oluşturabileyim</soThat>
+    <tasks>Task 1: Install Faker.js v8+ and create factories directory structure
+Task 2: Implement UserFactory class with Faker integration
+Task 3: Implement remaining factory classes (Role, Permission, File)
+Task 4: Test factory implementations
+Task 5: Integration with existing seeder classes</tasks>
+  </story>
+
+  <acceptanceCriteria>1. prisma/factories/ directory oluşturulmuş
+2. Factory classes: user.factory.ts, role.factory.ts, permission.factory.ts, file.factory.ts
+3. Static methods: generate() (single), generateMany(count) (bulk)
+4. Faker.js v8+ integration: Turkish locale for realistic data
+5. Type safety: Prisma types kullanarak generic factory
+6. Override support: factory(overrides) → merge defaults + overrides
+7. Realistic data: Turkish names, emails, phone numbers (05xx), addresses</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-13-advanced-seeder-infrastructure.md</path>
+        <title>Epic 13: Advanced Seeder Infrastructure</title>
+        <section>Story 13.2: Model Factory Pattern & Faker Integration</section>
+        <snippet>Story 13.2: Model Factory Pattern & Faker Integration. As a developer, I want realistic test data generate edebilmek için factory pattern, So that Faker.js ile Turkish test data kolayca oluşturabileyim.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-13.md</path>
+        <title>Epic Technical Specification: Advanced Seeder Infrastructure</title>
+        <section>Detailed Design - Services and Modules</section>
+        <snippet>prisma/factories/ directory with user.factory.ts, role.factory.ts, file.factory.ts. Individual factory classes with static seed() method pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/13-1-prisma-native-seeding-entry-point.md</path>
+        <title>Story 13.1: Prisma Native Seeding Entry Point</title>
+        <section>Architecture Patterns and Constraints</section>
+        <snippet>Modular seeder pattern: Each entity has its own seeder class with static seed() method. Main entry point at prisma/seed.ts implementing Prisma's native seeding feature.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Unit Tests</section>
+        <snippet>Pattern: Arrange-Act-Assert. Test coverage requirements: Utilities 100%, Services 80%+, Controllers 70%+, Repositories 70%+.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>prisma/seeders/user.seeder.ts</path>
+        <kind>seeder</kind>
+        <symbol>UserSeeder</symbol>
+        <lines>1-50</lines>
+        <reason>Existing user seeder that will integrate with UserFactory for bulk user creation</reason>
+      </file>
+      <file>
+        <path>prisma/seeders/role.seeder.ts</path>
+        <kind>seeder</kind>
+        <symbol>RoleSeeder</symbol>
+        <lines>1-30</lines>
+        <reason>Role seeder with static seed() method pattern to follow for RoleFactory implementation</reason>
+      </file>
+      <file>
+        <path>prisma/seeders/permission.seeder.ts</path>
+        <kind>seeder</kind>
+        <symbol>PermissionSeeder</symbol>
+        <lines>1-40</lines>
+        <reason>Permission seeder to integrate with PermissionFactory for generating permission data</reason>
+      </file>
+      <file>
+        <path>prisma/seeders/file.seeder.ts</path>
+        <kind>seeder</kind>
+        <symbol>FileSeeder</symbol>
+        <lines>1-35</lines>
+        <reason>File seeder to integrate with FileFactory for generating sample file metadata</reason>
+      </file>
+      <file>
+        <path>prisma/seed.ts</path>
+        <kind>entry-point</kind>
+        <symbol>main()</symbol>
+        <lines>1-74</lines>
+        <reason>Main seeding entry point that orchestrates all seeder classes in dependency order</reason>
+      </file>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="@faker-js/faker" version="^8.0.0">Turkish locale test data generation</package>
+        <package name="bcrypt" version="^5.1.0">Password hashing utility for test users (Story 13.6)</package>
+        <package name="ts-node" version="^10.9.0">TypeScript execution for seeders and factories</package>
+        <package name="@prisma/client" version="^6.16.0">Prisma ORM with native seeding support</package>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Static factory methods with Prisma type definitions for type safety
+- Use Prisma.{Entity}CreateInput types to ensure factory output matches Prisma schema
+- Override support via Partial<T> merge pattern for flexible data generation
+- Turkish locale integration for realistic data (names, phone 05xx format)
+- Idempotent operations: Generated data must be compatible with upsert() and createMany(skipDuplicates: true)
+- Import organization following Epic 12.5 8-category pattern
+- TypeScript strict mode compliance (Epic 12.4)
+- No breaking changes to existing seeders (Story 13.1)
+- Environment-based seeding compatible (Story 13.5)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>UserFactory.generate()</name>
+      <kind>function signature</kind>
+      <signature>static generate(overrides: Partial&lt;Prisma.UserCreateInput&gt; = {}): Prisma.UserCreateInput</signature>
+      <path>prisma/factories/user.factory.ts</path>
+    </interface>
+    <interface>
+      <name>UserFactory.generateMany()</name>
+      <kind>function signature</kind>
+      <signature>static generateMany(count: number, overrides: Partial&lt;Prisma.UserCreateInput&gt; = {}): Prisma.UserCreateInput[]</signature>
+      <path>prisma/factories/user.factory.ts</path>
+    </interface>
+    <interface>
+      <name>RoleFactory.generate()</name>
+      <kind>function signature</kind>
+      <signature>static generate(overrides: Partial&lt;Prisma.RoleCreateInput&gt; = {}): Prisma.RoleCreateInput</signature>
+      <path>prisma/factories/role.factory.ts</path>
+    </interface>
+    <interface>
+      <name>PermissionFactory.generate()</name>
+      <kind>function signature</kind>
+      <signature>static generate(overrides: Partial&lt;Prisma.PermissionCreateInput&gt; = {}): Prisma.PermissionCreateInput</signature>
+      <path>prisma/factories/permission.factory.ts</path>
+    </interface>
+    <interface>
+      <name>FileFactory.generate()</name>
+      <kind>function signature</kind>
+      <signature>static generate(overrides: Partial&lt;Prisma.FileCreateInput&gt; = {}): Prisma.FileCreateInput</signature>
+      <path>prisma/factories/file.factory.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Factory tests follow Arrange-Act-Assert pattern. UserFactory and other factories should have comprehensive unit tests covering generate() with various overrides, generateMany() for bulk generation, TypeScript type safety, Turkish locale data validation (05xx phone format, Turkish names), and override merging logic. Tests should verify idempotency with seeder operations.</standards>
+    <locations>test/factories/ directory for factory unit tests, prisma/factories/ for implementation, test/seeders/ for integration tests</locations>
+    <ideas>AC 1-2: Verify prisma/factories/ directory created with 4 factory files
+AC 3: Test generate() produces single record, generateMany(count) produces array of correct length
+AC 4: Validate Turkish phone format (05## ### ## ##), Turkish names via faker.locale = 'tr'
+AC 5: TypeScript type safety test - ensure return types match Prisma schema
+AC 6: Override test - verify defaults merged with overrides correctly
+AC 7: Data realism test - validate emails are valid format, names are Turkish, dates are reasonable</ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,111 @@
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+enum NotificationSenderType {
+  AUTOMATION
+  SYSTEM
+  USER
+}
+
+enum NotificationStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model Notification {
+  id         String                 @id @default(uuid()) @db.Uuid
+  userID     String                 @db.Uuid
+  senderType NotificationSenderType @default(SYSTEM)
+  senderID   String?                @db.Uuid
+  subject    String                 @default("Notification")
+  message    String
+  read       Boolean                @default(false) @map("readed")
+  status     NotificationStatus     @default(SENT)
+  createdAt  DateTime               @default(now()) @map("created_at")
+  updatedAt  DateTime               @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user   User  @relation("UserNotifications", fields: [userID], references: [id], onDelete: Cascade)
+  sender User? @relation("SenderNotifications", fields: [senderID], references: [id], onDelete: SetNull)
+
+  @@index([userID])
+  @@index([senderType])
+  @@index([status])
+  @@index([read])
+  @@map("notifications")
+}
+
+model NotificationLog {
+  id        String    @id @default(uuid()) @db.Uuid
+  userID    String    @db.Uuid
+  type      Int
+  channel   Int
+  title     String?
+  message   String
+  data      Json?
+  sent      Boolean   @default(false)
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userID], references: [id])
+
+  @@index([userID])
+  @@index([type])
+  @@index([sent])
+  @@map("notification_logs")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid()) @db.Uuid
+  userID    String   @db.Uuid
+  channel   Int // 0: EMAIL, 1: SMS, 2: PUSH
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userID], references: [id])
+
+  @@unique([userID, channel])
+  @@index([userID])
+  @@map("notification_preferences")
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userID    String   @db.Uuid
+  token     String   @unique
+  platform  Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([userID])
+  @@index([token])
+  @@map("device_tokens")
+}
+
+model SMS {
+  id           String    @id @default(uuid()) @db.Uuid
+  phoneNumber  String
+  message      String
+  type         Int       @default(0)
+  status       Int       @default(0)
+  provider     String    @default("FONIVA")
+  providerId   String?
+  attemptCount Int       @default(0)
+  errorMessage String?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([phoneNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@map("sms")
+}

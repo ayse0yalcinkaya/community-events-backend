@@ -1,0 +1,241 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6.5</epicId>
+    <storyId>6.5.2</storyId>
+    <title>Common Retry Service (Exponential Backoff)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6.5-2-common-retry-service-exponential-backoff.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>proje genelinde kullanılabilir retry mechanism</iWant>
+    <soThat>tüm async operasyonlar (S3 upload, external API calls, database operations) için transient failures otomatik retry edilsin</soThat>
+    <tasks>
+      <task id="1" ac="6.5.2.1">RetryService class oluştur</task>
+      <task id="2" ac="6.5.2.2">RetryOptions interface oluştur</task>
+      <task id="3" ac="6.5.2.2">executeWithRetry() Method implement et</task>
+      <task id="4" ac="6.5.2.3">Exponential Backoff Calculation implement et</task>
+      <task id="5" ac="6.5.2.4">Logging Integration implement et</task>
+      <task id="6" ac="6.5.2.5">Optional Retry Callback implement et</task>
+      <task id="7" ac="6.5.2.6">CommonModule Export implement et</task>
+      <task id="8" ac="6.5.2.7">Unit Tests implement et</task>
+      <task id="9" ac="6.5.2.8">Integration Tests implement et</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="6.5.2.1">RetryService oluşturulmuş - src/common/services/retry.service.ts, configurable max attempts (default: 3), configurable base delay (default: 1000ms), exponential backoff: 2^(attempt-1) * baseDelay, generic type support</ac>
+    <ac id="6.5.2.2">executeWithRetry() Method implement edilmiş - Method signature: executeWithRetry&lt;T&gt;(operation: () =&gt; Promise&lt;T&gt;, options?: RetryOptions): Promise&lt;T&gt;, RetryOptions interface with maxAttempts, baseDelay, context, onRetry callback, retry logic with exponential delays</ac>
+    <ac id="6.5.2.3">Exponential Backoff Calculation implement edilmiş - Formula: Math.pow(2, attempt - 1) * BASE_DELAY, delay sequence: 0ms → baseDelay → 2*baseDelay → 4*baseDelay...</ac>
+    <ac id="6.5.2.4">Logging Integration implement edilmiş - Use Common LoggerService (Epic 7.3), log each attempt, retry delay, success on retry, final failure</ac>
+    <ac id="6.5.2.5">Optional Retry Callback implement edilmiş - onRetry callback support, invoked before each retry attempt, provides attempt number and error</ac>
+    <ac id="6.5.2.6">CommonModule Export implement edilmiş - RetryService exported from src/common/services/index.ts, available to all modules via CommonModule import</ac>
+    <ac id="6.5.2.7">Unit Tests implement edilmiş - Test file: src/common/services/__tests__/retry.service.spec.ts, test coverage: &gt; 80%, test scenarios covering all methods and edge cases</ac>
+    <ac id="6.5.2.8">Integration Tests implement edilmiş - RetryService with mock failures, retry logging integration, retry with S3Service mock, retry with DocumentGeneratorService integration</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-6.5-document-generator-cache-retry.md</path>
+        <title>Epic 6.5: Common Cache &amp; Retry Services</title>
+        <section>Story 6.6: Common Retry Service (Exponential Backoff)</section>
+        <snippet>As a developer, I want proje genelinde kullanılabilir retry mechanism, so that tüm async operasyonlar için transient failures otomatik retry edilsin. RetryService with configurable max attempts (default: 3), base delay (default: 1000ms), exponential backoff formula: 2^(attempt-1) * baseDelay.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-6.5.md</path>
+        <title>Epic Technical Specification: Common Cache &amp; Retry Services</title>
+        <section>Services and Modules, Data Models and Contracts, APIs and Interfaces</section>
+        <snippet>RetryService provides exponential backoff retry mechanism for async operations. RetryOptions interface with maxAttempts, baseDelay, context, onRetry callback. Exponential backoff formula: 2^(attempt-1) * baseDelay. Delay sequence: 0ms → 1000ms → 2000ms → 4000ms...</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Unit Tests</section>
+        <snippet>Arrange-Act-Assert pattern kullanılır. Test coverage requirements: Services: 80%+. Mock objects doğru kullanılmış. Edge cases kapsanmış.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/project-structure.md</path>
+        <title>Project Structure</title>
+        <section>common/</section>
+        <snippet>Common infrastructure katmanı: src/common/services/ altında shared services. CommonModule üzerinden export edilir, tüm modüller tarafından kullanılabilir.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>Import Organization, Module Structure</section>
+        <snippet>8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events. Module structure: services/ klasöründe service dosyaları, __tests__/ altında test dosyaları.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6.5-1-common-cache-service-sha-256-hash-based.md</path>
+        <title>Story 6.5.1: Common Cache Service</title>
+        <section>Dev Notes, File List</section>
+        <snippet>CommonModule oluşturulmuş ve CacheService export edilmiş. CommonModule @Global() decorator ile tüm modüllere export edilir. Service location: src/common/services/ klasörü. Testing patterns: Arrange-Act-Assert pattern, unit testler __tests__/ klasöründe.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6-4-document-generation-endpoints.md</path>
+        <title>Story 6.4: Document Generation Endpoints</title>
+        <section>RetryService Placeholder Interface</section>
+        <snippet>DocumentGeneratorService RetryService için placeholder interface kullanıyor. RetryService, S3 upload operasyonları için kullanılacak. Interface: executeWithRetry&lt;T&gt;(operation: () =&gt; Promise&lt;T&gt;, context: string): Promise&lt;T&gt;</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/common/services/cache.service.ts</path>
+        <kind>service</kind>
+        <symbol>CacheService</symbol>
+        <lines>1-294</lines>
+        <reason>CommonModule'de CacheService ile birlikte RetryService de yer alacak. Aynı pattern'i takip edecek: Injectable decorator, dependency injection, CommonModule export.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/common.module.ts</path>
+        <kind>module</kind>
+        <symbol>CommonModule</symbol>
+        <lines>1-61</lines>
+        <reason>CommonModule @Global() decorator ile tüm modüllere export edilir. RetryService'i de providers ve exports'a eklemek gerekecek.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/services/index.ts</path>
+        <kind>export</kind>
+        <symbol>CacheService export</symbol>
+        <lines>1-2</lines>
+        <reason>RetryService'i de bu dosyaya export etmek gerekecek.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/document-generator/interfaces/retry-service.interface.ts</path>
+        <kind>interface</kind>
+        <symbol>IRetryService</symbol>
+        <lines>1-23</lines>
+        <reason>Placeholder interface. RetryService bu interface'i implement edecek. Interface signature: executeWithRetry&lt;T&gt;(operation: () =&gt; Promise&lt;T&gt;, context: string): Promise&lt;T&gt;</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/document-generator/services/document-generator.service.ts</path>
+        <kind>service</kind>
+        <symbol>DocumentGeneratorService</symbol>
+        <lines>225-226</lines>
+        <reason>DocumentGeneratorService RetryService'i kullanıyor (placeholder ile). S3 upload operasyonları için retry mechanism kullanılacak.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/logger/logger.service.ts</path>
+        <kind>service</kind>
+        <symbol>LoggerService</symbol>
+        <lines>1-68</lines>
+        <reason>RetryService LoggerService'i inject edecek (required dependency). Epic 7.3'ten gelen structured logging service. Methods: log(), error(), warn(), debug(), verbose().</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/services/__tests__/cache.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>CacheService unit tests</symbol>
+        <lines>1-500+</lines>
+        <reason>RetryService test pattern'i için referans. Arrange-Act-Assert pattern, mock objects, test coverage &gt; 80%.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="@nestjs/common" version="^11.0.1"/>
+        <package name="@nestjs/core" version="^11.0.1"/>
+        <package name="typescript" version="^5.7.3"/>
+        <package name="jest" version="^30.0.0"/>
+        <package name="@nestjs/testing" version="^11.0.1"/>
+        <package name="ts-jest" version="^29.2.5"/>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>RetryService MUST be located at src/common/services/retry.service.ts</constraint>
+    <constraint>RetryOptions interface MUST be located at src/common/services/interfaces/retry-options.interface.ts</constraint>
+    <constraint>RetryService MUST use NestJS dependency injection pattern (@Injectable decorator)</constraint>
+    <constraint>LoggerService MUST be injected as required dependency (Epic 7.3)</constraint>
+    <constraint>Exponential backoff formula MUST be: Math.pow(2, attempt - 1) * baseDelay</constraint>
+    <constraint>Default max attempts: 3, configurable via RetryOptions</constraint>
+    <constraint>Default base delay: 1000ms, configurable via RetryOptions</constraint>
+    <constraint>First attempt: Execute immediately (no delay)</constraint>
+    <constraint>Subsequent attempts: Exponential delay before retry (baseDelay → 2*baseDelay → 4*baseDelay...)</constraint>
+    <constraint>All attempts fail → Throw last error (no silent failures)</constraint>
+    <constraint>Logging MUST use LoggerService with context strings for debugging</constraint>
+    <constraint>Log each attempt: [context] Attempt {attempt}/{maxAttempts}</constraint>
+    <constraint>Log retry delay: [context] Waiting {delay}ms before retry attempt {attempt}</constraint>
+    <constraint>Log success on retry: [context] Succeeded on attempt {attempt}/{maxAttempts}</constraint>
+    <constraint>Log final failure: [context] All {maxAttempts} attempts failed</constraint>
+    <constraint>RetryService MUST be exported from CommonModule (same pattern as CacheService)</constraint>
+    <constraint>CommonModule MUST export RetryService via src/common/services/index.ts</constraint>
+    <constraint>Unit tests MUST be located at src/common/services/__tests__/retry.service.spec.ts</constraint>
+    <constraint>Test coverage MUST be &gt; 80%</constraint>
+    <constraint>Test pattern: Arrange-Act-Assert</constraint>
+    <constraint>Mock LoggerService in tests (jest.fn())</constraint>
+    <constraint>Mock operation functions in tests (jest.fn())</constraint>
+    <constraint>Import organization: 8-group order (Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events)</constraint>
+    <constraint>File naming: kebab-case (retry.service.ts, retry-options.interface.ts)</constraint>
+    <constraint>Class naming: PascalCase (RetryService, RetryOptions)</constraint>
+    <constraint>Generic type support: &lt;T&gt; for any Promise return type</constraint>
+    <constraint>RetryService MUST implement IRetryService interface (from document-generator module) or provide compatible signature</constraint>
+    <constraint>DocumentGeneratorService already uses RetryService placeholder - real implementation will replace it</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>IRetryService</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+export interface IRetryService {
+  executeWithRetry&lt;T&gt;(
+    operation: () =&gt; Promise&lt;T&gt;,
+    context: string,
+  ): Promise&lt;T&gt;;
+}
+      </signature>
+      <path>src/modules/document-generator/interfaces/retry-service.interface.ts</path>
+    </interface>
+    <interface>
+      <name>RetryOptions</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+export interface RetryOptions {
+  maxAttempts?: number;      // Default: 3
+  baseDelay?: number;         // Default: 1000ms
+  context?: string;           // For logging: 'S3 upload: invoice-001.pdf'
+  onRetry?: (attempt: number, error: Error) =&gt; void;  // Optional callback
+}
+      </signature>
+      <path>src/common/services/interfaces/retry-options.interface.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>LoggerService</name>
+      <kind>NestJS interface implementation</kind>
+      <signature>
+export class LoggerService implements NestLoggerService {
+  log(message: string, context?: any): void;
+  error(message: string, trace?: string, context?: any): void;
+  warn(message: string, context?: any): void;
+  debug(message: string, context?: any): void;
+  verbose(message: string, context?: any): void;
+}
+      </signature>
+      <path>src/common/logger/logger.service.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Arrange-Act-Assert pattern kullanılır. Test coverage: &gt; 80%. Mock LoggerService (jest.fn()). Mock operation functions (jest.fn()). Unit testler src/common/services/__tests__/ klasöründe. Integration testler test/ klasöründe. Test scenarios: success scenarios, failure scenarios, exponential backoff delay calculation, configurable options, logging calls, callback invocation, generic type support.</standards>
+    <locations>src/common/services/__tests__/retry.service.spec.ts (unit tests), test/retry-service.integration-spec.ts (integration tests)</locations>
+    <ideas>
+      <test ac="6.5.2.1">Test RetryService instantiation with LoggerService injection</test>
+      <test ac="6.5.2.2">Test executeWithRetry() with success scenario (no retry needed)</test>
+      <test ac="6.5.2.2">Test executeWithRetry() with failure then success (retry succeeds on attempt 2)</test>
+      <test ac="6.5.2.2">Test executeWithRetry() with all attempts fail (throws last error)</test>
+      <test ac="6.5.2.3">Test exponential backoff delay calculation: attempt 1 = 0ms, attempt 2 = baseDelay, attempt 3 = 2*baseDelay</test>
+      <test ac="6.5.2.2">Test configurable max attempts (default 3, custom 5)</test>
+      <test ac="6.5.2.2">Test configurable base delay (default 1000ms, custom 2000ms)</test>
+      <test ac="6.5.2.4">Test logging calls: log each attempt, log retry delay, log success on retry, log final failure</test>
+      <test ac="6.5.2.5">Test onRetry callback invocation before each retry attempt</test>
+      <test ac="6.5.2.1">Test generic type support: string, number, object, array return types</test>
+      <test ac="6.5.2.8">Test RetryService with mock failures (integration)</test>
+      <test ac="6.5.2.8">Test RetryService with DocumentGeneratorService integration</test>
+    </ideas>
+  </tests>
+</story-context>
+

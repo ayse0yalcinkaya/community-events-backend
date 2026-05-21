@@ -1,0 +1,80 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>13</epicId>
+    <storyId>3</storyId>
+    <title>Individual Module Seeders (Idempotent & Transactional)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/13-3-individual-module-seeders-idempotent-transactional.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>her module için ayrı seeder class'ı</iWant>
+    <soThat>RoleSeeder, PermissionSeeder, UserSeeder, FileSeeder ayrı ayrı çalışabilsin</soThat>
+    <tasks>21 tasks across 7 main areas covering RoleSeeder, PermissionSeeder, UserSeeder, FileSeeder, SmsSeeder, idempotent operations, and transaction support</tasks>
+  </story>
+
+  <acceptanceCriteria>7 acceptance criteria: RoleSeeder with upsert operations, PermissionSeeder with role assignments, UserSeeder with password hashing, FileSeeder with sample files, SmsSeeder with Turkish phone format, all seeders idempotent, and transaction support</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-13.md" title="Epic 13: Advanced Seeder Infrastructure Tech Spec" section="Detailed Design - Services and Modules">Defines seeder structure with 5 individual seeder classes in prisma/seeders/, static seed() methods, and integration with factories. Specifies idempotent operations and transaction support.</doc>
+      <doc path="docs/epics/epic-13-advanced-seeder-infrastructure.md" title="Epic 13: Advanced Seeder Infrastructure" section="Story 13.3: Individual Module Seeders">Complete story definition with acceptance criteria for 5 seeders (Role, Permission, User, File, SMS), idempotent operations using upsert() and createMany(skipDuplicates: true), and transaction support.</doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests">Testing pattern: Arrange-Act-Assert for seeders. Jest framework for unit/integration tests, separate test database setup, and cleanup between tests. Minimum 70% coverage enforced by CI/CD.</doc>
+      <doc path="docs/stories/13-1-prisma-native-seeding-entry-point.md" title="Story 13.1: Prisma Native Seeding Entry Point" section="Dev Notes">Main seed.ts entry point structure with async main() function, seeder execution order (roles → permissions → users), and console logging with ✓ checkmarks.</doc>
+      <doc path="docs/stories/13-2-model-factory-pattern-faker-integration.md" title="Story 13.2: Model Factory Pattern &amp; Faker Integration" section="Learnings from Previous Story">Factory pattern foundation with 4 factory classes (User, Role, Permission, File) using Faker.js v8+ with Turkish locale. Static generate() and generateMany() methods with Prisma type safety.</doc>
+    </docs>
+    <code>
+      <artifact path="prisma/seeders/role.seeder.ts" kind="seeder" symbol="RoleSeeder" lines="1-36">Already implemented with upsert operations for admin, staff, user, guest roles. Uses idempotent upsert() with domainID_name composite key. Console logging with ✓ indicators.</artifact>
+      <artifact path="prisma/seeders/permission.seeder.ts" kind="seeder" symbol="PermissionSeeder">Create permissions and assign to roles via RolePermission entities. Should use $transaction for role-permission assignments.</artifact>
+      <artifact path="prisma/seeders/user.seeder.ts" kind="seeder" symbol="UserSeeder">Create admin, staff, and regular users. Should import and use UserFactory from Story 13.2 and hashPassword utility from Story 13.6.</artifact>
+      <artifact path="prisma/seeders/file.seeder.ts" kind="seeder" symbol="FileSeeder">Seed sample S3 files (images, PDFs, videos) with file metadata (size, mimeType, fileName). Should use FileFactory for data generation.</artifact>
+      <artifact path="prisma/seeders/sms.seeder.ts" kind="seeder" symbol="SmsSeeder" lines="1-36">Already implemented for SMS logs with OTP codes and Turkish phone numbers (05xx format). Generate realistic SMS delivery statuses.</artifact>
+      <artifact path="prisma/factories/user.factory.ts" kind="factory" symbol="UserFactory" lines="1-50">Generates Turkish user data with 05xx phone format, Turkish names, and realistic emails. Uses Prisma.UserCreateInput type safety with override support.</artifact>
+      <artifact path="prisma/factories/role.factory.ts" kind="factory" symbol="RoleFactory">Generate role data with English names (admin, staff, user, guest). Static generate() and generateMany() methods.</artifact>
+      <artifact path="prisma/factories/permission.factory.ts" kind="factory" symbol="PermissionFactory">Generate permissions with module-action combinations (auth.users.*, files.*, etc.).</artifact>
+      <artifact path="prisma/factories/file.factory.ts" kind="factory" symbol="FileFactory" lines="1-50">Produces realistic file metadata with Turkish filenames, proper MIME types, and varied file sizes.</artifact>
+      <artifact path="prisma/schema.prisma" kind="schema" symbol="Prisma Schema">Database schema with User, Role, Permission, File, SMS entities. Defines data models for seeder implementations.</artifact>
+    </code>
+    <dependencies>
+      <dep name="@prisma/client" version="^6.18.0">Prisma ORM client for database operations. Used by all seeders for CRUD operations.</dep>
+      <dep name="bcrypt" version="^6.0.0">Password hashing utility. Required by UserSeeder for hashing test user passwords (Story 13.6).</dep>
+      <dep name="@faker-js/faker" version="^10.1.0">Faker.js library for realistic test data generation. Used by factories for Turkish locale data (names, phones, emails).</dep>
+      <dep name="ts-node" version="^10.9.0">TypeScript execution engine. Required for running seeders via `npm run prisma:seed`.</dep>
+      <dep name="jest" version="^29.7.0">Testing framework. Used for unit and integration tests of seeder classes.</dep>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>All seeders must use static seed(prisma: PrismaClient) method pattern for compatibility with seed.ts entry point</constraint>
+    <constraint>Idempotent operations required: upsert() for single records, createMany(skipDuplicates: true) for bulk operations</constraint>
+    <constraint>Console logging with ✓ success indicators for each seeder operation</constraint>
+    <constraint>TypeScript strict mode enabled (Epic 12.4) - all seeders must maintain type safety with Prisma schema types</constraint>
+    <constraint>Import organization follows 8-category pattern from Epic 12.5: External libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events</constraint>
+    <constraint>Transaction support using $transaction() for maintaining data consistency across related entities</constraint>
+    <constraint>Turkish locale data required: 05xx phone format, Turkish names, realistic emails for test data</constraint>
+    <constraint>Domain-based multi-tenancy: All entities include domainID field for tenant isolation</constraint>
+  </constraints>
+  <interfaces>
+    <interface name="Seeder Interface" kind="class method" signature="static seed(prisma: PrismaClient): Promise&lt;void&gt;" path="prisma/seeders/role.seeder.ts:10">Standard seeder contract: All seeder classes must implement static seed() method accepting PrismaClient and returning Promise&lt;void&gt;</interface>
+    <interface name="UserFactory.generate()" kind="factory method" signature="static generate(overrides: Partial&lt;Prisma.UserCreateInput&gt;): Prisma.UserCreateInput" path="prisma/factories/user.factory.ts:17">Generate single user with Turkish data, Prisma type-safe, supports override pattern</interface>
+    <interface name="UserFactory.generateMany()" kind="factory method" signature="static generateMany(count: number, overrides?: Partial&lt;Prisma.UserCreateInput&gt;): Prisma.UserCreateInput[]" path="prisma/factories/user.factory.ts:75">Generate array of users with bulk data generation capability</interface>
+    <interface name="Prisma Role Model" kind="database model" signature="role.upsert({ where: { domainID_name }, create, update })" path="prisma/schema.prisma">Upsert operation for idempotent role creation using composite unique key</interface>
+    <interface name="Prisma Permission Model" kind="database model" signature="permission.createMany({ data, skipDuplicates: true })" path="prisma/schema.prisma">Bulk create permissions with duplicate skipping for idempotent seeding</interface>
+  </interfaces>
+  <tests>
+    <standards>Testing pattern: Arrange-Act-Assert (AAA) for all seeder tests. Jest framework with separate test database. Setup: beforeAll connect Prisma, beforeEach seed test data, afterEach cleanup (deleteMany), afterAll disconnect. Minimum 70% coverage required. Integration tests validate full seeding workflow with transaction rollback.</standards>
+    <locations>test/seeders/*.spec.ts for unit tests, test/integration/*.spec.ts for E2E tests, test/factories/*.spec.ts for factory tests. Glob patterns: "test/**/*.{test,spec}.ts" for all tests. Seeders tested with mocked PrismaClient, factories tested with actual Faker.js output validation.</locations>
+    <ideas>
+      <idea testId="AC1" description="Test RoleSeeder.seed() creates all 4 roles (admin, staff, user, guest) with upsert idempotency - run twice and verify no duplicates">Priority: High</idea>
+      <idea testId="AC2" description="Test PermissionSeeder creates all permissions and assigns to roles via $transaction - verify RolePermission junction table populated">Priority: High</idea>
+      <idea testId="AC3" description="Test UserSeeder uses UserFactory and hashPassword utility - verify Turkish users created with proper role assignments">Priority: High</idea>
+      <idea testId="AC4" description="Test FileSeeder uses FileFactory - verify sample images, PDFs created with realistic metadata (size, mimeType, fileName)">Priority: Medium</idea>
+      <idea testId="AC5" description="Test SmsSeeder generates Turkish phone numbers (05xx format) and OTP codes - verify phone format compliance">Priority: Medium</idea>
+      <idea testId="AC6" description="Test all seeders idempotent - run each seeder twice and verify no duplicate records created">Priority: High</idea>
+      <idea testId="AC7" description="Test seed.ts $transaction wraps all seeders - simulate failure and verify rollback works">Priority: High</idea>
+    </ideas>
+  </tests>
+</story-context>

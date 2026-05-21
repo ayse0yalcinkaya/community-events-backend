@@ -1,0 +1,157 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>4</storyId>
+    <title>Document Generator Service (Orchestration)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-4-document-generation-endpoints.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>main document generator service orchestration</iWant>
+    <soThat>cache, generation, S3 upload flow yönetebilleyim</soThat>
+    <tasks>
+      <task id="1">Enums ve Interfaces oluştur (AC: 6.4.4, 6.4.5)</task>
+      <task id="2">DocumentGeneratorService oluştur (AC: 6.4.1)</task>
+      <task id="3">generate() Method implement et (AC: 6.4.2, 6.4.3)</task>
+      <task id="4">Default Values implement et (AC: 6.4.7)</task>
+      <task id="5">Error Handling implement et (AC: 6.4.6)</task>
+      <task id="6">Logging implement et (AC: 6.4.8)</task>
+      <task id="7">Testing (AC: All)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="AC-6.4.1">DocumentGeneratorService oluşturulmuş - Dependencies injection: CacheService, RetryService, AwsService, PdfAdapterFactory, ExcelAdapterFactory, I18nService</ac>
+    <ac id="AC-6.4.2">generate() Method implement edilmiş - Method signature: async generate(documentType: DocumentType, options: DocumentGeneratorOptions): Promise&lt;GenerationResult&gt;</ac>
+    <ac id="AC-6.4.3">Generation Flow implement edilmiş - Cache check → Adapter retrieval → Generation → S3 upload → Cache update</ac>
+    <ac id="AC-6.4.4">Enums oluşturulmuş - DocumentType (PDF, EXCEL), CacheStrategy (TEMPLATE_HASH, NO_CACHE)</ac>
+    <ac id="AC-6.4.5">Interfaces oluşturulmuş - DocumentGeneratorOptions, GenerationResult</ac>
+    <ac id="AC-6.4.6">Error Handling implement edilmiş - AdapterNotFoundException, TemplateNotFoundException, GenerationFailedException</ac>
+    <ac id="AC-6.4.7">Default Values implement edilmiş - Default cache TTL: 1 hour, default cache strategy: TEMPLATE_HASH, default ACL: public-read, S3 filename auto-generation, Content-Type auto-detection</ac>
+    <ac id="AC-6.4.8">Logging implement edilmiş - Generation time, cache hit/miss, file size, S3 upload success/failure, structured logging format</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-6.md" title="Epic 6 Technical Specification" section="Story 6.4: Document Generator Service (Orchestration)">
+        Complete AC specifications (AC-6.4.1 through AC-6.4.8). Service orchestration architecture, generation flow, error handling, default values, logging requirements.
+      </doc>
+      <doc path="docs/epics/epic-6-document-generation-adapter-pattern-hrsync-backend.md" title="Epic 6: Document Generation" section="Story 6.4: Document Generator Service (Orchestration)">
+        Epic-level story breakdown and acceptance criteria. Main method signature, generation flow, enums, error handling, technical notes.
+      </doc>
+      <doc path="docs/tech-spec-epic-6.md" title="Epic 6 Technical Specification" section="Document Generator Service Orchestration">
+        Service orchestration pattern, cache check → adapter retrieval → generation → S3 upload → cache update flow.
+      </doc>
+      <doc path="docs/tech-spec-epic-6.md" title="Epic 6 Technical Specification" section="Services and Modules">
+        DocumentGeneratorService dependencies and responsibilities table. Inputs, outputs, dependencies.
+      </doc>
+      <doc path="docs/tech-spec-epic-6.md" title="Epic 6 Technical Specification" section="Workflows and Sequencing">
+        Document generation flow diagram and detailed PDF/Excel generation flows. Retry mechanism flow.
+      </doc>
+      <doc path="docs/tech-spec-epic-6.md" title="Epic 6 Technical Specification" section="Error Handling">
+        Error codes and exception handling architecture. AdapterNotFoundException, TemplateNotFoundException, GenerationFailedException.
+      </doc>
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Module Structure">
+        Module structure patterns, import organization (8-group order), API response format.
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests">
+        Arrange-Act-Assert pattern, testing standards, test coverage requirements.
+      </doc>
+      <doc path="docs/stories/6-3-document-template-management.md" title="Story 6.3" section="Learnings from Previous Story">
+        PdfAdapterFactory ve ExcelAdapterFactory pattern, custom exceptions, example adapters, module structure.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/document-generator/factories/pdf-adapter.factory.ts" kind="service" symbol="PdfAdapterFactory" reason="Factory for retrieving PDF adapters. Methods: getAdapter(templateName), getRegisteredTemplates(). Used by DocumentGeneratorService for PDF adapter retrieval." />
+      <file path="src/modules/document-generator/factories/excel-adapter.factory.ts" kind="service" symbol="ExcelAdapterFactory" reason="Factory for retrieving Excel adapters. Methods: getAdapter(adapterName), getRegisteredAdapters(). Used by DocumentGeneratorService for Excel adapter retrieval." />
+      <file path="src/modules/document-generator/exceptions/adapter-not-found.exception.ts" kind="exception" symbol="AdapterNotFoundException" reason="Exception thrown when adapter not found. Used in DocumentGeneratorService when factory.getAdapter() fails." />
+      <file path="src/modules/document-generator/exceptions/template-not-found.exception.ts" kind="exception" symbol="TemplateNotFoundException" reason="Exception thrown when template file not found. Used in DocumentGeneratorService when adapter.generate() fails due to missing template." />
+      <file path="src/modules/document-generator/exceptions/generation-failed.exception.ts" kind="exception" symbol="GenerationFailedException" reason="Exception thrown when document generation fails. Used in DocumentGeneratorService for generation errors and S3 upload failures." />
+      <file path="src/modules/files/services/s3.service.ts" kind="service" symbol="S3Service" reason="AWS S3 service for file upload. Method: uploadFile(buffer, key, mimeType). Used by DocumentGeneratorService for S3 upload. Note: S3Service has built-in retry logic, but DocumentGeneratorService should use RetryService wrapper (Story 6.6)." lines="100-155" />
+      <file path="src/modules/document-generator/adapters/pdf/invoice-pdf.adapter.ts" kind="adapter" symbol="InvoicePdfAdapter" reason="Example PDF adapter. Extends BasePdfAdapter, implements IPdfAdapter. Used for testing DocumentGeneratorService PDF generation flow." />
+      <file path="src/modules/document-generator/adapters/excel/sales-report-excel.adapter.ts" kind="adapter" symbol="SalesReportExcelAdapter" reason="Example Excel adapter. Extends BaseExcelAdapter, implements IExcelAdapter. Used for testing DocumentGeneratorService Excel generation flow." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@aws-sdk/client-s3" version="^3.925.0" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="reflect-metadata" version="^0.2.2" />
+        <package name="winston" version="^3.18.3" />
+        <package name="nestjs-i18n" version="^10.5.1" />
+        <package name="@nestjs/cache-manager" note="Required for CacheService (Story 6.5)" />
+        <package name="cache-manager" note="Required for CacheService (Story 6.5)" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Service Orchestration Pattern: DocumentGeneratorService orchestrates cache check → adapter retrieval → generation → S3 upload → cache update flow. Separation of concerns: CacheService, RetryService, AwsService are separate services.</constraint>
+    <constraint>Dependency Injection Pattern: NestJS dependency injection required. CacheService and RetryService should be injected as interfaces/placeholders (implemented in Story 6.5 and 6.6). Factory pattern for adapter retrieval.</constraint>
+    <constraint>Error Handling Pattern: Use custom exceptions from Story 6.3: AdapterNotFoundException, TemplateNotFoundException, GenerationFailedException. Context-aware error messages.</constraint>
+    <constraint>Caching Strategy: SHA-256 hash-based caching (Story 6.5). Cache key format: doc:{type}:{template}:{dataHash}. TTL support (default 1 hour). Cache strategies: TEMPLATE_HASH, NO_CACHE.</constraint>
+    <constraint>Retry Mechanism: Exponential backoff retry (Story 6.6). Max 3 attempts. S3 upload failures use RetryService wrapper.</constraint>
+    <constraint>Module Structure: DocumentGeneratorService at services/document-generator.service.ts. Enums at enums/document-type.enum.ts, enums/cache-strategy.enum.ts. Interfaces at interfaces/document-generator-options.interface.ts, interfaces/generation-result.interface.ts.</constraint>
+    <constraint>Import Organization: 8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events.</constraint>
+    <constraint>Default Values: Default cache TTL: 3600000ms (1 hour). Default cache strategy: TEMPLATE_HASH. Default ACL: public-read. S3 filename auto-generation: UUID + extension (.pdf or .xlsx). Content-Type auto-detection: application/pdf (PDF), application/vnd.openxmlformats-officedocument.spreadsheetml.sheet (Excel).</constraint>
+    <constraint>Logging: Structured logging format (Epic 7 pattern). JSON format: { timestamp, level, message, context: { module, method, ... } }. Log generation time, cache hit/miss, file size, S3 upload success/failure.</constraint>
+    <constraint>Testing: Arrange-Act-Assert pattern. Mock dependencies (CacheService, RetryService, AwsService, Factories). Unit tests for generate() method scenarios. Integration tests for full generation flow.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="DocumentGeneratorService.generate()" kind="method signature" signature="async generate(documentType: DocumentType, options: DocumentGeneratorOptions): Promise&lt;GenerationResult&gt;" path="src/modules/document-generator/services/document-generator.service.ts" />
+    <interface name="DocumentGeneratorOptions" kind="TypeScript interface" signature="{ templateName: string, data: any, lang: string, s3Options: { path: string, filename?: string, contentType?: string, acl?: 'private' | 'public-read' | 'public-read-write' }, cacheStrategy?: CacheStrategy, cacheTtl?: number, metadata?: any }" path="src/modules/document-generator/interfaces/document-generator-options.interface.ts" />
+    <interface name="GenerationResult" kind="TypeScript interface" signature="{ success: boolean, fileUrl: string, cached: boolean, generatedAt: Date, fileSize?: number, generationTime?: number, metadata?: any }" path="src/modules/document-generator/interfaces/generation-result.interface.ts" />
+    <interface name="PdfAdapterFactory.getAdapter()" kind="method signature" signature="getAdapter(templateName: string): IPdfAdapter" path="src/modules/document-generator/factories/pdf-adapter.factory.ts" />
+    <interface name="ExcelAdapterFactory.getAdapter()" kind="method signature" signature="getAdapter(adapterName: string): IExcelAdapter" path="src/modules/document-generator/factories/excel-adapter.factory.ts" />
+    <interface name="S3Service.uploadFile()" kind="method signature" signature="async uploadFile(buffer: Buffer, key: string, mimeType: string): Promise&lt;string&gt;" path="src/modules/files/services/s3.service.ts" />
+    <interface name="CacheService.generateCacheKey()" kind="method signature" signature="generateCacheKey(documentType, templateName, data): string" path="src/modules/document-generator/services/cache.service.ts" note="Placeholder - Story 6.5" />
+    <interface name="CacheService.get()" kind="method signature" signature="get(key): Promise&lt;string | null&gt;" path="src/modules/document-generator/services/cache.service.ts" note="Placeholder - Story 6.5" />
+    <interface name="CacheService.set()" kind="method signature" signature="set(key, value, ttl?): Promise&lt;void&gt;" path="src/modules/document-generator/services/cache.service.ts" note="Placeholder - Story 6.5" />
+    <interface name="RetryService.executeWithRetry()" kind="method signature" signature="async executeWithRetry&lt;T&gt;(operation: () => Promise&lt;T&gt;, context: string): Promise&lt;T&gt;" path="src/modules/document-generator/services/retry.service.ts" note="Placeholder - Story 6.6" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests use Arrange-Act-Assert pattern. Mock dependencies (CacheService, RetryService, AwsService, Factories). Integration tests verify full generation flow. E2E tests cover cache hit/miss scenarios and error handling. Test coverage target: 70%+. Testing framework: Jest v29.x. Mocking: Jest mocks for Puppeteer, ExcelJS, AwsService, CacheManager.
+    </standards>
+    <locations>
+      Unit tests: src/modules/document-generator/services/__tests__/document-generator.service.spec.ts
+      Integration tests: src/modules/document-generator/services/__tests__/document-generator.service.integration-spec.ts
+      E2E tests: test/document-generator.e2e-spec.ts
+    </locations>
+    <ideas>
+      <test ac="AC-6.4.1">Unit test: DocumentGeneratorService constructor with all dependencies injected</test>
+      <test ac="AC-6.4.2">Unit test: generate() method signature validation</test>
+      <test ac="AC-6.4.3">Integration test: Full generation flow (cache miss → adapter → S3 upload → cache update)</test>
+      <test ac="AC-6.4.3">Unit test: Cache hit scenario - returns cached S3 URL</test>
+      <test ac="AC-6.4.3">Unit test: PDF generation - PdfAdapterFactory.getAdapter() called</test>
+      <test ac="AC-6.4.3">Unit test: Excel generation - ExcelAdapterFactory.getAdapter() called</test>
+      <test ac="AC-6.4.4">Unit test: DocumentType enum values (PDF, EXCEL)</test>
+      <test ac="AC-6.4.4">Unit test: CacheStrategy enum values (TEMPLATE_HASH, NO_CACHE)</test>
+      <test ac="AC-6.4.5">Unit test: DocumentGeneratorOptions interface validation</test>
+      <test ac="AC-6.4.5">Unit test: GenerationResult interface validation</test>
+      <test ac="AC-6.4.6">Unit test: AdapterNotFoundException thrown when adapter not found</test>
+      <test ac="AC-6.4.6">Unit test: TemplateNotFoundException caught and re-thrown</test>
+      <test ac="AC-6.4.6">Unit test: GenerationFailedException thrown on generation failure</test>
+      <test ac="AC-6.4.6">Unit test: GenerationFailedException thrown on S3 upload failure after retries</test>
+      <test ac="AC-6.4.7">Unit test: Default cache TTL: 3600000ms</test>
+      <test ac="AC-6.4.7">Unit test: Default cache strategy: TEMPLATE_HASH</test>
+      <test ac="AC-6.4.7">Unit test: Default ACL: public-read</test>
+      <test ac="AC-6.4.7">Unit test: S3 filename auto-generation: UUID + extension</test>
+      <test ac="AC-6.4.7">Unit test: Content-Type auto-detection: application/pdf (PDF)</test>
+      <test ac="AC-6.4.7">Unit test: Content-Type auto-detection: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet (Excel)</test>
+      <test ac="AC-6.4.8">Unit test: Generation time logging</test>
+      <test ac="AC-6.4.8">Unit test: Cache hit/miss logging</test>
+      <test ac="AC-6.4.8">Unit test: File size logging</test>
+      <test ac="AC-6.4.8">Unit test: S3 upload success/failure logging</test>
+      <test ac="AC-6.4.8">Unit test: Structured logging format (JSON)</test>
+    </ideas>
+  </tests>
+</story-context>
+

@@ -1,0 +1,284 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>11</epicId>
+    <storyId>5</storyId>
+    <title>Database Migration Automation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10T00:00:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/11-5-database-migration-automation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>migrations automated in CI/CD</iWant>
+    <soThat>schema değişiklikleri deploy ile birlikte apply edilsin</soThat>
+    <tasks>
+      Task 1: Configure migration command in CD pipelines (AC: #1)
+      Task 2: Implement migration failure handling (AC: #2)
+      Task 3: Implement migration lock mechanism (AC: #3)
+      Task 4: Enable migration history tracking (AC: #4)
+      Task 5: Create dry-run option (AC: #5)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Migration command: `npx prisma migrate deploy` implemented in CD pipelines
+    2. CD pipeline'da migration step:
+       - Before app deployment
+       - Failure → rollback, don't deploy app
+    3. Migration lock (prevent concurrent migrations) implemented
+    4. Migration history tracking enabled
+    5. Dry-run option (manual trigger) available
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-11-cicd-deployment.md</path>
+        <title>Epic 11: CI/CD & Deployment</title>
+        <section>Story 11.5: Database Migration Automation</section>
+        <snippet>As a developer, I want migrations automated in CI/CD, so that schema değişiklikleri deploy ile birlikte apply edilsin. Acceptance Criteria: Migration command: npx prisma migrate deploy, CD pipeline'da migration step: Before app deployment, Failure → rollback, Migration lock, Migration history tracking, Dry-run option</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-11.md</path>
+        <title>Epic Technical Specification: CI/CD & Deployment</title>
+        <section>Story 11.5: Database Migration Automation - AC</section>
+        <snippet>Migration command: npx prisma migrate deploy, Production-safe migration execution, Idempotent migrations (safe to run multiple times), Migration step in CD pipeline (before app deployment), Failure handling: rollback if migration fails, Migration lock: prevent concurrent migrations, Migration history tracking, Down migrations available, Transaction support: wrapped in DB transactions</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-11.md</path>
+        <title>Epic Technical Specification: CI/CD & Deployment</title>
+        <section>Database Migration Contract</section>
+        <snippet>interface MigrationExecution { migrationId: string; command: "npx prisma migrate deploy"; environment: "staging" | "production"; timeout: 30000; rollbackCommand?: "npx prisma migrate reset"; successCriteria: { schemaUpdated: boolean; healthCheckPass: boolean; applicationResponsive: boolean; } }</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-11.md</path>
+        <title>Epic Technical Specification: CI/CD & Deployment</title>
+        <section>CD Pipeline Workflow (Staging) and (Production)</section>
+        <snippet>Run Database Migrations → Health Check Validation → If Pass: Mark Staging Ready, If Fail: Rollback. For production, Run Database Migrations → Health Check Validation → Smoke Tests. Database migration execution: < 2 minutes (per migration batch)</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Test Coverage Requirements</section>
+        <snippet>Minimum Coverage: 70% (enforced by CI/CD). Coverage Breakdown: Utilities: 100%, Services: 80%+, Controllers: 70%+, Repositories: 70%+. Test Levels: Unit Testing, Integration Testing, E2E Testing, Infrastructure Testing, Performance Testing, Security Testing</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/11-4-cd-pipeline-production.md</path>
+        <title>Story 11.4: CD Pipeline (Production)</title>
+        <section>Dev Notes - Learnings from Previous Story</section>
+        <snippet>Prisma migrate deploy already integrated in production CD pipeline [cd-production.yml:113-129], Migration failure handling: Automatic rollback on failure, Health check validation after migration, Staging pipeline has same migration pattern [cd-staging.yml] (Story 11-3), Migration automation is direct extension of existing CD pipeline</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>.github/workflows/cd-staging.yml</path>
+        <kind>workflow</kind>
+        <symbol>cd-staging</symbol>
+        <lines>113-129</lines>
+        <reason>Contains Prisma migrate deploy integration in staging deployment</reason>
+      </file>
+      <file>
+        <path>.github/workflows/cd-production.yml</path>
+        <kind>workflow</kind>
+        <symbol>cd-production</symbol>
+        <lines>113-129</lines>
+        <reason>Contains Prisma migrate deploy integration in production deployment with manual approval</reason>
+      </file>
+      <file>
+        <path>.github/workflows/cd-production.yml</path>
+        <kind>workflow</kind>
+        <symbol>cd-production deploy job</symbol>
+        <lines>115-128</lines>
+        <reason>Implements migration failure handling with automatic rollback on failure</reason>
+      </file>
+      <file>
+        <path>.github/workflows/cd-production.yml</path>
+        <kind>workflow</kind>
+        <symbol>cd-production health check</symbol>
+        <lines>149-186</lines>
+        <reason>Health check validation after migration using /health endpoint</reason>
+      </file>
+      <file>
+        <path>docker/Dockerfile</path>
+        <kind>dockerfile</kind>
+        <symbol>multi-stage build</symbol>
+        <lines>1-109</lines>
+        <reason>Multi-stage Docker build for production deployment from Story 11-1</reason>
+      </file>
+      <file>
+        <path>src/health/health.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>/health endpoint</symbol>
+        <lines>199-218</lines>
+        <reason>Health check endpoint used for post-migration validation (Epic 7)</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package>@prisma/client</package>
+        <version>6.18+</version>
+        <purpose>Database ORM and migration system</purpose>
+      </node>
+      <node>
+        <package>prisma</package>
+        <version>6.18.0</version>
+        <purpose>Database schema management and migration tooling</purpose>
+      </node>
+      <node>
+        <package>@nestjs/config</package>
+        <version>4.x</version>
+        <purpose>Environment configuration management</purpose>
+      </node>
+      <node>
+        <package>joi</package>
+        <version>18.x</version>
+        <purpose>Configuration validation</purpose>
+      </node>
+      <github-actions>
+        <action>actions/checkout@v3</action>
+        <purpose>Source code checkout for workflows</purpose>
+      </github-actions>
+      <github-actions>
+        <action>actions/setup-node@v3</action>
+        <purpose>Node.js environment setup for CI/CD</purpose>
+      </github-actions>
+      <github-actions>
+        <action>docker/build-push-action@v4</action>
+        <purpose>Docker image build and push for CD pipelines</purpose>
+      </github-actions>
+      <github-actions>
+        <action>docker/login-action@v2</action>
+        <purpose>Container registry authentication</purpose>
+      </github-actions>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    Must use `npx prisma migrate deploy` for production-safe migration execution. Migration must execute before app deployment in CD pipeline. Migration failure must trigger automatic rollback. Migration lock must prevent concurrent migration execution. All migrations must be idempotent and wrapped in database transactions. Health check validation required after migration execution. Migration history must be maintained for audit purposes. GitHub Actions workflows must use Node.js 20.x LTS runtime. Docker multi-stage build must be used for containerized deployment. Migration dry-run capability required for manual validation.
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>MigrationExecution</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+        interface MigrationExecution {
+          migrationId: string;
+          command: "npx prisma migrate deploy";
+          environment: "staging" | "production";
+          timeout: 30000;
+          rollbackCommand?: "npx prisma migrate reset";
+          successCriteria: {
+            schemaUpdated: boolean;
+            healthCheckPass: boolean;
+            applicationResponsive: boolean;
+          };
+        }
+      </signature>
+      <path>docs/tech-spec-epic-11.md#Database-Migration-Contract</path>
+    </interface>
+    <interface>
+      <name>Health Check Endpoint</name>
+      <kind>REST API</kind>
+      <signature>
+        GET /health
+        Response: { status: "ok", timestamp: "2025-11-10", version: "1.0.0" }
+      </signature>
+      <path>src/health/health.controller.ts</path>
+    </interface>
+    <interface>
+      <name>Database Health Check</name>
+      <kind>REST API</kind>
+      <signature>
+        GET /health/db
+        Response: { database: "connected", type: "postgresql|mongodb" }
+      </signature>
+      <path>src/health/health.controller.ts</path>
+    </interface>
+    <interface>
+      <name>CI Pipeline API</name>
+      <kind>GitHub Actions</kind>
+      <signature>
+        POST /api/webhooks/ci/pipeline-started
+        Body: { pipelineId, commitSha, branch, prNumber }
+        Response: { status: "accepted", pipelineId }
+      </signature>
+      <path>docs/tech-spec-epic-11.md#APIs-and-Interfaces</path>
+    </interface>
+    <interface>
+      <name>CD Pipeline API</name>
+      <kind>GitHub Actions</kind>
+      <signature>
+        POST /api/webhooks/cd/deployment-started
+        Body: { deploymentId, environment, version, imageTag }
+        Response: { status: "accepted" }
+      </signature>
+      <path>docs/tech-spec-epic-11.md#APIs-and-Interfaces</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing Strategy requires minimum 70% test coverage enforced by CI/CD. Unit tests for individual services/modules using Jest with Arrange-Act-Assert pattern. Integration tests for API endpoints, database operations, and external service integration using Jest, SuperTest, and TestContainers. E2E tests for complete CI/CD workflow validation. Infrastructure tests for Docker, CI/CD pipelines, and deployment processes. Security tests for container security, dependency vulnerabilities, and secrets handling. Performance tests for CI/CD pipeline performance and container performance. Mock factories and test utilities available for consistent test data generation.</standards>
+    <locations>
+      Unit tests: tests/unit/ or src/**/*.test.ts
+      Integration tests: tests/integration/ or test/*.e2e-spec.ts
+      E2E tests: tests/e2e/ or test/*.e2e-spec.ts
+      Test utilities: tests/factories/, test/setup.ts
+      Test configuration: jest.config.js, jest-e2e.json
+    </locations>
+    <ideas>
+      <test>
+        <acRef>AC-1</acRef>
+        <name>Migration Command Execution</name>
+        <description>Verify that npx prisma migrate deploy executes successfully in both staging and production CD pipelines</description>
+      </test>
+      <test>
+        <acRef>AC-2</acRef>
+        <name>Migration Failure Handling</name>
+        <description>Test that migration failure triggers automatic rollback and prevents app deployment in both staging and production</description>
+      </test>
+      <test>
+        <acRef>AC-2</acRef>
+        <name>Migration Pre-Deployment</name>
+        <description>Verify that migration step executes before app container deployment in CD pipeline</description>
+      </test>
+      <test>
+        <acRef>AC-3</acRef>
+        <name>Migration Lock Mechanism</name>
+        <description>Test that concurrent migration attempts are prevented via lock file or database-level lock</description>
+      </test>
+      <test>
+        <acRef>AC-3</acRef>
+        <name>Lock File Cleanup</name>
+        <description>Verify that lock file is removed after successful migration and cleaned up on failure with timeout</description>
+      </test>
+      <test>
+        <acRef>AC-4</acRef>
+        <name>Migration History Tracking</name>
+        <description>Verify that Prisma migration history (_Prisma_migrations table) is properly maintained and logged in CI/CD</description>
+      </test>
+      <test>
+        <acRef>AC-5</acRef>
+        <name>Migration Dry-Run</name>
+        <description>Test that manual dry-run workflow validates migrations without applying them to the database</description>
+      </test>
+      <test>
+        <acRef>AC-1, AC-2</acRef>
+        <name>Health Check Post-Migration</name>
+        <description>Verify that /health endpoint responds successfully after migration execution</description>
+      </test>
+      <test>
+        <acRef>AC-2</acRef>
+        <name>Rollback on Health Check Failure</name>
+        <description>Test that container rollback occurs when health check fails after migration</description>
+      </test>
+      <test>
+        <acRef>AC-1, AC-2</acRef>
+        <name>Idempotent Migration Execution</name>
+        <description>Verify that migrations are safe to run multiple times without data corruption</description>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

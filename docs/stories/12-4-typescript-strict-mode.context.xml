@@ -1,0 +1,115 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>12</epicId>
+    <storyId>4</storyId>
+    <title>TypeScript Strict Mode</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/12-4-typescript-strict-mode.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>TypeScript strict mode enforced</iWant>
+    <soThat>type safety maksimum seviyede olsun</soThat>
+    <tasks>
+- Task 1: Review current tsconfig.json (AC: #1)
+  - Subtask 1.1: Read existing tsconfig.json
+  - Subtask 1.2: Document current strict settings status
+  - Subtask 1.3: Identify gaps from required strict flags
+- Task 2: Enable TypeScript strict mode flags (AC: #1)
+  - Subtask 2.1: Set strict: true in tsconfig.json
+  - Subtask 2.2: Set noImplicitAny: true
+  - Subtask 2.3: Set strictNullChecks: true
+  - Subtask 2.4: Set strictFunctionTypes: true
+  - Subtask 2.5: Set strictBindCallApply: true
+  - Subtask 2.6: Set strictPropertyInitialization: true
+  - Subtask 2.7: Set noImplicitThis: true
+  - Subtask 2.8: Set alwaysStrict: true
+- Task 3: Fix TypeScript compilation errors (AC: #2)
+  - Subtask 3.1: Run npx tsc --noEmit to identify type errors
+  - Subtask 3.2: Fix implicit any type errors
+  - Subtask 3.3: Fix strict null/undefined check errors
+  - Subtask 3.4: Fix property initialization errors
+  - Subtask 3.5: Fix function type binding errors
+  - Subtask 3.6: Test: Verify npx tsc --noEmit passes
+- Task 4: Add type-check to CI/CD pipeline (AC: #3)
+  - Subtask 4.1: Add type-check step to GitHub Actions workflow
+  - Subtask 4.2: Add npm run type-check script to package.json
+  - Subtask 4.3: Test: Verify CI/CD type-check stage
+- Task 5: Verify VS Code TypeScript IntelliSense (AC: #4)
+  - Subtask 5.1: Open TypeScript files in VS Code
+  - Subtask 5.2: Verify strict type checking shows warnings
+  - Subtask 5.3: Test: Type hints for strict null checks
+  - Subtask 5.4: Test: Property initialization warnings
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. tsconfig.json strict settings:
+   - strict: true
+   - noImplicitAny: true
+   - strictNullChecks: true
+   - strictFunctionTypes: true
+   - strictBindCallApply: true
+   - strictPropertyInitialization: true
+   - noImplicitThis: true
+   - alwaysStrict: true
+2. All existing code compiles without errors
+3. CI/CD: TypeScript compilation check
+4. VS Code: TypeScript IntelliSense fully leveraged
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-12-code-quality-standards.md" title="Epic 12: Code Quality &amp; Standards" section="Story 12.4: TypeScript Strict Mode" snippet="TypeScript strict mode enforced for maximum type safety. Includes strict: true, noImplicitAny, strictNullChecks, and related flags." />
+      <doc path="docs/tech-spec-epic-12.md" title="Epic 12 Technical Specification" section="TypeScript Configuration Contract" snippet="Canonical tsconfig.json structure with comprehensive strict compiler flags for maximum type safety enforcement." />
+      <doc path="docs/tech-spec-epic-12.md" title="Epic 12 Technical Specification" section="CI/CD Integration Workflow" snippet="Type-check stage integration in build pipeline with lint and format checks for quality gates." />
+      <doc path="docs/tech-spec-epic-12.md" title="Epic 12 Technical Specification" section="NFR Performance" snippet="Type checking overhead target: &lt; 5 seconds for full project to maintain developer productivity." />
+      <doc path="docs/PRD-NFR-CodingStandards.md" title="PRD Non-Functional Requirements - Coding Standards" section="NFR-4.12 Testing Pattern" snippet="Testing patterns and quality standards for hrsync-backend codebase including TypeScript strict mode requirements." />
+    </docs>
+    <code>
+      <file path="tsconfig.json" kind="config" symbol="TypeScript Configuration" lines="1-27" reason="Main TypeScript configuration file - currently has strict: true, needs remaining 7 strict flags added" />
+      <file path=".husky/pre-commit" kind="hook" symbol="Pre-commit Hook Script" lines="1-35" reason="Pre-commit hook that will need type-check stage added for Story 12-4 integration" />
+      <file path=".github/workflows/ci.yml" kind="workflow" symbol="CI Pipeline" lines="1-100" reason="GitHub Actions CI workflow that needs type-check stage added for quality gates" />
+      <file path="package.json" kind="config" symbol="NPM Scripts" lines="8-45" reason="NPM scripts configuration - will add type-check script here" />
+      <file path="src" kind="directory" symbol="Source Code" lines="N/A" reason="TypeScript source files that must compile without errors under strict mode" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="typescript" version="^5.7.3" />
+        <package name="@typescript-eslint/eslint-plugin" version="^8.46.3" />
+        <package name="@typescript-eslint/parser" version="^8.46.3" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="Technical">All 8 strict mode flags must be enabled in tsconfig.json for maximum type safety</constraint>
+    <constraint type="Technical">Type checking must complete in &lt; 5 seconds for developer productivity (NFR from tech-spec)</constraint>
+    <constraint type="Quality">All existing code must compile without errors under strict mode</constraint>
+    <constraint type="Integration">Type-check stage must be added to CI/CD pipeline as mandatory quality gate</constraint>
+    <constraint type="Integration">Pre-commit hook must include type-check to block commits with type errors</constraint>
+    <constraint type="Quality">VS Code IntelliSense must be fully leveraged for strict type checking</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="TypeScript CLI" kind="CLI Command" signature="npx tsc --noEmit" path="tsconfig.json" description="TypeScript compiler command for type-checking without emitting files" />
+    <interface name="NPM Script: type-check" kind="NPM Script" signature="npm run type-check" path="package.json" description="NPM script wrapper for TypeScript type-checking" />
+    <interface name="GitHub Actions: type-check" kind="CI Step" signature="run: npm run type-check" path=".github/workflows/ci.yml" description="CI/CD pipeline step for TypeScript type checking" />
+  </interfaces>
+
+  <tests>
+    <standards>Testing follows Epic-9 established patterns using Jest. TypeScript strict mode requires type-safe test code with proper null checks and explicit any handling. Tests should verify type-check stage in CI/CD and validate strict compilation of all TypeScript files.</standards>
+    <locations>test/ (unit tests), test/jest-e2e.json (E2E config), test/integration/ (integration tests), tests written in TypeScript following Jest patterns from Epic-9</locations>
+    <ideas>
+      <test idea="AC-1: Verify all 8 strict flags are enabled" testType="Integration" relatedAC="1" />
+      <test idea="AC-2: Run npx tsc --noEmit and verify zero errors" testType="Build" relatedAC="2" />
+      <test idea="AC-3: Verify CI/CD pipeline includes type-check stage" testType="E2E" relatedAC="3" />
+      <test idea="AC-4: Verify VS Code shows strict type warnings" testType="Manual" relatedAC="4" />
+      <test idea="Verify pre-commit hook blocks type errors" testType="Integration" relatedAC="1,2" />
+      <test idea="Verify type-check completes in &lt; 5 seconds" testType="Performance" relatedAC="2" />
+    </ideas>
+  </tests>
+</story-context>

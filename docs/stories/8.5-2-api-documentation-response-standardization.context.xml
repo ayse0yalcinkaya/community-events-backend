@@ -1,0 +1,265 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8.5</epicId>
+    <storyId>2</storyId>
+    <title>API Documentation & Response Standardization</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8.5-2-api-documentation-response-standardization.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>enhanced ApiEndpoint decorator with ApiBody integration and a global response interceptor</iWant>
+    <soThat>API documentation is consistent and responses are in standard format</soThat>
+    <tasks>
+- Task 1: Enhance ApiEndpoint Decorator with ApiBody Support (AC: 8.5-2.1)
+- Task 2: Enhance ApiCrud Decorators with Body Schema Support (AC: 8.5-2.2)
+- Task 3: Remove Manual ApiBody from Controllers (AC: 8.5-2.3)
+- Task 4: Create Global Response Interceptor (AC: 8.5-2.4)
+- Task 5: Integrate i18n into Response Interceptor (AC: 8.5-2.7)
+- Task 6: Register Global Interceptor (AC: 8.5-2.5)
+- Task 7: Refactor Controllers to Remove Manual Response Wrapping (AC: 8.5-2.6)
+- Task 8: Refactor Services to Return Raw Data (AC: 8.5-2.6)
+- Task 9: Verify Interceptor-Exception Filter Compatibility (AC: 8.5-2.8)
+- Task 10: Test Response Type Detection (AC: 8.5-2.9)
+- Task 11: Update Swagger Response Decorators (AC: 8.5-2.9)
+- Task 12: Build Validation and Integration Testing (AC: 8.5-2.10)
+- Task 13: Write Unit Tests for Interceptor
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-8.5-2.1:** ApiEndpoint decorator enhanced with ApiBody integration
+2. **AC-8.5-2.2:** ApiCrud decorator enhanced with body schema support
+3. **AC-8.5-2.3:** All manual ApiBody decorators removed from controllers
+4. **AC-8.5-2.4:** Global Response Interceptor created with standard format wrapping
+5. **AC-8.5-2.5:** Global Interceptor registered in main.ts
+6. **AC-8.5-2.6:** Controllers and services refactored - raw data flow
+7. **AC-8.5-2.7:** Response Interceptor integrated with i18n service
+8. **AC-8.5-2.8:** Interceptor compatible with exception filters (no conflict)
+9. **AC-8.5-2.9:** Automatic response type detection (single, array, paginated)
+10. **AC-8.5-2.10:** Build and type checking successful, Swagger UI working
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-8.5-technical-refinement-code-quality.md</path>
+        <title>Epic 8.5: Technical Refinement &amp; Code Quality</title>
+        <section>Story 8.5-2</section>
+        <snippet>Enhanced ApiEndpoint decorator with ApiBody integration and global response interceptor for consistent API documentation and standard response format.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-8.md</path>
+        <title>Epic 8 Technical Specification: API Documentation (Swagger)</title>
+        <section>Response Wrapper Classes, Factory Functions</section>
+        <snippet>Defines standard response format structure with success, status, data, message fields. Factory functions createApiResponseClass() and createPaginatedApiResponseClass() create runtime wrapper classes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>API Response Format (Auto-Wrapped by Interceptor)</section>
+        <snippet>Controllers return DTOs directly, interceptor wraps automatically with standard format. Paginated responses return { data, count } pattern which interceptor transforms.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/api-contracts.md</path>
+        <title>API Contracts</title>
+        <section>Response Format Standards</section>
+        <snippet>Success response: { success: true, status, data, count?, message }. Error response: { success: false, status, message, errors? }. HTTP status codes: 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, etc.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/common/decorators/api-endpoint.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>ApiEndpoint</symbol>
+        <lines>1-221</lines>
+        <reason>Existing decorator to be enhanced with bodySchema parameter for ApiBody integration. Currently supports params, queries, body.type but needs bodySchema field for multipart/form-data scenarios.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/api-crud.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>ApiGetAll, ApiGetOne, ApiCreate, ApiUpdate, ApiDelete</symbol>
+        <lines>1-192</lines>
+        <reason>CRUD shortcut decorators that wrap ApiEndpoint. Need to be enhanced to support body schema parameter for file upload scenarios.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/interceptors/logging.interceptor.ts</path>
+        <kind>interceptor</kind>
+        <symbol>LoggingInterceptor</symbol>
+        <lines>1-135</lines>
+        <reason>Reference interceptor pattern. Shows how to implement NestInterceptor with RxJS operators (tap, catchError). TransformResponseInterceptor will follow similar structure.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/base/dto/base-success-response.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>BaseSuccessResponse</symbol>
+        <lines>-</lines>
+        <reason>Base response class created in Story 8.5-1. Defines structure that interceptor must enforce: success, status, data, message fields.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/base/dto/base-paginated-response.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>BasePaginatedResponse</symbol>
+        <lines>-</lines>
+        <reason>Base paginated response class. Interceptor must detect { items, count } pattern and transform to { data, count } format.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/controllers/files.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>FilesController</symbol>
+        <lines>-</lines>
+        <reason>File upload controller likely uses @ApiBody for multipart/form-data. Needs to be refactored to use ApiEndpoint bodySchema parameter instead.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>AuthController</symbol>
+        <lines>-</lines>
+        <reason>Controller to refactor for removing manual response wrapping. Service should return raw data, interceptor handles wrapping.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/users.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>UsersController</symbol>
+        <lines>-</lines>
+        <reason>CRUD controller to refactor for removing manual response wrapping.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <nestjs>
+        <package name="@nestjs/common" version="^11.0.1">applyDecorators, Injectable, NestInterceptor, ExecutionContext, CallHandler</package>
+        <package name="@nestjs/swagger" version="^11.2.1">ApiOperation, ApiBody, ApiConsumes, SchemaObject, createApiResponseClass, createPaginatedApiResponseClass</package>
+        <package name="nestjs-i18n" version="^10.5.1">I18nService for message translation in interceptor</package>
+      </nestjs>
+      <thirdParty>
+        <package name="rxjs" version="^7.8.1">Observable, map operator for response transformation</package>
+        <package name="class-transformer" version="^0.5.1">plainToInstance for DTO transformation</package>
+      </thirdParty>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Interceptor must NOT wrap error responses - exception filters handle errors</constraint>
+    <constraint>Controllers must return raw DTOs - no manual { success, status, data } wrapping</constraint>
+    <constraint>Services must return raw data or { items, count } for pagination - interceptor handles wrapping</constraint>
+    <constraint>ApiEndpoint bodySchema parameter must support OpenAPI SchemaObject format for file uploads</constraint>
+    <constraint>Response format must match createApiResponseClass() and createPaginatedApiResponseClass() structure from Epic 8</constraint>
+    <constraint>Import organization must follow 8-group standard: Libraries, DTOs, Services, Repositories, Entities, Interfaces, Enums, Events</constraint>
+    <constraint>Interceptor must run AFTER controller but BEFORE response sent to client</constraint>
+    <constraint>Status code extraction from ExecutionContext for proper response wrapping</constraint>
+    <constraint>Paginated detection pattern: data.items &amp;&amp; data.count (service returns this structure)</constraint>
+    <constraint>Build must succeed with npm run build - no TypeScript errors</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>ApiEndpointOptions</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface ApiEndpointOptions {
+  summary: string;
+  type?: Type&lt;any&gt;;
+  status?: number;
+  consumes?: string; // 'application/json' | 'multipart/form-data'
+  bodySchema?: SchemaObject; // NEW: for ApiBody integration
+  isArray?: boolean;
+  isPaginated?: boolean;
+  isPublic?: boolean;
+}
+      </signature>
+      <path>src/common/decorators/api-endpoint.decorator.ts</path>
+    </interface>
+    <interface>
+      <name>NestInterceptor</name>
+      <kind>NestJS interface</kind>
+      <signature>
+interface NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable&lt;any&gt;;
+}
+      </signature>
+      <path>@nestjs/common</path>
+    </interface>
+    <interface>
+      <name>I18nService</name>
+      <kind>Service interface</kind>
+      <signature>
+class I18nService {
+  t(key: string, options?: any): string;
+}
+      </signature>
+      <path>nestjs-i18n</path>
+    </interface>
+    <interface>
+      <name>StandardResponse</name>
+      <kind>Response format</kind>
+      <signature>
+// Success Response
+{
+  success: true,
+  status: 200 | 201 | 204,
+  data: T | T[],
+  count?: number,  // Only for paginated
+  message: string
+}
+
+// Paginated Input Pattern (from service)
+{
+  items: T[],
+  count: number
+}
+      </signature>
+      <path>Architecture pattern</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Unit Testing Framework: Jest (^30.0.0)
+Test File Pattern: *.spec.ts in __tests__ subdirectories
+Coverage Target: 95% for critical infrastructure (interceptors)
+Mocking: Mock I18nService, ExecutionContext, CallHandler for interceptor tests
+Integration Testing: Supertest for end-to-end endpoint testing
+Manual Testing: Swagger UI "Try it out" functionality for response validation
+Build Validation: npm run build must succeed, npm run type-check must pass
+    </standards>
+    <locations>
+src/common/interceptors/__tests__/transform-response.interceptor.spec.ts
+test/e2e/ (integration tests for response format validation)
+    </locations>
+    <ideas>
+      <test ac="AC-8.5-2.1">
+        <description>Test ApiEndpoint decorator applies ApiBody with bodySchema</description>
+        <approach>Mock @nestjs/swagger decorators, verify ApiBody called with schema object for multipart/form-data</approach>
+      </test>
+      <test ac="AC-8.5-2.4">
+        <description>Test TransformResponseInterceptor wraps single object response</description>
+        <approach>Mock CallHandler returning single DTO, verify interceptor returns { success: true, status: 200, data: DTO, message }</approach>
+      </test>
+      <test ac="AC-8.5-2.4">
+        <description>Test interceptor wraps array response (non-paginated)</description>
+        <approach>Mock CallHandler returning array, verify wrapped as { success: true, data: array, message }</approach>
+      </test>
+      <test ac="AC-8.5-2.4">
+        <description>Test interceptor wraps paginated response</description>
+        <approach>Mock CallHandler returning { items: [], count: N }, verify transformed to { success: true, data: [], count: N, message }</approach>
+      </test>
+      <test ac="AC-8.5-2.7">
+        <description>Test interceptor translates default message via i18n</description>
+        <approach>Mock I18nService.t(), verify interceptor calls t('success.OPERATION_SUCCESSFUL')</approach>
+      </test>
+      <test ac="AC-8.5-2.8">
+        <description>Test interceptor does NOT wrap error responses</description>
+        <approach>Throw HttpException in CallHandler, verify error propagates unchanged (exception filter handles it)</approach>
+      </test>
+      <test ac="AC-8.5-2.9">
+        <description>Integration test: GET /users (paginated) returns correct format</description>
+        <approach>Call endpoint via supertest, verify response structure matches { success, status, data: [], count, message }</approach>
+      </test>
+      <test ac="AC-8.5-2.10">
+        <description>Build validation: TypeScript compilation succeeds</description>
+        <approach>Run npm run build, verify exit code 0 with no errors</approach>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

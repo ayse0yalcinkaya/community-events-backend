@@ -1,0 +1,115 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>8</storyId>
+    <title>Firebase Push Notification (Optional)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-8-firebase-push-notification-optional.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Firebase push notification support</iWant>
+    <soThat>mobile app'e push notification gönderebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="5.8.3">DeviceToken entity ve enum'ları hazırla</task>
+      <task id="2" ac="5.8.1,5.8.2">FirebaseService oluştur</task>
+      <task id="3" ac="5.8.4">DeviceToken DTOs ve Controller oluştur</task>
+      <task id="4" ac="5.8.4">DeviceTokenService oluştur</task>
+      <task id="5" ac="5.8.5">NotificationService'e PUSH channel entegrasyonu</task>
+      <task id="6" ac="All">NotificationsModule yapılandırması</task>
+      <task id="7" ac="All">Testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="5.8.1">FirebaseService oluşturulmuş - src/modules/notifications/services/firebase.service.ts, Firebase Admin SDK configured, Environment variables: FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_ENABLED, Optional feature: Skip if FIREBASE_ENABLED=false</ac>
+    <ac id="5.8.2">FirebaseService methods - sendPush(deviceToken: string, title: string, body: string, data?: object): Promise&lt;void&gt; method, Firebase Admin SDK kullanarak push notification gönderimi, Error handling: Invalid token → mark token as inactive, log error</ac>
+    <ac id="5.8.3">DeviceToken entity oluşturulmuş - Fields: id, domainID, userID, token (unique), platform (iOS|Android), createdAt, Indexes: [domainID, userID], [token], Multi-tenancy support (domainID filtering)</ac>
+    <ac id="5.8.4">POST /users/me/device-tokens endpoint - Register device token endpoint, Request DTO: token, platform (iOS|Android), Authentication: JwtAuthGuard required, User can only register own tokens (userID from JWT), Response: DeviceToken entity</ac>
+    <ac id="5.8.5">NotificationService, PUSH channel için FirebaseService kullanıyor - NotificationService.send() method'unda PUSH channel enabled ise FirebaseService.sendPush() çağırılır, User'ın device token'ları fetch edilir, Her device token için push notification gönderilir, Notification history database'e kaydedilir (channel: PUSH, sent: true/false)</ac>
+    <ac id="5.8.6">Error handling implemented - Invalid token → mark token as inactive (soft delete veya isActive flag), Firebase service unavailable → log error, don't block other channels, Partial success: Some tokens succeed, some fail → record individually</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md" title="Epic 5: Communication Infrastructure" section="Story 5.8: Firebase Push Notification (Optional)" snippet="Firebase push notification support for mobile app. Firebase Admin SDK configured with environment variables. DeviceToken entity for token management. POST /users/me/device-tokens endpoint for token registration." />
+      <doc path="docs/tech-spec-epic-5.md" title="Epic Technical Specification: Communication Infrastructure" section="Story 5.8: Firebase Push Notification (Optional)" snippet="Complete AC specifications (AC-5.8.1 through AC-5.8.6). FirebaseService with sendPush method. DeviceToken entity with domainID, userID, token, platform. Error handling for invalid tokens." />
+      <doc path="docs/stories/5-7-unified-notification-service.md" title="Story 5.7: Unified Notification Service" section="Learnings from Previous Story" snippet="NotificationService implementation with PUSH channel stub. Multi-channel sending pattern. Async fire-and-forget pattern. NotificationPreferencesService for channel filtering." />
+      <doc path="docs/stories/5-6-notification-preferences-entity.md" title="Story 5.6: Notification Preferences Entity" section="NotificationPreferencesService" snippet="NotificationPreferencesService with getPreferences method. Default preferences: All channels enabled. Channel enum: EMAIL, SMS, PUSH." />
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Controller-Service Pattern" snippet="Controller-Service pattern: Controller handles HTTP layer, Service handles business logic. Multi-tenancy pattern with domainID filtering. Provider abstraction pattern for easy switching." />
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests" snippet="Arrange-Act-Assert pattern. Unit tests for services (80%+ coverage). Mock external dependencies. Fast execution (no database, no network)." />
+      <doc path="docs/tech-spec-epic-5.md" title="Epic Technical Specification" section="Unified Notification Flow" snippet="Multi-channel notification sending flow. User preferences filtering. Parallel channel execution. Partial success handling. Notification history tracking." />
+      <doc path="docs/tech-spec-epic-5.md" title="Epic Technical Specification" section="Provider Abstraction" snippet="Provider abstraction pattern for easy provider switching. FirebaseService optional feature. Environment variable configuration (FIREBASE_ENABLED)." />
+      <doc path="prisma/schema-postgres.prisma" title="Prisma Schema" section="Notification Entity" snippet="Notification entity with id, domainID, userID, type, channel, title, message, data (JSON), sent (boolean), sentAt, createdAt. Indexes on domainID, userID, type, sent." />
+      <doc path="prisma/schema-postgres.prisma" title="Prisma Schema" section="NotificationPreference Entity" snippet="NotificationPreference entity with id, domainID, userID, channel (EMAIL|SMS|PUSH), enabled (boolean). Unique constraint on [domainID, userID, channel]." />
+    </docs>
+    <code>
+      <artifact path="src/modules/notifications/services/notification.service.ts" kind="service" symbol="NotificationService" lines="436-495" reason="PUSH channel stub implementation that needs to be replaced with real FirebaseService integration. Currently creates Notification record with sent: false. Checks FIREBASE_ENABLED environment variable." />
+      <artifact path="src/modules/notifications/services/notification.service.ts" kind="service" symbol="NotificationService.send()" lines="58-147" reason="Main notification sending method that orchestrates multi-channel sending. Fetches user preferences, filters enabled channels, calls sendToChannel() for each channel. Uses async fire-and-forget pattern." />
+      <artifact path="src/modules/notifications/services/notification.service.ts" kind="service" symbol="NotificationService.sendToEmailChannel()" lines="228-329" reason="Email channel implementation pattern to follow for PUSH channel. Creates Notification record with sent status. Error handling with Sentry integration." />
+      <artifact path="src/modules/notifications/services/notification.service.ts" kind="service" symbol="NotificationService.sendToSmsChannel()" lines="331-434" reason="SMS channel implementation pattern to follow for PUSH channel. Partial success handling. Notification record creation. Error logging." />
+      <artifact path="src/modules/notifications/services/notification.service.ts" kind="service" symbol="NotificationService.createNotificationRecord()" lines="497-563" reason="Helper method to create Notification records in database. Used by all channel methods. Tracks notification history with sent status and error messages." />
+      <artifact path="src/modules/notifications/services/notification-preferences.service.ts" kind="service" symbol="NotificationPreferencesService.getPreferences()" reason="Fetches user notification preferences. Returns array of NotificationPreference entities. Used by NotificationService to filter enabled channels." />
+      <artifact path="src/modules/notifications/controllers/notification.controller.ts" kind="controller" symbol="NotificationController" lines="1-189" reason="Notification endpoints controller. POST /notifications/send endpoint uses fire-and-forget pattern. GET /users/me/notifications endpoint for history. Pattern to follow for device token registration endpoint." />
+      <artifact path="src/modules/notifications/notifications.module.ts" kind="module" symbol="NotificationsModule" reason="Module configuration. Imports PrismaModule, MailModule, SmsModule. Exports NotificationService and NotificationPreferencesService. Needs FirebaseService and DeviceTokenService added." />
+      <artifact path="src/modules/notifications/enums/notification-channel.enum.ts" kind="enum" symbol="NotificationChannel" reason="Notification channel enum with EMAIL, SMS, PUSH values. Used throughout NotificationService for channel filtering." />
+      <artifact path="prisma/schema-postgres.prisma" kind="schema" symbol="Notification" lines="215-236" reason="Notification entity definition. Reference for DeviceToken entity structure. Multi-tenancy support with domainID. User relation." />
+      <artifact path="prisma/schema-postgres.prisma" kind="schema" symbol="NotificationPreference" lines="239-255" reason="NotificationPreference entity definition. Reference for DeviceToken entity structure. Unique constraint pattern. Multi-tenancy support." />
+      <artifact path="src/common/decorators/current-user.decorator.ts" kind="decorator" symbol="@CurrentUser()" reason="Decorator to extract user from JWT token. Used in controllers for authenticated endpoints. Returns JwtPayload with sub (userID), domainID, roles." />
+      <artifact path="src/common/guards/jwt-auth.guard.ts" kind="guard" symbol="JwtAuthGuard" reason="JWT authentication guard. Protects routes requiring authentication. Used in NotificationController pattern." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="firebase-admin" version="^13.0.0" reason="Firebase Admin SDK for push notifications" />
+        <package name="@sentry/node" version="^7.120.4" reason="Error tracking for Firebase errors" />
+        <package name="nestjs-i18n" version="^10.5.1" reason="Internationalization for error messages" />
+        <package name="class-validator" version="^0.14.2" reason="DTO validation" />
+        <package name="class-transformer" version="^0.5.1" reason="DTO transformation" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Controller-Service Pattern: DeviceTokenController → DeviceTokenService → PrismaService pattern. NotificationService → FirebaseService → Firebase Admin SDK pattern. Controller handles HTTP layer, Service handles business logic.</constraint>
+    <constraint>Multi-Tenancy Pattern: @DomainID decorator + domainID filtering in all queries. DeviceToken entity includes domainID field. All queries filtered by domainID from JWT token. User can only access own device tokens (userID from JWT).</constraint>
+    <constraint>Provider Abstraction Pattern: FirebaseService uses provider abstraction pattern. NotificationService injects FirebaseService. Provider switching easy via environment variables. Optional feature: FIREBASE_ENABLED=false skips Firebase.</constraint>
+    <constraint>Unified Notification Pattern: NotificationService filters channels by user preferences. Multi-channel sending: EMAIL, SMS, PUSH channels parallel. PUSH channel: Fetch user device tokens, send to each token. Partial success: One token failure doesn't block others. History tracking: Each attempt recorded in Notification entity.</constraint>
+    <constraint>Async Fire-and-Forget Pattern: Push notification sending uses async fire-and-forget (no await, catch error handling). Communication operations don't block other flows. Error handling: Log errors but don't throw exceptions.</constraint>
+    <constraint>Error Handling Pattern: Partial success OK - one device token failure doesn't block others. Invalid token → mark as inactive, don't block other tokens. Failure → log to Sentry. Notification record → sent: false for failures.</constraint>
+    <constraint>Testing Requirements: Unit tests for FirebaseService (80%+ coverage). Unit tests for DeviceTokenService (80%+ coverage). Integration tests for endpoints. E2E tests for full flow. Arrange-Act-Assert pattern. Mock external dependencies (Firebase Admin SDK).</constraint>
+    <constraint>Coding Standards: Follow existing NotificationService patterns. Use same error handling approach as EMAIL/SMS channels. Use same Notification record creation pattern. Follow existing DTO validation patterns. Use existing Swagger decorators.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="POST /users/me/device-tokens" kind="REST endpoint" signature="POST /users/me/device-tokens - Register device token for push notifications. Request: RegisterDeviceTokenDto { token: string, platform: Platform enum }. Response: DeviceTokenResDto { id, token, platform, createdAt }. Auth: JwtAuthGuard required." path="src/modules/notifications/controllers/device-token.controller.ts" />
+    <interface name="NotificationService.send()" kind="function signature" signature="async send(userID: string, domainID: string, type: NotificationType, title: string, message: string, data?: object): Promise&lt;void&gt;" path="src/modules/notifications/services/notification.service.ts" />
+    <interface name="FirebaseService.sendPush()" kind="function signature" signature="async sendPush(deviceToken: string, title: string, body: string, data?: object): Promise&lt;void&gt;" path="src/modules/notifications/services/firebase.service.ts" />
+    <interface name="DeviceTokenService.registerToken()" kind="function signature" signature="async registerToken(userID: string, domainID: string, token: string, platform: Platform): Promise&lt;DeviceToken&gt;" path="src/modules/notifications/services/device-token.service.ts" />
+    <interface name="DeviceTokenService.getUserTokens()" kind="function signature" signature="async getUserTokens(userID: string, domainID: string): Promise&lt;DeviceToken[]&gt;" path="src/modules/notifications/services/device-token.service.ts" />
+    <interface name="DeviceTokenService.invalidateToken()" kind="function signature" signature="async invalidateToken(token: string): Promise&lt;void&gt;" path="src/modules/notifications/services/device-token.service.ts" />
+    <interface name="NotificationPreferencesService.getPreferences()" kind="function signature" signature="async getPreferences(userID: string, domainID: string): Promise&lt;NotificationPreference[]&gt;" path="src/modules/notifications/services/notification-preferences.service.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>Testing follows Arrange-Act-Assert pattern. Unit tests mock external dependencies (Firebase Admin SDK, PrismaService). Integration tests use real database (test database). E2E tests use supertest for HTTP requests. Coverage targets: Services 80%+, Controllers 70%+. Test isolation: Each test independent, no shared state. Mock strategy: External services always mocked, internal services mocked in unit tests, real in E2E tests.</standards>
+    <locations>Unit tests: src/modules/notifications/services/*.spec.ts. Integration tests: test/notifications-integration.e2e-spec.ts. E2E tests: test/notifications.e2e-spec.ts. Test setup: test/jest-e2e-setup.ts, test/utils/seedTestData.ts.</locations>
+    <ideas>
+      <test ac="5.8.1">Unit test FirebaseService initialization - Firebase Admin SDK configured correctly, Environment variables loaded, FIREBASE_ENABLED=false skips initialization</test>
+      <test ac="5.8.2">Unit test FirebaseService.sendPush() - Success case with valid token, Invalid token error handling, Network error handling, FIREBASE_ENABLED=false skip</test>
+      <test ac="5.8.3">Unit test DeviceToken entity - Prisma schema validation, Field validation, Index validation, Unique constraint validation</test>
+      <test ac="5.8.4">Unit test DeviceTokenService.registerToken() - Success case, Duplicate token handling, Multi-tenancy filtering, Unit test DeviceTokenService.getUserTokens() - Returns user tokens, DomainID filtering, Unit test DeviceTokenService.invalidateToken() - Marks token as inactive</test>
+      <test ac="5.8.4">Integration test POST /users/me/device-tokens - Registers device token (authenticated), Duplicate token handling, Multi-tenancy filtering (domainID), Invalid platform enum</test>
+      <test ac="5.8.5">Unit test NotificationService.send() - PUSH channel enabled with single device token, PUSH channel enabled with multiple device tokens, PUSH channel enabled with partial success (one token fails), PUSH channel disabled (preferences)</test>
+      <test ac="5.8.5">Integration test NotificationService.send() - Multi-channel with PUSH enabled, PUSH channel with invalid token handling</test>
+      <test ac="5.8.6">Unit test Error handling - Invalid token marks token as inactive, Firebase unavailable doesn't block other channels, Partial success records individually</test>
+      <test ac="5.8.6">E2E test Push notification flow - Register device token → Send notification → Verify history, Multi-channel notification (EMAIL, SMS, PUSH all enabled), Invalid token → Token invalidated, notification history recorded</test>
+    </ideas>
+  </tests>
+</story-context>
+

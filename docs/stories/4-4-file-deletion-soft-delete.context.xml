@@ -1,0 +1,297 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>4</storyId>
+    <title>File Deletion (Soft Delete)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/4-4-file-deletion-soft-delete.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>dosya silebilmek</iWant>
+    <soThat>gereksiz dosyaları sistemden kaldırabileyim</soThat>
+    <tasks>
+      <task id="1" ac="4.4.1, 4.4.3">Add DELETE /files/:id endpoint to FilesController</task>
+      <task id="2" ac="4.4.2, 4.4.3, 4.4.5">Implement deleteFile() in FilesService</task>
+      <task id="3" ac="4.4.2, 4.4.4">Update getFileMetadata() to exclude soft-deleted files</task>
+      <task id="4" ac="4.4.6">Update listFiles() to exclude soft-deleted files (Story 4.5)</task>
+      <task id="5" ac="4.4.3, 4.4.4">Error handling for deletion operations</task>
+      <task id="6" ac="All">Testing (unit tests, E2E tests)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="4.4.1">
+      <title>DELETE /files/:id endpoint created</title>
+      <requirements>
+        - Route: DELETE /api/files/:id
+        - Guards: JwtAuthGuard, PermissionsGuard
+        - Permission: FILES.DELETE (or file owner)
+        - Path parameter: id (UUID validation)
+        - Returns success message on deletion
+      </requirements>
+    </ac>
+    <ac id="4.4.2">
+      <title>Soft delete implemented</title>
+      <requirements>
+        - Sets deletedAt to current timestamp
+        - Does NOT delete metadata from database
+        - Does NOT delete file from S3 (deferred to cleanup job)
+        - File excluded from all queries (WHERE deletedAt IS NULL)
+      </requirements>
+    </ac>
+    <ac id="4.4.3">
+      <title>Deletion access validated</title>
+      <requirements>
+        - Checks: file exists AND file.domainID === currentUserDomainID
+        - Checks: file.userID === currentUserID OR user has FILES.DELETE permission
+        - Returns 403 Forbidden if user not authorized
+        - Returns 404 Not Found if file doesn't exist or already deleted
+      </requirements>
+    </ac>
+    <ac id="4.4.4">
+      <title>Deletion response validated</title>
+      <requirements>
+        - Returns 200 OK on success
+        - Response: { success: true, message: "File deleted successfully" }
+        - Subsequent GET /files/:id returns 404 Not Found
+        - Subsequent GET /files/:id/download returns 404 Not Found
+      </requirements>
+    </ac>
+    <ac id="4.4.5">
+      <title>Deletion logged</title>
+      <requirements>
+        - Logs file deletion event (info level)
+        - Includes: fileID, s3Key, userID, domainID, timestamp
+        - Logs who deleted the file (currentUserID)
+      </requirements>
+    </ac>
+    <ac id="4.4.6">
+      <title>Soft-deleted files excluded from list endpoint</title>
+      <requirements>
+        - GET /files excludes files with deletedAt !== null
+        - Admin with FILES.VIEW_ALL also doesn't see soft-deleted files
+        - No way to list deleted files via API (future restore feature)
+      </requirements>
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-4.md</path>
+        <title>Epic 4 Technical Specification - File Management (AWS S3)</title>
+        <section>Story 4.4: File Deletion (Soft Delete)</section>
+        <snippet>Complete acceptance criteria for Story 4.4 (AC-4.4.1 through AC-4.4.6). Soft delete pattern: Sets deletedAt timestamp, preserves DB metadata, defers S3 cleanup to scheduled job. Access control: Owner or FILES.DELETE permission required, domain isolation enforced.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boilerplate - Epic Breakdown</title>
+        <section>Epic 4: File Management (AWS S3) - Story 4.4</section>
+        <snippet>File deletion with soft delete pattern. DELETE /files/:id endpoint with permission check (FILES.DELETE or owner). Soft-delete metadata (deletedAt set), S3 cleanup deferred to cleanup job (future Epic 11). Domain isolation mandatory.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/4-3-file-download-pre-signed-url.md</path>
+        <title>Story 4.3: File Download (Pre-Signed URL)</title>
+        <section>Completion Notes List, Dev Notes</section>
+        <snippet>FilesService.getFileMetadata() method implements comprehensive access control (domain isolation + ownership check + permission-based access). Already checks file.deletedAt === null (soft-deleted files excluded). Reuse this method in deleteFile() to avoid duplicating validation logic.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/4-2-file-upload-endpoint-single-multiple.md</path>
+        <title>Story 4.2: File Upload Endpoint (Single & Multiple)</title>
+        <section>Completion Notes List</section>
+        <snippet>File entity created in Prisma schema with deletedAt field (nullable DateTime). Indexes on deletedAt for query performance. FILES.DELETE permission constant defined in permissions.constant.ts and synced to database.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/modules/files/services/files.service.ts</path>
+        <kind>service</kind>
+        <symbol>FilesService.getFileMetadata()</symbol>
+        <lines>42-47, 200-250</lines>
+        <reason>REUSE THIS METHOD in deleteFile() for access validation. Already implements: file exists check, domain isolation (file.domainID === currentUserDomainID), ownership check (file.userID === currentUserID), permission check (hasViewPermission), soft-delete filtering (deletedAt === null). Returns NotFoundException for not found/wrong domain/soft-deleted, ForbiddenException for unauthorized.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/controllers/files.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>FilesController</symbol>
+        <lines>26-150</lines>
+        <reason>Add new DELETE /files/:id endpoint. Follow existing pattern: @UseGuards(JwtAuthGuard, PermissionsGuard), @Permission('FILES', ActionEnum.DELETE), @Param('id', ParseUUIDPipe), @CurrentUser() user: JwtPayload. Extract domainID and userID from user, call FilesService.deleteFile().</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/constants/permissions.constant.ts</path>
+        <kind>constants</kind>
+        <symbol>PERMISSIONS.FILES.DELETE</symbol>
+        <lines>N/A</lines>
+        <reason>FILES.DELETE permission constant already defined (Story 4.2). Use for permission decorator: @Permission('FILES', ActionEnum.DELETE). Permission already synced to database via permission-sync script.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/services/files.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>FilesService unit tests</symbol>
+        <lines>All</lines>
+        <reason>Add unit tests for deleteFile() method: owner deletes (success), user with FILES.DELETE deletes (success), file not found (NotFoundException), wrong domain (NotFoundException), already deleted (NotFoundException), not owner + no permission (ForbiddenException). Test soft-delete filtering in getFileMetadata().</reason>
+      </artifact>
+      <artifact>
+        <path>test/files-upload.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>Files E2E tests</symbol>
+        <lines>All</lines>
+        <reason>Add E2E tests for DELETE /files/:id: owner can delete (200 OK), invalid UUID (400), non-existent file (404), wrong domain (404), already deleted (404), unauthorized (401), user without permission (403). Test end-to-end: Upload → Delete → GET returns 404, Upload → Delete → Download returns 404.</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>File model</symbol>
+        <lines>187-209</lines>
+        <reason>File entity has deletedAt field (DateTime?, nullable) for soft delete. Indexes on deletedAt for performance. Soft delete implementation: UPDATE File SET deletedAt = NOW() WHERE id = fileId. All queries filter: WHERE deletedAt IS NULL.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.0.1">Core NestJS framework - Injectable, exceptions, decorators</package>
+        <package name="@nestjs/core" version="^11.0.1">NestJS core module system</package>
+        <package name="@nestjs/platform-express" version="^11.0.1">Express adapter for NestJS, Multer integration</package>
+        <package name="@nestjs/passport" version="^11.0.5">Passport integration for authentication</package>
+        <package name="@nestjs/jwt" version="^11.0.1">JWT authentication strategy</package>
+        <package name="@nestjs/throttler" version="^6.4.0">Rate limiting (used in upload endpoint, not deletion)</package>
+        <package name="@prisma/client" version="^6.18.0">Prisma ORM client for database operations</package>
+        <package name="@aws-sdk/client-s3" version="^3.925.0">AWS S3 SDK (S3Service - not used in Story 4.4, cleanup deferred)</package>
+        <package name="class-transformer" version="^0.5.1">DTO transformation (plainToInstance)</package>
+        <package name="class-validator" version="^0.14.2">DTO validation decorators</package>
+      </node>
+      <devDependencies>
+        <package name="@nestjs/testing" version="^11.0.1">NestJS testing utilities</package>
+        <package name="jest" version="^30.0.0">Testing framework</package>
+        <package name="supertest" version="^7.0.0">HTTP assertion library for E2E tests</package>
+        <package name="ts-jest" version="^29.2.5">TypeScript support for Jest</package>
+        <package name="prisma" version="^6.18.0">Prisma CLI for migrations and schema management</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>REUSE FilesService.getFileMetadata() for access validation - DO NOT duplicate validation logic</constraint>
+    <constraint>Soft delete only: Set deletedAt timestamp, DO NOT delete database record, DO NOT call S3Service.deleteFile()</constraint>
+    <constraint>S3 cleanup deferred to scheduled job (Epic 11) - cleanup job will query deletedAt > 7 days → delete from S3 → hard delete DB record</constraint>
+    <constraint>All queries must filter: WHERE deletedAt IS NULL (getFileMetadata, listFiles, generateDownloadUrl)</constraint>
+    <constraint>Error handling: 404 for not found/wrong domain/already deleted (consistent response, prevent info leakage), 403 for unauthorized</constraint>
+    <constraint>Domain isolation mandatory: file.domainID === currentUserDomainID on all operations</constraint>
+    <constraint>Access control: Owner (file.userID === currentUserID) OR user has FILES.DELETE permission</constraint>
+    <constraint>Logging required: Log deletion event (info level) with fileID, s3Key, userID, domainID, currentUserID (who deleted)</constraint>
+    <constraint>TypeScript strict mode: All code must pass strict type checking</constraint>
+    <constraint>Controller-Service pattern: FilesController → FilesService.deleteFile() → Prisma update</constraint>
+    <constraint>Guards pattern: @UseGuards(JwtAuthGuard, PermissionsGuard) on DELETE endpoint</constraint>
+    <constraint>Permission decorator: @Permission('FILES', ActionEnum.DELETE)</constraint>
+    <constraint>Path parameter validation: @Param('id', ParseUUIDPipe)</constraint>
+    <constraint>Response format: { success: true, message: "File deleted successfully" }</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FilesService.deleteFile()</name>
+      <kind>Service method (to be implemented)</kind>
+      <signature>
+        async deleteFile(
+          fileId: string,
+          domainID: string,
+          userID: string,
+          hasDeletePermission: boolean
+        ): Promise&lt;void&gt;
+      </signature>
+      <path>src/modules/files/services/files.service.ts</path>
+      <description>Soft delete file by setting deletedAt timestamp. Validates access using getFileMetadata() (reuse existing validation). Logs deletion event. Does NOT delete from S3.</description>
+    </interface>
+    <interface>
+      <name>FilesController.deleteFile()</name>
+      <kind>Controller endpoint (to be implemented)</kind>
+      <signature>
+        @Delete(':id')
+        @HttpCode(HttpStatus.OK)
+        @UseGuards(JwtAuthGuard, PermissionsGuard)
+        @Permission('FILES', ActionEnum.DELETE)
+        async deleteFile(
+          @Param('id', ParseUUIDPipe) id: string,
+          @CurrentUser() user: JwtPayload
+        ): Promise&lt;{ success: boolean; message: string }&gt;
+      </signature>
+      <path>src/modules/files/controllers/files.controller.ts</path>
+      <description>DELETE /api/files/:id endpoint. Validates UUID, extracts user from JWT, calls FilesService.deleteFile(), returns success response.</description>
+    </interface>
+    <interface>
+      <name>FilesService.getFileMetadata()</name>
+      <kind>Service method (existing - REUSE)</kind>
+      <signature>
+        async getFileMetadata(
+          fileId: string,
+          domainID: string,
+          userID: string,
+          hasViewPermission: boolean
+        ): Promise&lt;File&gt;
+      </signature>
+      <path>src/modules/files/services/files.service.ts</path>
+      <description>EXISTING METHOD from Story 4.3. Validates file access: file exists, domain match, deletedAt === null, owner or has permission. REUSE in deleteFile() for validation (call getFileMetadata before soft delete). Throws NotFoundException or ForbiddenException.</description>
+    </interface>
+    <interface>
+      <name>Prisma File Entity</name>
+      <kind>Database model</kind>
+      <signature>
+        model File {
+          id           String    @id @default(uuid())
+          domainID     String
+          userID       String
+          filename     String
+          originalName String
+          mimeType     String
+          size         Int
+          s3Key        String
+          s3Bucket     String
+          createdAt    DateTime  @default(now())
+          deletedAt    DateTime? // Soft delete field
+          user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+          @@index([domainID])
+          @@index([userID])
+          @@index([mimeType])
+          @@index([deletedAt]) // Performance for soft-delete queries
+          @@index([s3Key])
+        }
+      </signature>
+      <path>prisma/schema.prisma</path>
+      <description>File entity with deletedAt field for soft delete. Update operation: prisma.file.update({ where: { id }, data: { deletedAt: new Date() } }). All queries filter: where: { deletedAt: null }.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows NestJS testing patterns with Jest. Unit tests use mocking for PrismaService and S3Service. E2E tests use supertest with MinIO for S3 operations. Test organization: src/**/*.spec.ts for unit tests, test/**/*.e2e-spec.ts for E2E tests. Coverage requirements: All service methods must have unit tests, all endpoints must have E2E tests. Test pattern: Arrange (setup), Act (execute), Assert (verify). Use describe blocks for grouping, beforeEach for setup, expect for assertions.
+    </standards>
+    <locations>
+      <location>src/modules/files/services/files.service.spec.ts</location>
+      <location>test/files-upload.e2e-spec.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="4.4.1, 4.4.2, 4.4.3">Unit test: FilesService.deleteFile() with owner - should set deletedAt timestamp and return void</idea>
+      <idea ac="4.4.3">Unit test: FilesService.deleteFile() with user having FILES.DELETE permission - should succeed</idea>
+      <idea ac="4.4.3">Unit test: FilesService.deleteFile() with file not found - should throw NotFoundException</idea>
+      <idea ac="4.4.3">Unit test: FilesService.deleteFile() with wrong domain - should throw NotFoundException (prevent info leakage)</idea>
+      <idea ac="4.4.2, 4.4.4">Unit test: FilesService.deleteFile() with already deleted file (deletedAt !== null) - should throw NotFoundException</idea>
+      <idea ac="4.4.3">Unit test: FilesService.deleteFile() with not owner and no FILES.DELETE permission - should throw ForbiddenException</idea>
+      <idea ac="4.4.2, 4.4.4">Unit test: FilesService.getFileMetadata() with soft-deleted file - should throw NotFoundException (verify deletedAt filter works)</idea>
+      <idea ac="4.4.1, 4.4.4">E2E test: DELETE /files/:id as owner - should return 200 OK with success message</idea>
+      <idea ac="4.4.1">E2E test: DELETE /files/:id with invalid UUID - should return 400 Bad Request</idea>
+      <idea ac="4.4.3">E2E test: DELETE /files/:id with non-existent file - should return 404 Not Found</idea>
+      <idea ac="4.4.3">E2E test: DELETE /files/:id with wrong domain - should return 404 Not Found</idea>
+      <idea ac="4.4.4">E2E test: DELETE /files/:id with already deleted file - should return 404 Not Found</idea>
+      <idea ac="4.4.1">E2E test: DELETE /files/:id without JWT - should return 401 Unauthorized</idea>
+      <idea ac="4.4.3">E2E test: DELETE /files/:id as user without FILES.DELETE permission and not owner - should return 403 Forbidden</idea>
+      <idea ac="4.4.4">E2E test: Upload file → Delete → GET /files/:id - should return 404 Not Found (verify soft-delete excludes from queries)</idea>
+      <idea ac="4.4.4">E2E test: Upload file → Delete → GET /files/:id/download - should return 404 Not Found (verify download also excludes soft-deleted)</idea>
+      <idea ac="4.4.2">E2E test: Upload file → Delete → Verify file still in S3 (soft delete, S3 not affected) - should find file in MinIO bucket</idea>
+    </ideas>
+  </tests>
+</story-context>

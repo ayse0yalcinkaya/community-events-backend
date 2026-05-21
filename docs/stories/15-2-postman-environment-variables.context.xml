@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>15</epicId>
+    <storyId>2</storyId>
+    <title>Postman Collection Environment Variables</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-12T17:00:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/15-2-postman-environment-variables.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Postman environment variables for base URL and auth tokens</iWant>
+    <soThat>I can easily switch between environments (dev, staging, production)</soThat>
+    <tasks>
+      Task 1: Extend PostmanCollectionService for Environment Generation (AC: 1, 2)
+      Task 2: Add Environment Endpoints (AC: 1, 3)
+      Task 3: Configure Environment-Specific Values (AC: 2, 3)
+      Task 4: Mark Variables as Sensitive (AC: 4)
+      Task 5: Update Documentation (AC: 5)
+      Task 6: Integration Testing (AC: 1, 3, 4)
+      Task 7: Manual Verification (AC: 4, 5)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Postman environment JSON generated alongside collection - Environment JSON files created using Postman Collection Format v2.1.0, Generated automatically when accessing /api/docs/postman endpoint, Separate environment files for dev, staging, and production environments, Compatible with Postman Collection v2.1.0 specification
+    2. Environment variables defined - baseUrl: API base URL dynamically configured from environment, authToken: JWT bearer token placeholder for authentication, apiKey: API key placeholder (if applicable for future endpoints), All variables properly typed and validated
+    3. Separate environment files generated - api-environment-dev.postman_environment.json - Development environment configuration, api-environment-staging.postman_environment.json - Staging environment configuration, api-environment-prod.postman_environment.json - Production environment configuration, Each environment contains appropriate values for that environment
+    4. Variables marked as sensitive - authToken marked as sensitive in Postman (hidden value), apiKey marked as sensitive in Postman (hidden value), baseUrl marked as non-sensitive (visible for easy switching), Proper variable type configuration (text, hidden, default)
+    5. Environment selection guide in README - Documentation explaining how to import and use environment files, Step-by-step instructions for switching between environments, Environment-specific configuration notes, Troubleshooting guide for common issues
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-15.md" title="Epic 15 Technical Specification">
+        <section>Core Components</section>
+        <snippet>Epic 15, mevcut Swagger/OpenAPI 3.0 documentation'dan (Epic 8) otomatik olarak Postman Collection'ları generate eder.</snippet>
+      </doc>
+      <doc path="docs/epics/epic-15-postman-collection-export.md" title="Epic 15 Story Breakdown">
+        <section>Story 15.2: Postman Collection Environment Variables</section>
+        <snippet>As a developer, I want Postman environment variables for base URL and auth tokens, So that I can easily switch between environments.</snippet>
+      </doc>
+      <doc path="docs/stories/15-1-swagger-to-postman-converter.md" title="Story 15.1 Previous Implementation">
+        <section>Dev Agent Record - Completion Notes List</section>
+        <snippet>Package: openapi-to-postmanv2, Service: Full PostmanCollectionService implementation with validation and retry, Controller: DocsController with GET /api/docs/postman endpoint</snippet>
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy">
+        <section>Testing Standards</section>
+        <snippet>Test coverage requirements: ≥90% for all service methods and controllers</snippet>
+      </doc>
+      <doc path="docs/sprint-status.yaml" title="Sprint Status Tracking">
+        <section>Epic 15 Development Status</section>
+        <snippet>Tracks story progression: 15-1 (done), 15-2 (ready-for-dev), 15-3, 15-4, 15-5 (backlog)</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file path="src/common/postman/postman-collection.service.ts" kind="service">
+        <symbol>PostmanCollectionService</symbol>
+        <lines>1-120</lines>
+        <reason>Core service to extend with environment generation methods - contains generateCollectionFromSwagger(), getCollectionJson(), validateOpenApiSpec(), fetchOpenApiSpec()</reason>
+      </file>
+      <file path="src/common/postman/interfaces/postman-collection.interface.ts" kind="interface">
+        <symbol>IPostmanCollectionService</symbol>
+        <lines>87-119</lines>
+        <reason>Interface definition to extend for environment generation - includes service contract for Postman collection operations</reason>
+      </file>
+      <file path="src/modules/docs/controllers/docs.controller.ts" kind="controller">
+        <symbol>DocsController</symbol>
+        <lines>34-64</lines>
+        <reason>Controller to extend with new endpoint GET /api/docs/postman/environment/:env - follows same pattern as GET /api/docs/postman</reason>
+      </file>
+      <file path="src/modules/docs/docs.module.ts" kind="module">
+        <symbol>DocsModule</symbol>
+        <lines>1-50</lines>
+        <reason>Module configuration for dependency injection - may need updates if new services added</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/common" version="^11.0.1">Core NestJS framework - dependency injection, controllers, decorators</package>
+        <package name="@nestjs/swagger" version="^11.2.1">Swagger/OpenAPI integration - decorators, documentation generation</package>
+        <package name="@nestjs/platform-express" version="^11.0.1">Express platform adapter - HTTP server integration</package>
+        <package name="openapi-to-postmanv2" version="^5.3.5">Official Postman converter for OpenAPI specs - used for collection generation</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    Must follow Postman Collection Format v2.1.0 specification for environment JSON structure
+    Environment generation must build on existing PostmanCollectionService from Story 15-1 (no recreation)
+    Sensitive variables (authToken, apiKey) must be marked with type: 'hidden' in Postman
+    baseUrl must include /api path for all environments
+    Service methods must be extendable following existing interface patterns
+    Endpoint must follow RESTful design with proper HTTP status codes and error handling
+    Test coverage must meet ≥90% standard established in Epic 9
+    Must integrate with Epic 8 Swagger infrastructure (GET /api/docs-json endpoint)
+    File naming convention: kebab-case for files, PascalCase for interfaces
+    Dependency injection must be properly configured through NestJS module system
+  </constraints>
+
+  <interfaces>
+    <interface name="IPostmanCollectionService" kind="class interface">
+      <signature>
+        interface IPostmanCollectionService {
+          generateCollectionFromSwagger(): Promise&lt;PostmanCollection&gt;
+          getCollectionJson(): Promise&lt;Buffer&gt;
+          validateOpenApiSpec(spec: any): OpenApiValidationResult
+          fetchOpenApiSpec(): Promise&lt;any&gt;
+          postProcessCollection(collection: PostmanCollection): PostmanCollection
+        }
+      </signature>
+      <path>src/common/postman/interfaces/postman-collection.interface.ts</path>
+    </interface>
+
+    <interface name="PostmanEnvironmentService" kind="REST endpoint">
+      <signature>
+        GET /api/docs/postman/environment/:env
+        Path parameter: env (dev|staging|prod)
+        Response: application/json - downloadable environment JSON file
+        Headers: Content-Disposition: attachment; filename="api-environment-${env}.postman_environment.json"
+      </signature>
+      <path>src/modules/docs/controllers/docs.controller.ts</path>
+    </interface>
+
+    <interface name="EnvironmentType" kind="enum">
+      <signature>
+        enum EnvironmentType {
+          DEVELOPMENT = 'dev',
+          STAGING = 'staging',
+          PRODUCTION = 'prod'
+        }
+      </signature>
+      <path>src/common/postman/interfaces/postman-environment.interface.ts (to be created)</path>
+    </interface>
+
+    <interface name="PostmanEnvironment" kind="type definition">
+      <signature>
+        interface PostmanEnvironment {
+          id: string
+          name: string
+          values: Array&lt;{
+            key: string
+            value: string
+            enabled: boolean
+            type?: 'text' | 'hidden'
+          }&gt;
+        }
+      </signature>
+      <path>src/common/postman/interfaces/postman-environment.interface.ts (to be created)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Follow Epic 9 testing strategy with ≥90% coverage. Use Jest testing framework. Create unit tests for service methods and integration tests for controller endpoints. Follow patterns established in Story 15-1 (src/common/postman/__tests__/postman-collection.service.spec.ts, test/integration/docs/postman-collection.integration-spec.ts). Mock external dependencies including openapi-to-postmanv2 package.</standards>
+    <locations>src/common/postman/__tests__/ (unit tests), test/integration/docs/ (integration tests)</locations>
+    <ideas>
+      <test idea="AC1">
+        Test environment JSON generation with valid Postman v2.1.0 format
+        Validate file structure: id, name, values array
+        Verify compatibility with Postman Collection v2.1.0 specification
+      </test>
+      <test idea="AC2">
+        Test generateEnvironment() method produces correct variables
+        Verify baseUrl, authToken, apiKey are defined
+        Test variable typing and validation logic
+      </test>
+      <test idea="AC3">
+        Test all three environment types (dev, staging, prod)
+        Verify each environment produces separate JSON file
+        Validate environment-specific baseUrl values
+      </test>
+      <test idea="AC4">
+        Test variable sensitivity configuration
+        Verify authToken and apiKey marked as type: 'hidden'
+        Verify baseUrl marked as type: 'text'
+      </test>
+      <test idea="AC6">
+        Test GET /api/docs/postman/environment/:env endpoints
+        Validate all three environment endpoints work correctly
+        Test error handling for invalid environment parameter
+        Verify download headers are set correctly
+      </test>
+    </ideas>
+  </tests>
+</story-context>

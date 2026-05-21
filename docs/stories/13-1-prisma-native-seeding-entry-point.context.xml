@@ -1,0 +1,62 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>13</epicId>
+    <storyId>1</storyId>
+    <title>Prisma Native Seeding Entry Point</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-11</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/13-1-prisma-native-seeding-entry-point.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>main `prisma/seed.ts` entry point and organized seeder structure</iWant>
+    <soThat>`npx prisma db seed` komutu çalıştığında tüm seeders sırayla çalışsın</soThat>
+    <tasks>5 tasks with 25 subtasks covering entry point creation, seeder files implementation, individual seeder classes, error handling, and testing</tasks>
+  </story>
+
+  <acceptanceCriteria>1. prisma/seed.ts main entry point, 2. prisma/seeders/ directory, 3. Individual seeder files (user, role, permission, file), 4. Main seed function with PrismaClient, 5. Seeder execution order (roles → permissions → users), 6. Progress logging with ✓ checkmarks, 7. Error handling with try-catch, 8. Prisma disconnect in finally block</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-13-advanced-seeder-infrastructure.md" title="Epic 13: Advanced Seeder Infrastructure" section="Story 13.1: Prisma Native Seeding Entry Point" snippet="Main entry point at prisma/seed.ts implementing Prisma's native seeding feature. Modular seeder pattern with dependency-aware execution order." />
+      <doc path="docs/tech-spec-epic-13.md" title="Epic Technical Specification: Advanced Seeder Infrastructure" section="Detailed Design - Services and Modules" snippet="Seeder Structure: prisma/seed.ts entry point, prisma/seeders/ individual seeder classes with static seed() methods." />
+      <doc path="docs/tech-spec-epic-13.md" title="Epic Technical Specification: Advanced Seeder Infrastructure" section="Workflows and Sequencing" snippet="Seeding Order: 1. RoleSeeder → 2. PermissionSeeder → 3. UserSeeder → 4. FileSeeder → 5. SmsSeeder" />
+      <doc path="docs/tech-spec-epic-13.md" title="Epic Technical Specification: Advanced Seeder Infrastructure" section="NFR - Reliability/Availability" snippet="Transaction Support: All-or-nothing seeding. Error Handling: try-catch with process.exit(1) on failure. Prisma Disconnect: $disconnect() in finally block." />
+      <doc path="docs/architecture/index.md" title="Architecture - Boilerplate" section="Testing Strategy" snippet="Test Coverage Requirements: Unit tests, Integration tests, E2E tests with proper test utilities." />
+      <doc path="docs/epics/epic-12-code-quality-standards.md" title="Epic 12: Code Quality & Standards" section="Story 12.5: Import Organization Rules" snippet="eslint-plugin-import configured with hrsync-backend 8-category pattern for consistent import organization across codebase." />
+    </docs>
+    <code>
+      <code path="docs/stories/12-5-import-organization-rules.md" kind="documentation" symbol="Import Organization Pattern" lines="133-139" reason="Demonstrates 8-category import pattern that seeders should follow" />
+      <code path="docs/stories/12-4-typescript-strict-mode.md" kind="documentation" symbol="TypeScript Strict Mode" lines="118-121" reason="Type assertion patterns for Prisma and external libraries" />
+      <code path="docs/stories/11-5-database-migration-automation.md" kind="documentation" symbol="Database Migration Automation" lines="1-50" reason="CI/CD integration patterns for database operations" />
+      <code path="docs/epics/epic-6-document-generation-adapter-pattern-hrsync-backend.md" kind="documentation" symbol="Adapter Pattern" lines="50-70" reason="Modular architecture pattern similar to seeder organization" />
+    </code>
+    <dependencies>
+      <dependency name="@prisma/client" version="^6.16.0" />
+      <dependency name="ts-node" version="^10.9.0" />
+      <dependency name="@faker-js/faker" version="^8.0.0" />
+      <dependency name="bcrypt" version="^5.1.0" />
+    </dependencies>
+  </artifacts>
+
+  <constraints>Required Patterns: Modular seeder classes with static seed() methods, Dependency injection not required (PrismaClient as parameter), No NestJS module dependencies. Layer Restrictions: Standalone TypeScript classes only, No controllers/DTOs needed, Database operations only. Testing Requirements: Unit tests for each seeder class, Integration tests for end-to-end seeding, Error handling validation. Coding Standards: Follow Epic 12 import organization (8-category), TypeScript strict mode enabled, Progress logging with ✓/❌ emojis.</constraints>
+
+  <interfaces>
+    <interface name="Seeder Interface" kind="Class with static method" signature="class SeederName { static async seed(prisma: PrismaClient): Promise&lt;void&gt; }" path="docs/epics/epic-13-advanced-seeder-infrastructure.md#Technical-Implementation" />
+    <interface name="PrismaClient" kind="Database Client" signature="import { PrismaClient } from '@prisma/client'" path="docs/epics/epic-1-database-infrastructure-project-setup.md#Story-14-Prisma-Service-Module" />
+  </interfaces>
+
+  <tests>
+    <standards>Jest v29+ for unit/integration testing. Seeder tests require beforeEach/afterEach cleanup. End-to-end tests validate full seed execution with transaction rollback on failure. TypeScript strict mode applies to all test files. Import organization follows 8-category pattern from Epic 12.</standards>
+    <locations>test/seeders/ for individual seeder unit tests, test/integration/ for end-to-end seeding tests, test/ for global test setup/teardown</locations>
+    <ideas>
+      <test idea="Test main seed entry point" ac="1,4,7,8">Verify async main() executes all seeders in correct order and handles errors properly</test>
+      <test idea="Test seeder execution order" ac="5">Verify roles → permissions → users → files → SMS dependency chain</test>
+      <test idea="Test idempotent operations" ac="3">Verify upsert() and createMany(skipDuplicates: true) prevent duplicates</test>
+      <test idea="Test progress logging" ac="6">Verify console.log outputs with ✓ checkmarks appear during seeding</test>
+      <test idea="Test error handling" ac="7">Verify try-catch block logs errors with ❌ and exits with process.exit(1)</test>
+    </ideas>
+  </tests>
+</story-context>

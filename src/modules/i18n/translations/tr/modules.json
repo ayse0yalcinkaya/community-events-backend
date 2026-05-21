@@ -1,0 +1,58 @@
+{
+  "USERS": {
+    "NAME": "Kullanıcılar",
+    "DESCRIPTION": "Sistem kullanıcılarını yönet"
+  },
+  "ROLES": {
+    "NAME": "Roller",
+    "DESCRIPTION": "Rol ve yetkileri yönet"
+  },
+  "PERMISSIONS": {
+    "NAME": "Yetkiler",
+    "DESCRIPTION": "Sistem yetkilerini görüntüle"
+  },
+  "FILES": {
+    "NAME": "Dosyalar",
+    "DESCRIPTION": "Dosya yönetimi"
+  },
+  "NOTIFICATIONS": {
+    "NAME": "Bildirimler",
+    "DESCRIPTION": "Sistem bildirimleri"
+  },
+  "NOTIFICATION_PREFERENCES": {
+    "NAME": "Bildirim Tercihleri",
+    "DESCRIPTION": "Bildirim ayarlarını yönet"
+  },
+  "OTP_VERIFICATIONS": {
+    "NAME": "OTP Doğrulamaları",
+    "DESCRIPTION": "OTP kayıtlarını görüntüle"
+  },
+  "DEVICE_TOKENS": {
+    "NAME": "Cihaz Tokenları",
+    "DESCRIPTION": "Cihaz tokenlarını yönet"
+  },
+  "REFRESH_TOKENS": {
+    "NAME": "Yenileme Tokenları",
+    "DESCRIPTION": "Oturum tokenlarını yönet"
+  },
+  "SMS": {
+    "NAME": "SMS",
+    "DESCRIPTION": "SMS kayıtları ve yönetimi"
+  },
+  "DOMAINS": {
+    "NAME": "Alan Adları",
+    "DESCRIPTION": "Alan adı yönetimi"
+  },
+  "ANNOUNCEMENTS": {
+    "NAME": "Duyurular",
+    "DESCRIPTION": "Şirket içi duyurular"
+  },
+  "LOGS": {
+    "NAME": "Loglar",
+    "DESCRIPTION": "Tüm modüllerdeki işlemleri görüntüle"
+  },
+  "CHAT": {
+    "NAME": "Sohbet",
+    "DESCRIPTION": "Canlı sohbet ve mesajlaşma"
+  }
+}

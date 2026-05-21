@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>16</epicId>
+    <storyId>6</storyId>
+    <title>Permission Guard Update (Multi-Tenant)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/16-6-permission-guard-update.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>permission guard to work with clean design</iWant>
+    <soThat>authorization is domain-aware and efficient</soThat>
+    <tasks>
+      1. PermissionsGuard updated (Epic 3 Story 3.6)
+      2. Domain context verification
+      3. Efficient permission checking (no extra queries)
+      4. Guard chains properly: JwtAuthGuard → PermissionsGuard
+      5. 403 Forbidden for insufficient permissions
+      6. 403 Forbidden for cross-domain access
+      7. Public routes bypass guard
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">PermissionsGuard updated (Epic 3 Story 3.6)</ac>
+    <ac id="2">Domain context verification</ac>
+    <ac id="3">Efficient permission checking (no extra queries)</ac>
+    <ac id="4">Guard chains properly: JwtAuthGuard → PermissionsGuard</ac>
+    <ac id="5">403 Forbidden for insufficient permissions</ac>
+    <ac id="6">403 Forbidden for cross-domain access</ac>
+    <ac id="7">Public routes bypass guard</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-16-clean-relational-role-design.md">
+        <title>Epic 16: Clean Relational Role Design</title>
+        <section>Story 16.6: Permission Guard Update</section>
+        <snippet>Permission guard updated to work with clean relational design and domain-aware authorization</snippet>
+      </doc>
+      <doc path="src/modules/permissions/services/authorization.service.ts">
+        <title>AuthorizationService</title>
+        <section>Clean Authorization Service</section>
+        <snippet>Already implements clean design with UserRole junction table (Story 16.3)</snippet>
+      </doc>
+      <doc path="prisma/schema/user.prisma">
+        <title>User Prisma Model</title>
+        <section>Clean Relational Design</section>
+        <snippet>User model with userRoles relation, no role string field</snippet>
+      </doc>
+      <doc path="src/modules/permissions/guards/permissions.guard.ts">
+        <title>PermissionsGuard</title>
+        <section>Current Implementation</section>
+        <snippet>Requires update to work with clean design</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/permissions/guards/permissions.guard.ts">
+        <kind>guard</kind>
+        <symbol>PermissionsGuard</symbol>
+        <reason>Main guard that needs updating for clean design</reason>
+      </file>
+      <file path="src/modules/auth/guards/jwt-auth.guard.ts">
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <reason>Part of guard chain, provides user from JWT</reason>
+      </file>
+      <file path="src/modules/permissions/decorators/permission.decorator.ts">
+        <kind>decorator</kind>
+        <symbol>Permission decorator</symbol>
+        <reason>Decorator used to specify required permissions</reason>
+      </file>
+      <file path="src/modules/permissions/decorators/current-user.decorator.ts">
+        <kind>decorator</kind>
+        <symbol>CurrentUser decorator</symbol>
+        <reason>Extracts user from request</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^10.0.0">Framework core</package>
+        <package name="@nestjs/passport" version="^10.0.0">Passport integration</package>
+        <package name="passport" version="^0.6.0">Passport auth</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Get user with domainID from JWT payload</constraint>
+    <constraint>Verify resource domainID matches user domainID</constraint>
+    <constraint>Use AuthorizationService for permission checking</constraint>
+    <constraint>No additional database queries in guard (use eager loading)</constraint>
+    <constraint>Fast-fail on domain mismatch (return 403 immediately)</constraint>
+    <constraint>Public routes must bypass guard via @Public decorator</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="JwtPayload">
+      <kind>TypeScript Interface</kind>
+      <signature>
+        {
+          sub: string;
+          phoneNumber: string;
+          domainID: string;
+          roles: string[];
+          iat: number;
+          exp: number;
+        }
+      </signature>
+      <path>src/modules/auth/interfaces/jwt-payload.interface.ts</path>
+    </interface>
+    <interface name="PermissionsGuard">
+      <kind>NestJS Guard</kind>
+      <signature>canActivate(context: ExecutionContext): Promise&lt;boolean&gt;</signature>
+      <path>src/modules/permissions/guards/permissions.guard.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Jest unit tests with @nestjs/testing, guard testing</standards>
+    <locations>
+      test/modules/permissions/guards/
+    </locations>
+    <ideas>
+      <test idea="Guard verifies domain context from JWT">ac:2</test>
+      <test idea="Guard checks permissions via AuthorizationService">ac:1,ac:3</test>
+      <test idea="403 Forbidden for cross-domain access">ac:6</test>
+      <test idea="403 Forbidden for insufficient permissions">ac:5</test>
+      <test idea="Public routes bypass guard">ac:7</test>
+      <test idea="No extra database queries">ac:3</test>
+    </ideas>
+  </tests>
+</story-context>

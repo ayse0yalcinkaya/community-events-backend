@@ -1,0 +1,145 @@
+// ============================================================================
+// CHAT SYSTEM (Prisma)
+// Adapted from hrsync with single user table and no domain scoping.
+// ============================================================================
+
+// Participant type (kept for API parity; currently only USER is used)
+enum ChatParticipantType {
+  USER
+  STAFF
+}
+
+// Delivery lifecycle of a chat message
+enum ChatMessageStatus {
+  PENDING // stored but not yet read
+  READED // receiver has read
+  SENT_PUSH // push notification sent
+}
+
+// Role of a participant within a chat group
+enum ChatGroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// Chat message persisted with encrypted content and optional attachments
+model ChatMessage {
+  id             String              @id @default(uuid()) @db.Uuid
+  senderUserId   String              @db.Uuid
+  receiverUserId String              @db.Uuid
+  senderType     ChatParticipantType @default(USER)
+  receiverType   ChatParticipantType @default(USER)
+  content        String
+  attachment     Json?
+  metadata       Json?
+  status         ChatMessageStatus   @default(PENDING)
+  isEdited       Boolean             @default(false)
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  // Relations
+  sender   User @relation("ChatSender", fields: [senderUserId], references: [id])
+  receiver User @relation("ChatReceiver", fields: [receiverUserId], references: [id])
+
+  @@index([senderUserId, receiverUserId, createdAt])
+  @@index([receiverUserId, status])
+  @@map("chats")
+}
+
+// Chat group metadata
+model ChatGroup {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  ownerId     String   @db.Uuid
+  createdBy   String   @db.Uuid
+  photoFileId String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members              ChatGroupMember[]
+  messages             ChatGroupMessage[]
+  photoFile            File?                          @relation(fields: [photoFileId], references: [id], onDelete: SetNull)
+  deletedConversations ChatGroupDeletedConversation[]
+
+  @@index([ownerId])
+  @@map("chat_groups")
+}
+
+// Memberships within chat groups
+model ChatGroupMember {
+  groupId  String        @db.Uuid
+  userId   String        @db.Uuid
+  role     ChatGroupRole @default(MEMBER)
+  joinedAt DateTime      @default(now())
+  leftAt   DateTime?
+
+  group ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@index([userId])
+  @@map("chat_group_members")
+}
+
+// Messages sent inside chat groups
+model ChatGroupMessage {
+  id         String              @id @default(uuid()) @db.Uuid
+  groupId    String              @db.Uuid
+  senderId   String              @db.Uuid
+  senderType ChatParticipantType @default(USER)
+  content    String
+  attachment Json?
+  metadata   Json?
+  status     ChatMessageStatus   @default(PENDING)
+  isEdited   Boolean             @default(false)
+  editedAt   DateTime?
+  deletedAt  DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  group  ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+  @@index([senderId])
+  @@map("chat_group_messages")
+}
+
+// Per-user conversation deletions (clear history)
+model ChatDeletedConversation {
+  id              String              @id @default(uuid()) @db.Uuid
+  userId          String              @db.Uuid
+  userType        ChatParticipantType
+  counterpartId   String              @db.Uuid
+  counterpartType ChatParticipantType
+  deletedAt       DateTime
+  createdAt       DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, userType, counterpartId, counterpartType])
+  @@index([userId])
+  @@map("chat_deleted_conversations")
+}
+
+// Per-user group conversation deletions (clear group history for specific user)
+// When a user "clears" a group conversation, messages with created_at < deleted_at are hidden
+model ChatGroupDeletedConversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  groupId   String   @db.Uuid
+  deletedAt DateTime
+  createdAt DateTime @default(now())
+
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("chat_group_deleted_conversations")
+}

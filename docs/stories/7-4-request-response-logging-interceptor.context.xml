@@ -1,0 +1,346 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>7.4</storyId>
+    <title>Request/Response Logging Interceptor</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-4-request-response-logging-interceptor.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>automatic request/response logging</iWant>
+    <soThat>I can trace API requests and monitor application performance without manual logging in every endpoint</soThat>
+    <tasks>
+      - Task 1: Create LoggingInterceptor with request logging (AC: 7.4.1, 7.4.2)
+        - Create `src/common/interceptors/logging.interceptor.ts`
+        - Implement `NestInterceptor` interface with `intercept()` method
+        - Extract request details (method, URL, user agent) from ExecutionContext
+        - Log request start with timestamp and request details
+
+      - Task 2: Implement X-Request-ID header handling (AC: 7.4.5)
+        - Check for existing `X-Request-ID` header in request
+        - Generate UUID v4 if request ID not present
+        - Store request ID in request object for access throughout lifecycle
+        - Add `X-Request-ID` header to response
+
+      - Task 3: Implement response logging with duration calculation (AC: 7.4.3, 7.4.6)
+        - Record request start timestamp
+        - Use RxJS `tap()` operator to intercept response
+        - Calculate duration (end timestamp - start timestamp)
+        - Extract response status code from response object
+        - Log response with status code, duration, request ID
+
+      - Task 4: Implement conditional log levels based on status code (AC: 7.4.3)
+        - Use `info` level for 2xx and 3xx status codes
+        - Use `warn` level for 4xx status codes (client errors)
+        - Use `error` level for 5xx status codes (server errors)
+
+      - Task 5: Implement sensitive data scrubbing (AC: 7.4.4)
+        - Create sanitization utility for request body
+        - Detect and exclude sensitive fields (password, token, secret, apiKey, creditCard, authorization)
+        - Apply sanitization to request body before logging
+        - Do NOT log response body (only status code and duration)
+
+      - Task 6: Register interceptor globally in main.ts (AC: 7.4.1)
+        - Import LoggingInterceptor in `main.ts`
+        - Register with `app.useGlobalInterceptors(new LoggingInterceptor(logger))`
+        - Ensure interceptor runs after JwtAuthGuard and PermissionsGuard
+
+      - Task 7: Write comprehensive tests (AC: all)
+        - Unit tests for LoggingInterceptor
+        - Test request logging with all required fields
+        - Test response logging with duration calculation
+        - Test X-Request-ID generation and propagation
+        - Test sensitive data scrubbing
+        - Test conditional log levels based on status codes
+        - Integration tests with actual HTTP requests
+        - E2E tests for full request/response lifecycle
+
+      - Task 8: Documentation and verification (AC: all)
+        - Verify request logs appear in console/file
+        - Verify response logs include correct duration
+        - Verify X-Request-ID header in response
+        - Test with various endpoints and status codes
+        - Verify sensitive data NOT present in logs
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-7.4.1: LoggingInterceptor created and registered globally
+      - Created in `src/common/interceptors/logging.interceptor.ts`
+      - Registered globally in `main.ts` with `app.useGlobalInterceptors()`
+      - Implements NestJS `NestInterceptor` interface
+
+    AC-7.4.2: Each request logged with: method, URL, user agent, request ID, timestamp
+      - HTTP method (GET, POST, PUT, DELETE, etc.)
+      - Full URL path with query parameters
+      - User-Agent header value
+      - Request ID (UUID)
+      - Timestamp in ISO 8601 format (UTC)
+      - Log level: `info`
+
+    AC-7.4.3: Each response logged with: status code, duration (ms), timestamp
+      - HTTP status code (200, 201, 400, 500, etc.)
+      - Request duration in milliseconds (calculated from request start to response end)
+      - Timestamp in ISO 8601 format (UTC)
+      - Log level: `info` for successful responses (2xx, 3xx), `warn` for client errors (4xx), `error` for server errors (5xx)
+
+    AC-7.4.4: Sensitive data excluded from request/response logs (passwords, tokens in body)
+      - Request body sanitized before logging
+      - Sensitive fields excluded: password, token, secret, apiKey, creditCard, authorization, accessToken, refreshToken
+      - Response body NOT logged by default (to avoid sensitive data leakage)
+      - Only status code and duration logged for responses
+
+    AC-7.4.5: X-Request-ID header support: Generate UUID if not present, propagate if exists
+      - Check incoming request for `X-Request-ID` header
+      - If present: Use existing request ID (propagate from client/upstream service)
+      - If missing: Generate new UUID v4 request ID
+      - Add `X-Request-ID` header to response
+      - Include request ID in all log entries for correlation
+
+    AC-7.4.6: Request ID included in all log entries for correlation
+      - Request log includes: `requestId` in context
+      - Response log includes: `requestId` in context
+      - Enables correlation of request/response pairs in log aggregation systems
+      - Request ID available throughout request lifecycle via request object
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - path: docs/tech-spec-epic-7.md
+        title: Epic Technical Specification: Developer Infrastructure
+        section: Story 7.4 - Request/Response Logging Interceptor
+        snippet: Defines LoggingInterceptor as global interceptor that logs request (method, URL, user agent, requestId) and response (status code, duration). Integrates with Winston logger from Story 7.3. X-Request-ID header support for distributed tracing. Sensitive data scrubbing required.
+
+      - path: docs/tech-spec-epic-7.md
+        title: Epic Technical Specification: Developer Infrastructure
+        section: Workflows and Sequencing - Request Lifecycle
+        snippet: Request lifecycle flow: LoggingInterceptor → JwtAuthGuard → PermissionsGuard → ValidationPipe → Controller → LoggingInterceptor (response). Interceptors execute BEFORE and AFTER controller using RxJS operators (tap, catchError).
+
+      - path: docs/tech-spec-epic-7.md
+        title: Epic Technical Specification: Developer Infrastructure
+        section: Data Models and Contracts - LogEntry Interface
+        snippet: LogEntry interface defines structured log format with timestamp (ISO 8601 UTC), level (debug/info/warn/error), message, context (module, method, requestId, userId, domainId, duration, statusCode), and optional stack trace.
+
+      - path: docs/tech-spec-epic-7.md
+        title: Epic Technical Specification: Developer Infrastructure
+        section: Performance - Interceptor Performance
+        snippet: Interceptor overhead must be < 5ms per request (p95). Duration calculation using high-precision timestamps (process.hrtime.bigint). Non-blocking logging operations (async). Zero impact on request throughput.
+
+      - path: docs/tech-spec-epic-7.md
+        title: Epic Technical Specification: Developer Infrastructure
+        section: Security - Sensitive Data Protection
+        snippet: Request body MUST be sanitized before logging (GDPR, PCI compliance). Sensitive fields: password, token, secret, apiKey, creditCard, authorization, accessToken, refreshToken. Response body NOT logged by default. Reuse sanitization from Winston logger.
+
+      - path: docs/tech-spec-epic-7.md
+        title: Epic Technical Specification: Developer Infrastructure
+        section: Acceptance Criteria - AC-7.4.1 through AC-7.4.6
+        snippet: Complete acceptance criteria definitions including LoggingInterceptor creation, request/response logging fields, X-Request-ID header support, sensitive data exclusion, and request ID correlation.
+
+      - path: stories/7-3-structured-logging-winston.md
+        title: Story 7.3: Structured Logging (Winston)
+        section: Dev Notes - Winston Logger Service
+        snippet: LoggerService injectable from src/common/logger/logger.service.ts. Methods: log(), info(), warn(), error(), debug(). Accepts context object with metadata (module, method, requestId, userId, domainId). JSON structured format in production, pretty-print in development.
+
+      - path: stories/7-3-structured-logging-winston.md
+        title: Story 7.3: Structured Logging (Winston)
+        section: Project Structure Notes - Sensitive Data Scrubbing
+        snippet: sanitizeContext() function in src/config/logger.config.ts detects sensitive fields (password, token, secret, apiKey, creditCard, authorization, accessToken, refreshToken) and replaces with '[REDACTED]'. Recursive sanitization for nested objects. Pattern can be reused for request body sanitization.
+    </docs>
+
+    <code>
+      - path: src/common/logger/logger.service.ts
+        kind: service
+        symbol: LoggerService
+        lines: 1-68
+        reason: Injectable logger service to be used by LoggingInterceptor. Provides log(), info(), warn(), error(), debug() methods with context support. Already configured and available from Story 7.3.
+
+      - path: src/config/logger.config.ts
+        kind: configuration
+        symbol: sanitizeContext
+        lines: 45-101
+        reason: Sanitization function that removes sensitive data from context objects. Can be adapted for request body sanitization in LoggingInterceptor. Handles nested objects, arrays, and circular references.
+
+      - path: src/config/logger.config.ts
+        kind: configuration
+        symbol: SENSITIVE_FIELDS
+        lines: 27-36
+        reason: List of sensitive field names to exclude from logs (password, token, secret, apiKey, creditCard, authorization, accessToken, refreshToken). Use same list for request body sanitization.
+
+      - path: src/config/logger.config.ts
+        kind: configuration
+        symbol: LogEntry
+        lines: 8-21
+        reason: Interface defining log entry structure with timestamp, level, message, context (module, method, requestId, userId, domainId), and optional stack trace. LoggingInterceptor should follow this format.
+
+      - path: src/main.ts
+        kind: bootstrap
+        symbol: bootstrap
+        lines: 7-41
+        reason: Application bootstrap file where LoggingInterceptor will be registered globally with app.useGlobalInterceptors(). Logger service already initialized and set as global logger. Reference for interceptor registration pattern.
+
+      - path: src/common/guards/jwt-auth.guard.ts
+        kind: guard
+        symbol: JwtAuthGuard
+        reason: JWT authentication guard that runs before interceptors. LoggingInterceptor will see authenticated user context after this guard executes. Important for understanding request lifecycle execution order.
+
+      - path: src/common/guards/permissions.guard.ts
+        kind: guard
+        symbol: PermissionsGuard
+        reason: Permissions guard that runs after JwtAuthGuard. LoggingInterceptor runs before guards (request phase) and after guards/controller (response phase). Important for understanding execution order.
+    </code>
+
+    <dependencies>
+      node:
+        - "@nestjs/common": "^11.0.1" (NestInterceptor, ExecutionContext, CallHandler, Injectable)
+        - "rxjs": "^7.8.1" (Observable, tap operator for intercepting responses)
+        - "uuid": "^13.0.0" (v4 for generating request IDs)
+        - "winston": "^3.18.3" (already installed for LoggerService, Story 7.3)
+        - "@types/uuid": "^10.0.0" (TypeScript types for uuid, devDependency)
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MUST implement NestJS NestInterceptor interface with intercept(context: ExecutionContext, next: CallHandler) method
+    - MUST use RxJS tap() operator to intercept response stream without modifying it
+    - MUST inject LoggerService via constructor dependency injection (from Story 7.3)
+    - MUST use process.hrtime.bigint() for high-precision duration calculation (sub-millisecond accuracy)
+    - MUST check for existing X-Request-ID header before generating new UUID (propagate if exists)
+    - MUST set X-Request-ID response header for all requests (generated or propagated)
+    - MUST include requestId in context object for all log entries (request and response)
+    - MUST use conditional log levels: info (2xx/3xx), warn (4xx), error (5xx)
+    - MUST NOT log request body by default (security risk - sensitive data)
+    - MUST NOT log response body by default (security risk - sensitive data)
+    - MUST register interceptor globally in main.ts with app.useGlobalInterceptors()
+    - MUST ensure interceptor overhead is < 5ms per request (performance requirement)
+    - SHOULD reuse SENSITIVE_FIELDS list from logger.config.ts if request body logging is added later
+    - SHOULD reuse sanitizeContext() pattern from logger.config.ts for request body sanitization
+    - MUST follow existing project patterns: Jest for testing, @Injectable() decorator, project-relative imports
+    - MUST create tests in __tests__/ subdirectory following established pattern (src/common/interceptors/__tests__/)
+    - MUST achieve 90%+ test coverage for LoggingInterceptor
+  </constraints>
+
+  <interfaces>
+    - name: NestInterceptor
+      kind: interface (NestJS)
+      signature: |
+        interface NestInterceptor<T = any, R = any> {
+          intercept(context: ExecutionContext, next: CallHandler<T>): Observable<R> | Promise<Observable<R>>;
+        }
+      path: @nestjs/common
+      usage: LoggingInterceptor must implement this interface
+
+    - name: LoggerService
+      kind: service (injectable)
+      signature: |
+        @Injectable()
+        class LoggerService implements NestLoggerService {
+          log(message: string, context?: any): void;
+          error(message: string, trace?: string, context?: any): void;
+          warn(message: string, context?: any): void;
+          debug(message: string, context?: any): void;
+          info(message: string, context?: any): void; // Alias for log()
+        }
+      path: src/common/logger/logger.service.ts
+      usage: Inject and use for logging in LoggingInterceptor
+
+    - name: sanitizeContext
+      kind: utility function
+      signature: |
+        function sanitizeContext(obj: any): any
+      path: src/config/logger.config.ts
+      usage: Reference pattern for request body sanitization (if needed). Recursively removes sensitive fields from objects.
+
+    - name: uuid.v4
+      kind: function
+      signature: |
+        import { v4 as uuidv4 } from 'uuid';
+        const requestId: string = uuidv4();
+      path: uuid package
+      usage: Generate UUID v4 for X-Request-ID when not present in request headers
+
+    - name: process.hrtime.bigint
+      kind: native function
+      signature: |
+        const startTime: bigint = process.hrtime.bigint();
+        const duration: number = Number(endTime - startTime) / 1_000_000; // Convert to ms
+      path: Node.js native
+      usage: High-precision timestamp for accurate duration calculation (sub-millisecond accuracy)
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing standards from Story 7.3 and project conventions:
+      - Jest framework for unit and integration tests
+      - Tests in __tests__/ subdirectory (src/common/interceptors/__tests__/)
+      - 90%+ coverage target for LoggingInterceptor
+      - Mock ExecutionContext, CallHandler, and LoggerService for unit tests
+      - Integration tests with real HTTP requests to verify end-to-end behavior
+      - E2E tests for full request/response lifecycle with various status codes
+      - Performance tests to verify < 5ms overhead per request
+      - Test file naming: logging.interceptor.spec.ts
+      - Use descriptive test names following pattern: "should [expected behavior] when [condition]"
+      - Arrange-Act-Assert pattern for test structure
+      - Mock process.hrtime.bigint() for deterministic duration testing
+    </standards>
+
+    <locations>
+      - src/common/interceptors/__tests__/logging.interceptor.spec.ts (unit tests)
+      - test/**/*.e2e-spec.ts (E2E tests for request/response logging)
+    </locations>
+
+    <ideas>
+      Unit Tests (AC-7.4.1, 7.4.2, 7.4.3):
+      - Test: interceptor implements NestInterceptor interface correctly
+      - Test: request logged with method, URL, userAgent, requestId, timestamp when request starts
+      - Test: X-Request-ID generated when not present in request headers (UUID v4 format)
+      - Test: X-Request-ID propagated when present in request headers (existing value used)
+      - Test: X-Request-ID added to response headers
+      - Test: response logged with statusCode, duration, requestId, timestamp when request completes
+      - Test: duration calculated accurately using process.hrtime.bigint() (mock for deterministic test)
+      - Test: duration rounded to 2 decimal places
+
+      Unit Tests (AC-7.4.3 - Conditional Log Levels):
+      - Test: log level is 'info' for 200 status code (success)
+      - Test: log level is 'info' for 201 status code (created)
+      - Test: log level is 'info' for 304 status code (not modified - 3xx)
+      - Test: log level is 'warn' for 400 status code (bad request)
+      - Test: log level is 'warn' for 404 status code (not found)
+      - Test: log level is 'error' for 500 status code (internal server error)
+      - Test: log level is 'error' for 503 status code (service unavailable)
+
+      Unit Tests (AC-7.4.4 - Sensitive Data):
+      - Test: request body NOT logged by default (security best practice)
+      - Test: response body NOT logged by default (security best practice)
+      - Test: sensitive fields excluded if request body logging is enabled in future
+
+      Unit Tests (AC-7.4.6 - Request ID Correlation):
+      - Test: same requestId present in both request and response log entries
+      - Test: requestId stored in request object (request.requestId) for access in controllers
+
+      Integration Tests:
+      - Test: interceptor registered globally and runs for all HTTP requests
+      - Test: request and response logs appear in console (development mode)
+      - Test: X-Request-ID header present in HTTP response
+      - Test: request ID consistent across request/response log pairs (correlation)
+      - Test: duration values realistic and positive
+
+      E2E Tests:
+      - Test: full request lifecycle logged (request → guards → controller → response)
+      - Test: multiple concurrent requests have unique request IDs (no collision)
+      - Test: authenticated requests include userId in context (from JwtAuthGuard)
+      - Test: error responses (4xx, 5xx) logged with correct log levels
+      - Test: successful responses (2xx) logged with 'info' level
+      - Test: interceptor doesn't interfere with @Public routes
+
+      Performance Tests:
+      - Test: interceptor adds < 5ms overhead per request (measure actual latency)
+      - Test: high-precision duration calculation (sub-millisecond accuracy)
+      - Test: no performance degradation under load (100-1000 req/sec)
+      - Test: memory usage stable (no memory leaks from interceptor)
+    </ideas>
+  </tests>
+</story-context>

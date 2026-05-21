@@ -1,0 +1,491 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.2</storyId>
+    <title>Admin User CRUD</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-2-admin-user-crud.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>admin</asA>
+    <iWant>tüm kullanıcıları görüntüleyip yönetebilmek</iWant>
+    <soThat>user lifecycle'ı kontrol edebilleyim</soThat>
+    <tasks>
+      - Task 1: Create UsersController with admin endpoints (GET /users, GET /users/:id)
+      - Task 2: Create DTOs (CreateUserDto, UpdateUserDto, QueryUserDto)
+      - Task 3: Implement POST /users endpoint (user creation with password hashing)
+      - Task 4: Implement PATCH /users/:id endpoint (partial update)
+      - Task 5: Implement DELETE /users/:id endpoint (soft-delete)
+      - Task 6: Extend UsersService with admin operations (findAll, create, update, softDelete)
+      - Task 7: Create PERMISSIONS constant and ActionEnum
+      - Task 8: Create @Permission decorator
+      - Task 9: Create PermissionsGuard
+      - Task 10: Create AuthorizationService stub (returns true)
+      - Task 11: Register UsersController in UsersModule
+      - Task 12: Write unit tests for UsersController
+      - Task 13: Update UsersService unit tests
+      - Task 14: Write E2E tests for admin user CRUD
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-3.2.1: GET /users endpoint returns paginated user list
+      - Admin with USERS.VIEW permission can access
+      - Pagination: page (default 1), limit (default 20, max 100)
+      - Filtering: status (active/inactive), role, search (firstName, lastName, phoneNumber)
+      - Sorting: sortBy (default createdAt), sortOrder (default desc)
+      - domainID isolation enforced
+      - Response includes meta: { page, limit, total, totalPages }
+      - Soft-deleted users excluded
+      - Returns 403 if no USERS.VIEW permission
+
+    AC-3.2.2: GET /users/:id returns single user
+      - Admin with USERS.VIEW permission can access
+      - domainID check enforced (403 if different domain)
+      - Returns 404 if not found or soft-deleted
+      - passwordHash excluded from response
+
+    AC-3.2.3: POST /users creates new user
+      - Admin with USERS.CREATE permission can access
+      - Validates: phoneNumber (unique per domain), firstName, lastName, role
+      - password required if role=admin, optional for staff
+      - Password hashed with bcrypt (10 rounds)
+      - User created with phoneVerified=false
+      - Returns 201 Created with UserResDto
+      - Returns 409 if phoneNumber exists, 400 if validation fails
+
+    AC-3.2.4: PATCH /users/:id updates user
+      - Admin with USERS.UPDATE permission can access
+      - Partial update: firstName, lastName, phoneNumber, isActive
+      - domainID check enforced
+      - phoneNumber uniqueness validated
+      - Returns updated UserResDto
+      - Returns 404 if not found, 403 if wrong domain
+
+    AC-3.2.5: DELETE /users/:id soft-deletes user
+      - Admin with USERS.DELETE permission can access
+      - Soft delete: set deletedAt timestamp
+      - domainID check enforced
+      - Cascade: UserRole, UserPermission soft-deleted
+      - Returns 200 OK with success message
+      - Returns 404 if not found, 403 if wrong domain
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Controller-Service pattern, module structure, permission system design (hybrid enum + DB), authorization flow, security constraints, multi-tenancy enforcement</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>APIs and Interfaces</section>
+        <snippet>Complete API specs for GET /users, GET /users/:id, POST /users, PATCH /users/:id, DELETE /users/:id with request/response formats</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models and Contracts</section>
+        <snippet>CreateUserDto, UpdateUserDto, QueryUserDto, UserResDto specifications with class-validator decorators</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Security</section>
+        <snippet>Permission-based access control, multi-tenancy isolation, password hashing (bcrypt 10 rounds), input validation, soft-delete pattern</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Test Strategy Summary</section>
+        <snippet>Unit tests (85% coverage), integration tests, E2E tests covering all CRUD operations, permission checks, multi-tenancy isolation</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Decisions</title>
+        <section>Permission System (Hybrid Enum + DB)</section>
+        <snippet>Module-based permission constants (PERMISSIONS.MODULE.ACTION), database-backed permission checks, decorator-based route protection</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-1-user-profile-endpoints-self-service.md</path>
+        <title>Story 3.1 (Previous)</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>UsersService foundation ready (findOne, updateProfile), UserResDto pattern established, multi-tenancy pattern, JWT authentication working, validation infrastructure ready</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/modules/users/services/users.service.ts</path>
+        <kind>service</kind>
+        <symbol>UsersService</symbol>
+        <lines>1-99</lines>
+        <reason>Existing service with findOne, updateProfile methods. Story 3.2 extends with findAll, create, update, softDelete. Demonstrates multi-tenancy (domainID filtering), soft-delete pattern (deletedAt: null), Prisma usage</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/response/user-res.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>UserResDto</symbol>
+        <lines>1-37</lines>
+        <reason>Response DTO for all user endpoints. Uses @Expose() to whitelist safe fields, excludes passwordHash/domainID/deletedAt. Reuse for Story 3.2 responses</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/profile.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>ProfileController</symbol>
+        <lines>1-83</lines>
+        <reason>Reference implementation for controller patterns: @UseGuards(JwtAuthGuard), @CurrentUser decorator, plainToInstance transformation, error handling. Story 3.2 follows same pattern with added PermissionsGuard</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/users.module.ts</path>
+        <kind>module</kind>
+        <symbol>UsersModule</symbol>
+        <lines>1-16</lines>
+        <reason>Current module config. Story 3.2 adds UsersController to controllers array and imports PermissionsModule for authorization</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/request/update-profile.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>UpdateProfileDto</symbol>
+        <lines>1-27</lines>
+        <reason>Validation pattern reference: @IsOptional, @IsString, @MinLength, @MaxLength, @IsPhoneNumber('TR'). Story 3.2 creates similar DTOs</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>1-59</lines>
+        <reason>JWT authentication guard supporting @Public() bypass. Story 3.2 uses with PermissionsGuard: @UseGuards(JwtAuthGuard, PermissionsGuard)</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/decorators/current-user.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>CurrentUser</symbol>
+        <lines>1-27</lines>
+        <reason>Extracts JwtPayload from request.user. Story 3.2 uses to get domainID for multi-tenancy filtering in all admin endpoints</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public</symbol>
+        <lines>1-21</lines>
+        <reason>Pattern reference for creating @Permission decorator. Shows SetMetadata usage and metadata key constant pattern</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/interfaces/jwt-payload.interface.ts</path>
+        <kind>interface</kind>
+        <symbol>JwtPayload</symbol>
+        <lines>1-41</lines>
+        <reason>JWT payload structure (sub, phoneNumber, domainID, roles). Used by @CurrentUser decorator and PermissionsGuard</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthService</symbol>
+        <lines>49</lines>
+        <reason>Password hashing pattern: bcrypt.hash(password, 10) with 10 rounds. Story 3.2 replicates in CreateUserDto handler</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthService</symbol>
+        <lines>53-55</lines>
+        <reason>domainID retrieval from config (DEFAULT_DOMAIN_ID pattern). Story 3.2 may reference for default domain handling</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/dto/register.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>RegisterDto</symbol>
+        <lines>1-43</lines>
+        <reason>Complete validation reference for CreateUserDto: @IsPhoneNumber('TR'), @IsEnum(['admin', 'staff', 'manager']), @Matches for password, @IsEmail</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>User model</symbol>
+        <lines>20-50</lines>
+        <reason>User entity definition: role (admin/staff/manager), isActive, deletedAt (soft-delete), domainID (multi-tenancy), passwordHash (optional), indexes. Story 3.2 queries based on this schema</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>Permission, Role, UserRole, RolePermission, UserPermission models</symbol>
+        <lines>99-180</lines>
+        <reason>Authorization schema for permission system. Story 3.2 creates foundation code (constants, guards) that will query these tables in Story 3.5</reason>
+      </artifact>
+      <artifact>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>1-30</lines>
+        <reason>PrismaClient wrapper injected into UsersService for all database operations</reason>
+      </artifact>
+      <artifact>
+        <path>src/main.ts</path>
+        <kind>bootstrap</kind>
+        <symbol>bootstrap</symbol>
+        <lines>13-17</lines>
+        <reason>Global ValidationPipe configuration (whitelist: true, forbidNonWhitelisted: true, transform: true). Story 3.2 DTOs validated automatically</reason>
+      </artifact>
+      <artifact>
+        <path>test/users-profile.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersController - Profile Endpoints (e2e)</symbol>
+        <lines>1-272</lines>
+        <reason>E2E testing pattern reference: app bootstrap, PrismaService injection, test user creation, JWT token generation, cleanup. Story 3.2 creates similar tests for admin endpoints</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/services/users.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersService unit tests</symbol>
+        <lines>1-100</lines>
+        <reason>Unit test pattern: mocking PrismaService, TestingModule setup. Story 3.2 adds tests for new methods (findAll, create, update, softDelete)</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/seed.ts</path>
+        <kind>seed</kind>
+        <symbol>Permission seed data</symbol>
+        <lines>46-72</lines>
+        <reason>Permission structure: module + action (USERS.CREATE, USERS.VIEW, USERS.UPDATE, USERS.DELETE). Story 3.2 PERMISSIONS constant follows this pattern</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <nodejs>
+        <package name="@nestjs/common" version="^11.1.8">NestJS core decorators, guards, pipes, interceptors</package>
+        <package name="@nestjs/core" version="^11.1.8">NestJS module system, dependency injection</package>
+        <package name="@nestjs/platform-express" version="^11.1.8">Express platform adapter</package>
+        <package name="@nestjs/passport" version="^10.0.3">Passport integration for guards</package>
+        <package name="@nestjs/jwt" version="^10.2.0">JWT token handling</package>
+        <package name="@prisma/client" version="^6.16.0">Prisma ORM client for database access</package>
+        <package name="passport" version="^0.7.0">Authentication middleware</package>
+        <package name="passport-jwt" version="^4.0.1">JWT authentication strategy</package>
+        <package name="bcrypt" version="^5.1.1">Password hashing (10 rounds)</package>
+        <package name="class-validator" version="^0.14.1">DTO validation decorators</package>
+        <package name="class-transformer" version="^0.5.1">DTO transformation (plainToInstance, @Expose)</package>
+      </nodejs>
+      <devDependencies>
+        <package name="@types/passport-jwt" version="^4.0.1">TypeScript types for passport-jwt</package>
+        <package name="@types/bcrypt" version="^5.0.2">TypeScript types for bcrypt</package>
+        <package name="@nestjs/testing" version="^11.1.8">Testing utilities for NestJS</package>
+        <package name="jest" version="^29.7.0">Testing framework</package>
+        <package name="supertest" version="^6.3.4">HTTP assertions for E2E tests</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. **Multi-Tenancy Mandatory:** ALL queries MUST filter by domainID from @CurrentUser() decorator. Never allow cross-domain data access.
+
+    2. **Soft-Delete Only:** DELETE operations set deletedAt timestamp, never hard delete. All queries filter deletedAt: null.
+
+    3. **Permission-Based Authorization:** All admin endpoints MUST have @Permission decorator. PermissionsGuard executes after JwtAuthGuard.
+
+    4. **Password Security:** Hash with bcrypt.hash(password, 10). Never return passwordHash in responses (UserResDto excludes it).
+
+    5. **Validation Required:** All DTOs use class-validator decorators. ValidationPipe is global, validation automatic.
+
+    6. **Response Format:** Use plainToInstance(UserResDto, user, { excludeExtraneousValues: true }). ResponseTransformInterceptor wraps in { success, data } format.
+
+    7. **Controller-Service Pattern:** Controllers are thin (parameter extraction, response wrapping). Business logic in services.
+
+    8. **Phone Number Validation:** Use @IsPhoneNumber('TR') for Turkish phone numbers. Enforce uniqueness per domain.
+
+    9. **Pagination Defaults:** page=1, limit=20, max=100. Response includes meta: { page, limit, total, totalPages }.
+
+    10. **Role Enum:** ['admin', 'staff', 'manager']. Validate with @IsEnum in DTOs.
+
+    11. **Error Handling:** Throw domain exceptions (NotFoundException, ConflictException, ForbiddenException). Global exception filter handles mapping to HTTP status codes.
+
+    12. **Testing Coverage:** 85% unit test coverage target. E2E tests for all CRUD operations, permission checks, multi-tenancy isolation.
+
+    13. **Stub Implementation:** AuthorizationService.hasPermission() returns TRUE for all checks in Story 3.2. Full implementation deferred to Story 3.5.
+
+    14. **Module Organization:** UsersModule imports PrismaModule (global), AuthModule (for guards), PermissionsModule (for authorization). Export UsersService for cross-module usage.
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /users</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /users?page=1&amp;limit=20&amp;status=active&amp;role=staff&amp;search=john&amp;sortBy=createdAt&amp;sortOrder=desc</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+      <returns>{ success: true, data: UserResDto[], meta: { page, limit, total, totalPages } }</returns>
+      <guards>@UseGuards(JwtAuthGuard, PermissionsGuard) + @Permission('USERS', ActionEnum.VIEW)</guards>
+    </interface>
+    <interface>
+      <name>GET /users/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /users/:id</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+      <returns>{ success: true, data: UserResDto }</returns>
+      <guards>@UseGuards(JwtAuthGuard, PermissionsGuard) + @Permission('USERS', ActionEnum.VIEW)</guards>
+    </interface>
+    <interface>
+      <name>POST /users</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /users { phoneNumber, password?, firstName, lastName, email?, role }</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+      <returns>{ success: true, data: UserResDto } (201 Created)</returns>
+      <guards>@UseGuards(JwtAuthGuard, PermissionsGuard) + @Permission('USERS', ActionEnum.CREATE)</guards>
+    </interface>
+    <interface>
+      <name>PATCH /users/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>PATCH /users/:id { firstName?, lastName?, phoneNumber?, isActive? }</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+      <returns>{ success: true, data: UserResDto }</returns>
+      <guards>@UseGuards(JwtAuthGuard, PermissionsGuard) + @Permission('USERS', ActionEnum.UPDATE)</guards>
+    </interface>
+    <interface>
+      <name>DELETE /users/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>DELETE /users/:id</signature>
+      <path>src/modules/users/controllers/users.controller.ts</path>
+      <returns>{ success: true, message: "User deleted successfully" }</returns>
+      <guards>@UseGuards(JwtAuthGuard, PermissionsGuard) + @Permission('USERS', ActionEnum.DELETE)</guards>
+    </interface>
+    <interface>
+      <name>UsersService.findAll</name>
+      <kind>service method</kind>
+      <signature>async findAll(queryDto: QueryUserDto, domainID: string): Promise&lt;{ data: User[], total: number }&gt;</signature>
+      <path>src/modules/users/services/users.service.ts</path>
+      <description>Paginated user list with filtering (status, role, search) and sorting. Filters by domainID and deletedAt: null</description>
+    </interface>
+    <interface>
+      <name>UsersService.create</name>
+      <kind>service method</kind>
+      <signature>async create(createUserDto: CreateUserDto, domainID: string): Promise&lt;User&gt;</signature>
+      <path>src/modules/users/services/users.service.ts</path>
+      <description>Creates user with password hashing (bcrypt 10 rounds), phoneNumber uniqueness check per domain</description>
+    </interface>
+    <interface>
+      <name>UsersService.update</name>
+      <kind>service method</kind>
+      <signature>async update(id: string, updateUserDto: UpdateUserDto, domainID: string): Promise&lt;User&gt;</signature>
+      <path>src/modules/users/services/users.service.ts</path>
+      <description>Partial update with domainID check, phoneNumber uniqueness validation</description>
+    </interface>
+    <interface>
+      <name>UsersService.softDelete</name>
+      <kind>service method</kind>
+      <signature>async softDelete(id: string, domainID: string): Promise&lt;void&gt;</signature>
+      <path>src/modules/users/services/users.service.ts</path>
+      <description>Sets deletedAt timestamp, enforces domainID check</description>
+    </interface>
+    <interface>
+      <name>AuthorizationService.hasPermission</name>
+      <kind>service method</kind>
+      <signature>async hasPermission(userID: string, domainID: string, permission: string): Promise&lt;boolean&gt;</signature>
+      <path>src/modules/permissions/services/authorization.service.ts</path>
+      <description>STUB: Returns TRUE for all checks. Full implementation in Story 3.5</description>
+    </interface>
+    <interface>
+      <name>@Permission decorator</name>
+      <kind>decorator</kind>
+      <signature>@Permission(module: string, action: ActionEnum)</signature>
+      <path>src/common/decorators/permission.decorator.ts</path>
+      <description>Metadata decorator for route-level permission requirements. Used with PermissionsGuard</description>
+    </interface>
+    <interface>
+      <name>PermissionsGuard</name>
+      <kind>guard</kind>
+      <signature>class PermissionsGuard implements CanActivate</signature>
+      <path>src/common/guards/permissions.guard.ts</path>
+      <description>Extracts @Permission metadata, calls AuthorizationService.hasPermission(), throws ForbiddenException if denied</description>
+    </interface>
+    <interface>
+      <name>PERMISSIONS constant</name>
+      <kind>constant</kind>
+      <signature>export const PERMISSIONS = { USERS: { CREATE: 'USERS.CREATE', VIEW: 'USERS.VIEW', UPDATE: 'USERS.UPDATE', DELETE: 'USERS.DELETE' } } as const</signature>
+      <path>src/modules/permissions/constants/permissions.constant.ts</path>
+      <description>Type-safe permission constants matching database permission format (module.action)</description>
+    </interface>
+    <interface>
+      <name>ActionEnum</name>
+      <kind>enum</kind>
+      <signature>enum ActionEnum { CREATE = 'CREATE', VIEW = 'VIEW', UPDATE = 'UPDATE', DELETE = 'DELETE' }</signature>
+      <path>src/common/enums/action.enum.ts</path>
+      <description>Action types for @Permission decorator</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      **Unit Tests (85% coverage):**
+      - Mock dependencies with jest.fn() and TestingModule
+      - Test services: PrismaService mocked, business logic validated
+      - Test controllers: Service mocked, HTTP layer validated
+      - Test guards: Reflector and AuthorizationService mocked
+
+      **Integration Tests:**
+      - Full request/response cycle with test database
+      - Transaction rollback in afterEach for cleanup
+      - Validate pagination, filtering, sorting
+      - Test multi-tenancy isolation (cross-domain access denied)
+      - Verify soft-delete behavior
+
+      **E2E Tests:**
+      - Full app bootstrap with AppModule
+      - Real database with cleanup
+      - JWT token generation via TokenService
+      - Test complete user journeys (create → list → update → delete)
+      - Permission checks (403 when no permission)
+
+      **Reference:** test/users-profile.e2e-spec.ts, src/modules/users/services/users.service.spec.ts
+    </standards>
+
+    <locations>
+      - src/modules/users/controllers/users.controller.spec.ts (unit tests for controller)
+      - src/modules/users/services/users.service.spec.ts (extend with new method tests)
+      - src/common/guards/permissions.guard.spec.ts (unit tests for guard)
+      - src/modules/permissions/services/authorization.service.spec.ts (unit tests for stub)
+      - test/users-admin.e2e-spec.ts (E2E tests for all admin CRUD endpoints)
+    </locations>
+
+    <ideas>
+      **AC-3.2.1 (GET /users list):**
+      - Test pagination: page=1, limit=20 returns correct subset
+      - Test filtering: status=active excludes inactive users
+      - Test filtering: role=staff returns only staff users
+      - Test search: search=john matches firstName/lastName/phoneNumber
+      - Test sorting: sortBy=createdAt&amp;sortOrder=desc returns newest first
+      - Test multi-tenancy: Domain A admin cannot see Domain B users (403)
+      - Test soft-delete: Deleted users excluded from results
+      - Test permission: No USERS.VIEW permission → 403 Forbidden
+
+      **AC-3.2.2 (GET /users/:id):**
+      - Test success: Returns UserResDto with passwordHash excluded
+      - Test domainID check: Cross-domain access → 403 Forbidden
+      - Test not found: Non-existent ID → 404 Not Found
+      - Test soft-deleted: Deleted user → 404 Not Found
+
+      **AC-3.2.3 (POST /users create):**
+      - Test success: User created with password hashed (bcrypt)
+      - Test validation: Missing firstName → 400 Bad Request
+      - Test uniqueness: Duplicate phoneNumber in same domain → 409 Conflict
+      - Test role validation: Invalid role → 400 Bad Request
+      - Test password hashing: Verify bcrypt.compare() works on stored hash
+      - Test permission: No USERS.CREATE permission → 403 Forbidden
+
+      **AC-3.2.4 (PATCH /users/:id update):**
+      - Test partial update: Only firstName provided → only firstName updated
+      - Test phoneNumber uniqueness: Duplicate phoneNumber → 409 Conflict
+      - Test domainID check: Cross-domain update → 403 Forbidden
+      - Test not found: Non-existent ID → 404 Not Found
+
+      **AC-3.2.5 (DELETE /users/:id soft-delete):**
+      - Test soft-delete: deletedAt timestamp set, not hard deleted
+      - Test cascade: UserRole, UserPermission records soft-deleted (if exist)
+      - Test domainID check: Cross-domain delete → 403 Forbidden
+      - Test not found: Non-existent ID → 404 Not Found
+      - Test list after delete: Deleted user not in GET /users results
+    </ideas>
+  </tests>
+</story-context>

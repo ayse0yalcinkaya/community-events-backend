@@ -1,0 +1,242 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>12</epicId>
+    <storyId>1</storyId>
+    <title>ESLint Configuration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10T18:10:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/12-1-eslint-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>ESLint configured</iWant>
+    <soThat>code quality rules are enforced consistently</soThat>
+    <tasks>
+- Task 1: Create .eslintrc.js configuration file (AC: #1, #2, #3)
+  - Subtask 1.1: Install required dependencies (eslint, @typescript-eslint/parser, @typescript-eslint/eslint-plugin, eslint-plugin-prettier, eslint-config-prettier)
+  - Subtask 1.2: Create .eslintrc.js with required extends
+  - Subtask 1.3: Configure NestJS best practices rules
+  - Subtask 1.4: Configure TypeScript strict rules
+  - Subtask 1.5: Configure no-console rule for production
+  - Subtask 1.6: Configure import order rules
+  - Subtask 1.7: Configure no-unused-vars rule
+- Task 2: Add npm scripts to package.json (AC: #4)
+  - Subtask 2.1: Add "lint" script with --fix flag
+  - Subtask 2.2: Test lint script execution
+- Task 3: Configure VS Code integration (AC: #5)
+  - Subtask 3.1: Create/update .vscode/settings.json
+  - Subtask 3.2: Enable eslint.autoFixOnSave
+  - Subtask 3.3: Enable editor.codeActionsOnSave for ESLint
+- Task 4: Integrate lint check in CI/CD pipeline (AC: #6)
+  - Subtask 4.1: Add lint check stage to ci-pipeline.yml (Epic 11-2)
+  - Subtask 4.2: Add lint check stage to cd-staging.yml (Epic 11-3)
+  - Subtask 4.3: Add lint check stage to cd-production.yml (Epic 11-4)
+  - Subtask 4.4: Configure to fail build on violations
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. `.eslintrc.js` oluşturulmuş
+2. Extends:
+   - `@typescript-eslint/recommended`
+   - `plugin:@typescript-eslint/recommended`
+   - `plugin:prettier/recommended`
+3. Rules:
+   - NestJS best practices
+   - TypeScript strict rules
+   - No console.log in production
+   - Consistent import order
+   - No unused vars
+4. `package.json`: `"lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"`
+5. VS Code integration: `.vscode/settings.json` (eslint.autoFixOnSave)
+6. CI/CD: Lint check mandatory
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-12.md">
+        <title>Epic 12 Technical Specification - Code Quality & Standards</title>
+        <section>ESLint Configuration Contract</section>
+        <snippet>.eslintrc.js structure and configuration contract with TypeScript-first approach, Prettier integration, and NestJS framework-specific rules.</snippet>
+      </doc>
+      <doc path="docs/epics/epic-12-code-quality-standards.md">
+        <title>Epic 12 - Code Quality & Standards</title>
+        <section>Story 12.1: ESLint Configuration</section>
+        <snippet>Complete story definition, acceptance criteria, and dependencies. Specifies @typescript-eslint/recommended extends and required rules configuration.</snippet>
+      </doc>
+      <doc path="docs/PRD-NFR-CodingStandards.md">
+        <title>PRD - Non-Functional Requirements: Coding Standards</title>
+        <section>NFR-4.1: File & Folder Naming</section>
+        <snippet>Production-tested naming conventions from hrsync-backend: kebab-case files/folders, DTO patterns, entity naming standards.</snippet>
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md">
+        <title>Testing Strategy</title>
+        <section>Test Coverage Requirements</section>
+        <snippet>70% minimum coverage requirement enforced by CI/CD. Unit test patterns with Arrange-Act-Assert, integration tests, and E2E test structure.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <codeEntry path="tsconfig.json">
+        <kind>configuration</kind>
+        <symbol>TypeScript Configuration</symbol>
+        <lines>1-27</lines>
+        <reason>TypeScript strict mode already enabled (strict: true) - ESLint must align with these settings</reason>
+      </codeEntry>
+      <codeEntry path="package.json">
+        <kind>manifest</kind>
+        <symbol>Dependencies</symbol>
+        <lines>86-117</lines>
+        <reason>ESLint dependencies already installed: eslint@^9.18.0, @eslint/js@^9.18.0, @eslint/eslintrc@^3.2.0, typescript-eslint@^8.20.0, eslint-config-prettier@^10.0.1, eslint-plugin-prettier@^5.2.2. Lint script already configured on line 15.</reason>
+      </codeEntry>
+      <codeEntry path="src/main.ts">
+        <kind>file</kind>
+        <symbol>Main Application File</symbol>
+        <lines>1-50</lines>
+        <reason>Sample NestJS application entry point - should be checked by ESLint for best practices compliance</reason>
+      </codeEntry>
+    </code>
+    <dependencies>
+      <ecosystem name="Node.js">
+        <package name="eslint" version="^9.18.0" />
+        <package name="@eslint/js" version="^9.18.0" />
+        <package name="@eslint/eslintrc" version="^3.2.0" />
+        <package name="typescript-eslint" version="^8.20.0" />
+        <package name="eslint-config-prettier" version="^10.0.1" />
+        <package name="eslint-plugin-prettier" version="^5.2.2" />
+        <package name="prettier" version="^3.4.2" />
+        <package name="typescript" version="^5.7.3" />
+      </ecosystem>
+      <ecosystem name="NestJS">
+        <package name="@nestjs/cli" version="^11.0.0" />
+        <package name="@nestjs/schematics" version="^11.0.0" />
+        <package name="@nestjs/testing" version="^11.0.1" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      TypeScript-first approach with @typescript-eslint integration required for all lint rules
+    </constraint>
+    <constraint type="architecture">
+      Prettier integration mandatory via eslint-config-prettier to prevent rule conflicts
+    </constraint>
+    <constraint type="architecture">
+      TypeScript strict mode compatibility required (tsconfig.json already has strict: true)
+    </constraint>
+    <constraint type="pattern">
+      NestJS framework-specific rules and best practices must be enforced
+    </constraint>
+    <constraint type="pattern">
+      CI/CD integration mandatory - lint check must fail build on violations (Epic 11)
+    </constraint>
+    <constraint type="pattern">
+      VS Code integration required for developer experience (format on save, auto-fix)
+    </constraint>
+    <constraint type="performance">
+      ESLint check must complete in under 2 seconds for projects ≤10,000 LOC
+    </constraint>
+    <constraint type="enforcement">
+      No console.log statements allowed in production code
+    </constraint>
+    <constraint type="enforcement">
+      Import order must be consistent (external packages → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events)
+    </constraint>
+    <constraint type="enforcement">
+      Unused variables must be detected and reported
+    </constraint>
+  </constraints>
+  <interfaces>
+    <interface name="CLI: npm run lint">
+      <kind>command</kind>
+      <signature>eslint "{src,apps,libs,test}/**/*.ts" --fix</signature>
+      <path>package.json</path>
+    </interface>
+    <interface name="ESLint Configuration File">
+      <kind>configuration</kind>
+      <signature>.eslintrc.js (CommonJS format)</signature>
+      <path>project-root/.eslintrc.js</path>
+    </interface>
+    <interface name="VS Code Settings">
+      <kind>editor-config</kind>
+      <signature>.vscode/settings.json with eslint.autoFixOnSave</signature>
+      <path>project-root/.vscode/settings.json</path>
+    </interface>
+    <interface name="TypeScript Config">
+      <kind>compiler-config</kind>
+      <signature>tsconfig.json with strict mode enabled</signature>
+      <path>project-root/tsconfig.json</path>
+    </interface>
+    <interface name="GitHub Actions: CI Pipeline">
+      <kind>ci-pipeline</kind>
+      <signature>ci.yml with lint check stage</signature>
+      <path>project-root/.github/workflows/ci.yml</path>
+    </interface>
+    <interface name="GitHub Actions: Staging CD">
+      <kind>cd-pipeline</kind>
+      <signature>cd-staging.yml with lint check stage before deployment</signature>
+      <path>project-root/.github/workflows/cd-staging.yml</path>
+    </interface>
+    <interface name="GitHub Actions: Production CD">
+      <kind>cd-pipeline</kind>
+      <signature>cd-production.yml with lint check stage before deployment</signature>
+      <path>project-root/.github/workflows/cd-production.yml</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Jest testing framework with 70% minimum coverage enforced by CI/CD. Unit tests follow Arrange-Act-Assert pattern. Integration tests for database and API endpoints. E2E tests for critical user journeys. ESLint should validate test file quality and consistency.
+    </standards>
+    <locations>
+      - test/ (E2E tests)
+      - src/**/*.(spec|test).ts (Unit tests)
+      - test/e2e/ (E2E test files)
+      - test/integration/ (Integration tests)
+    </locations>
+    <ideas>
+      <testIdea id="AC1">
+        <scenario>ESLint configuration file exists and is valid</scenario>
+        <steps>
+          1. Create .eslintrc.js with required extends
+          2. Verify file is valid JSON/JavaScript
+          3. Run eslint --print-config to validate configuration
+        </steps>
+      </testIdea>
+      <testIdea id="AC2">
+        <scenario>Required ESLint extends are configured</scenario>
+        <steps>
+          1. Check .eslintrc.js contains @typescript-eslint/recommended
+          2. Check .eslintrc.js contains plugin:@typescript-eslint/recommended
+          3. Check .eslintrc.js contains plugin:prettier/recommended
+        </steps>
+      </testIdea>
+      <testIdea id="AC4">
+        <scenario>npm script 'lint' executes successfully</scenario>
+        <steps>
+          1. Run npm run lint
+          2. Verify command completes without errors on clean code
+          3. Verify --fix flag applies auto-fixes
+        </steps>
+      </testIdea>
+      <testIdea id="AC5">
+        <scenario>VS Code integration enables auto-fix on save</scenario>
+        <steps>
+          1. Create intentional violation (unused variable)
+          2. Save file
+          3. Verify auto-fix is applied or violation is highlighted
+        </steps>
+      </testIdea>
+      <testIdea id="AC6">
+        <scenario>CI/CD pipeline fails build on lint violations</scenario>
+        <steps>
+          1. Introduce lint violation
+          2. Push to feature branch
+          3. Verify CI pipeline fails on lint check
+          4. Fix violation and verify pipeline passes
+        </steps>
+      </testIdea>
+    </ideas>
+  </tests>
+</story-context>

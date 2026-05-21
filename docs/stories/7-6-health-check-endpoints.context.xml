@@ -1,0 +1,217 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>7.6</storyId>
+    <title>Health Check Endpoints</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-6-health-check-endpoints.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>health check endpoints for the application</iWant>
+    <soThat>load balancers and monitoring systems can verify application health and database connectivity</soThat>
+    <tasks>
+      - Install @nestjs/terminus package (^11.0.1)
+      - Create HealthModule and HealthController in src/health/
+      - Implement GET /health endpoint (liveness check, always 200 OK, &lt;10ms)
+      - Apply @Public() decorator to bypass authentication
+      - Implement GET /health/db endpoint (database connection test with Prisma.$queryRaw)
+      - Return 200 OK when database connected, 503 when disconnected
+      - Track and return response time in milliseconds
+      - Implement GET /health/services stub endpoint for future expansion
+      - Write comprehensive tests (unit + E2E)
+      - Add Swagger documentation for all endpoints
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-7.6.1: @nestjs/terminus package installed (version ^11.0.1)
+    AC-7.6.2: HealthController created in src/health/ with HealthModule
+    AC-7.6.3: GET /health endpoint returns { status: 'ok', timestamp: '...' } with 200 OK
+    AC-7.6.4: GET /health endpoint is public (no authentication required via @Public())
+    AC-7.6.5: GET /health/db endpoint checks database connection (Prisma.$queryRaw SELECT 1)
+    AC-7.6.6: GET /health/db returns { status: 'ok', database: 'connected', responseTime: 23, timestamp: '...' } when healthy
+    AC-7.6.7: GET /health/db returns 503 Service Unavailable when database disconnected
+    AC-7.6.8: GET /health/services endpoint created as stub for future expansion
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification: Developer Infrastructure</title>
+        <section>Story 7.6: Health Check Endpoints</section>
+        <snippet>Complete AC specifications (AC-7.6.1 through AC-7.6.8), health check strategy (liveness vs readiness), performance requirements (&lt;10ms for /health, &lt;50ms for /health/db), Terminus integration details, and graceful failure handling patterns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Health Checks</section>
+        <snippet>Health check endpoints specification: GET /health (load balancer health check), GET /health/db (database connectivity check with response time), GET /health/services (comprehensive service health). Standard HTTP status codes for load balancer compatibility.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics Breakdown</title>
+        <section>Story 7.6: Health Check Endpoints</section>
+        <snippet>User story definition, acceptance criteria for @nestjs/terminus installation, endpoint implementations (/health, /health/db, /health/services), public endpoint requirements, database connection testing, and response formats.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/7-5-sentry-error-tracking.md</path>
+        <title>Story 7.5: Sentry Error Tracking</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>@Public() decorator available from Story 7.2 (bypasses JWT authentication), exception handling patterns established (SentryExceptionFilter, LoggingInterceptor), Winston logger available for health check failure logging, testing patterns (mock services, E2E tests).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/health/health.module.ts</path>
+        <kind>module</kind>
+        <symbol>HealthModule</symbol>
+        <lines>1-9</lines>
+        <reason>EXISTING health module - currently imports FilesModule for S3 health check. MUST BE MODIFIED to add Terminus integration and database module for Story 7.6.</reason>
+      </artifact>
+      <artifact>
+        <path>src/health/health.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>HealthController</symbol>
+        <lines>1-47</lines>
+        <reason>EXISTING health controller with S3 health check only. MUST BE EXTENDED to add /health (liveness), /health/db (database), and /health/services endpoints for Story 7.6.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public</symbol>
+        <lines>1-21</lines>
+        <reason>USE THIS DECORATOR on all health endpoints to bypass JWT authentication. Sets IS_PUBLIC_KEY metadata checked by JwtAuthGuard.</reason>
+      </artifact>
+      <artifact>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>1-30</lines>
+        <reason>USE THIS SERVICE for database health check. Extends PrismaClient, provides $queryRaw method for SELECT 1 query to test database connection.</reason>
+      </artifact>
+      <artifact>
+        <path>src/database/prisma.module.ts</path>
+        <kind>module</kind>
+        <symbol>PrismaModule</symbol>
+        <lines>all</lines>
+        <reason>IMPORT THIS MODULE in HealthModule to access PrismaService for database health check.</reason>
+      </artifact>
+      <artifact>
+        <path>test/health-s3.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>Health S3 E2E tests</symbol>
+        <lines>1-72</lines>
+        <reason>REFERENCE for testing patterns: Mock service dependencies (S3Service.testConnection), test success/failure scenarios, verify response structure and status codes. Apply similar patterns for database health tests.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/terminus" version="^11.0.1" status="REQUIRED - NOT INSTALLED">Health check framework for NestJS, provides HealthCheckService and health indicators</package>
+        <package name="@nestjs/common" version="^11.0.1" status="installed">Core NestJS decorators and utilities (Controller, Get, Injectable)</package>
+        <package name="@nestjs/core" version="^11.0.1" status="installed">NestJS core functionality</package>
+        <package name="@nestjs/swagger" version="^11.2.1" status="installed">Swagger documentation decorators (ApiTags, ApiOperation, ApiResponse)</package>
+        <package name="@prisma/client" version="^6.18.0" status="installed">Prisma ORM client for database queries ($queryRaw)</package>
+        <package name="winston" version="^3.18.3" status="installed">Structured logging (optional for health check failure logging)</package>
+        <package name="@nestjs/testing" version="^11.0.1" status="installed (devDependency)">Testing utilities for unit and E2E tests</package>
+        <package name="supertest" version="^7.0.0" status="installed (devDependency)">HTTP testing library for E2E tests</package>
+        <package name="jest" version="^30.0.0" status="installed (devDependency)">Testing framework</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Health endpoints MUST be public (use @Public() decorator from Story 7.2)
+    - GET /health MUST NOT call database or external services (liveness check only)
+    - GET /health MUST return 200 OK always (unless application crashed)
+    - GET /health response time MUST be &lt;10ms (performance requirement)
+    - GET /health/db MUST use Prisma.$queryRaw with SELECT 1 query
+    - GET /health/db MUST measure and return response time in milliseconds
+    - GET /health/db MUST return 200 OK when database connected, 503 when disconnected
+    - GET /health/db response time MUST be &lt;50ms for healthy database
+    - Database health check SHOULD timeout after 5 seconds to prevent hanging
+    - Health check exceptions MUST be caught internally (return 503, not 500)
+    - NO sensitive information exposed in health check responses
+    - Load balancer compatible: Use standard HTTP status codes (200, 503)
+    - Testing: Unit tests MUST mock PrismaService.$queryRaw
+    - Testing: E2E tests MUST test success (200) and failure (503) scenarios
+    - Testing: E2E tests MUST verify public access (no JWT token required)
+    - Swagger documentation MUST be added for all endpoints (@ApiOperation, @ApiResponse)
+    - HealthModule MUST import TerminusModule and PrismaModule
+    - HealthModule MUST be imported in AppModule
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /health</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /health → { status: 'ok', timestamp: string }</signature>
+      <path>src/health/health.controller.ts</path>
+      <notes>Basic liveness check, always returns 200 OK, no database or external service calls, public endpoint (no auth)</notes>
+    </interface>
+    <interface>
+      <name>GET /health/db</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /health/db → { status: 'ok' | 'error', database: 'connected' | 'disconnected', responseTime: number, timestamp: string, error?: string }</signature>
+      <path>src/health/health.controller.ts</path>
+      <notes>Database readiness check, executes SELECT 1 query via Prisma.$queryRaw, returns 200 OK when healthy or 503 when unhealthy, public endpoint</notes>
+    </interface>
+    <interface>
+      <name>GET /health/services</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /health/services → { status: 'ok' | 'degraded' | 'error', services: { database: { status: 'healthy' | 'unhealthy', responseTime: number }, ... }, timestamp: string }</signature>
+      <path>src/health/health.controller.ts</path>
+      <notes>Comprehensive service health check, currently returns database health only, extensible for future services (Redis, S3, Sentry), public endpoint</notes>
+    </interface>
+    <interface>
+      <name>PrismaService.$queryRaw</name>
+      <kind>database query method</kind>
+      <signature>async $queryRaw&lt;T&gt;(query: TemplateStringsArray, ...values: any[]): Promise&lt;T&gt;</signature>
+      <path>src/database/prisma.service.ts (inherited from @prisma/client)</path>
+      <notes>Execute raw SQL query, use for SELECT 1 to test database connection, measure execution time for health check response</notes>
+    </interface>
+    <interface>
+      <name>@Public() decorator</name>
+      <kind>route decorator</kind>
+      <signature>@Public(): MethodDecorator</signature>
+      <path>src/common/decorators/public.decorator.ts</path>
+      <notes>Marks routes as public (bypass JWT authentication), sets IS_PUBLIC_KEY metadata, checked by JwtAuthGuard, apply to all health endpoints</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit Testing: Use Jest framework, mock PrismaService with jest.spyOn() to control database query behavior (success/failure scenarios), test HealthController methods in isolation, verify response structure and status codes, target 90%+ coverage.
+
+      E2E Testing: Use supertest library, test actual HTTP endpoints (/health, /health/db, /health/services) with app.getHttpServer(), verify public access without JWT token, test database connection success (200 OK) and failure (503) scenarios, measure response times, verify error handling.
+
+      Test file locations: Unit tests in src/health/__test__/health.controller.spec.ts, E2E tests in test/health.e2e-spec.ts. Follow existing test patterns from test/health-s3.e2e-spec.ts (mock service dependencies, test success/failure, verify response structure).
+    </standards>
+    <locations>
+      src/health/__test__/health.controller.spec.ts (unit tests)
+      test/health.e2e-spec.ts (E2E tests)
+    </locations>
+    <ideas>
+      AC-7.6.1: Verify @nestjs/terminus package installed in package.json
+      AC-7.6.2: Test HealthModule imports TerminusModule and PrismaModule
+      AC-7.6.3: Test GET /health returns 200 OK with { status: 'ok', timestamp }
+      AC-7.6.3: Test GET /health response time &lt;10ms
+      AC-7.6.4: Test GET /health accessible without JWT token (public endpoint)
+      AC-7.6.5: Test GET /health/db executes Prisma.$queryRaw with SELECT 1
+      AC-7.6.5: Test response time measurement for database query
+      AC-7.6.6: Test GET /health/db returns 200 OK when database connected
+      AC-7.6.6: Test response includes { status: 'ok', database: 'connected', responseTime, timestamp }
+      AC-7.6.7: Test GET /health/db returns 503 when database query fails
+      AC-7.6.7: Test response includes { status: 'error', database: 'disconnected', responseTime, timestamp, error }
+      AC-7.6.8: Test GET /health/services returns combined service status
+      AC-7.6.8: Test services object includes database health
+      E2E: Test concurrent health checks (no race conditions)
+      E2E: Test health endpoints don't trigger authentication errors
+      Performance: Test GET /health &lt;10ms, GET /health/db &lt;50ms
+    </ideas>
+  </tests>
+</story-context>

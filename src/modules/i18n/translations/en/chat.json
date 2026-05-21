@@ -1,0 +1,21 @@
+{
+  "MESSAGE_BODY_REQUIRED": "Message must include text or attachments",
+  "QUOTED_MESSAGE_NOT_FOUND": "Quoted message not found",
+  "RECEIVER_NOT_FOUND": "Receiver not found",
+  "GROUP_NAME_REQUIRED": "Group name is required",
+  "GROUP_MEMBER_NOT_FOUND": "Group member not found",
+  "OWNER_CANNOT_BE_REMOVED": "Group owner cannot be removed",
+  "NO_MEMBER_TO_TRANSFER": "No other member available to transfer ownership",
+  "NOT_GROUP_MEMBER": "You are not a member of this group",
+  "NOT_GROUP_ADMIN": "Only group admins can perform this action",
+  "UNSUPPORTED_AUDIO_TYPE": "Audio type not supported",
+  "AUDIO_TOO_LARGE": "Audio file is too large",
+  "ATTACHMENT_NOT_FOUND": "Attachment not found",
+  "CANNOT_EDIT_DELETED": "Cannot edit a deleted message",
+  "CANNOT_EDIT_OTHERS": "You can only edit your own messages",
+  "MESSAGE_NOT_FOUND": "Message not found",
+  "CANNOT_DELETE_OTHERS": "You can only delete your own messages",
+  "INVALID_METADATA_JSON": "Invalid metadata JSON",
+  "INVALID_EXISTING_FILE_IDS": "Invalid existing file IDs",
+  "ENCRYPTION_FAILED": "Failed to encrypt message"
+}

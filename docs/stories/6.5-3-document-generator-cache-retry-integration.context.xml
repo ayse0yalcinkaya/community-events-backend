@@ -1,0 +1,201 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6.5</epicId>
+    <storyId>3</storyId>
+    <title>Document Generator Cache & Retry Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6.5-3-document-generator-cache-retry-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>DocumentGeneratorService'te cache ve retry mekanizmalarını entegre etmek</iWant>
+    <soThat>PDF/Excel generation işlemleri cache'lensin ve geçici hatalar otomatik retry edilsin</soThat>
+    <tasks>
+      <task id="1" ac="6.5.3.1">DocumentGeneratorService Dependencies Update - Constructor'a CacheService ve RetryService inject et</task>
+      <task id="2" ac="6.5.3.10">Environment Configuration - .env.example ve ConfigService config değerleri</task>
+      <task id="3" ac="6.5.3.2">Cache Key Generation - generateCacheKey() private method</task>
+      <task id="4" ac="6.5.3.3">Cache Check before Generation - generate() başında cache check</task>
+      <task id="5" ac="6.5.3.4">Cache Write after Generation - Successful generation sonrası cache write</task>
+      <task id="6" ac="6.5.3.6">PDF Generation Retry Integration - RetryService ile wrap</task>
+      <task id="7" ac="6.5.3.7">Excel Generation Retry Integration - RetryService ile wrap</task>
+      <task id="8" ac="6.5.3.8">Error Handling - Cache miss, cache write failure, retry exhaustion</task>
+      <task id="9" ac="6.5.3.9">Logging Integration - Cache hit/miss, retry, cache write logging</task>
+      <task id="10" ac="6.5.3.11">Unit Tests - Cache/retry scenarios, mocking</task>
+      <task id="11" ac="6.5.3.12">Integration Tests - End-to-end cache/retry integration</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="6.5.3.1">DocumentGeneratorService Cache Integration - CacheService ve RetryService inject edilmiş</criterion>
+    <criterion id="6.5.3.2">Cache Key Generation - Pattern: document:{format}:{templateName}:{dataHash}</criterion>
+    <criterion id="6.5.3.3">Cache Check before Generation - Cache hit → return cached, cache miss → generate</criterion>
+    <criterion id="6.5.3.4">Cache Write after Generation - TTL: 1 hour, DOCUMENT_CACHE_TTL ile configurable</criterion>
+    <criterion id="6.5.3.5">Cache Write Failure Handling - Non-blocking, log warning</criterion>
+    <criterion id="6.5.3.6">PDF Generation Retry Integration - Puppeteer PDF generation RetryService ile wrap</criterion>
+    <criterion id="6.5.3.7">Excel Generation Retry Integration - Excel generation RetryService ile wrap</criterion>
+    <criterion id="6.5.3.8">Error Handling - Cache miss, generation failure, retry exhausted, cache write failure</criterion>
+    <criterion id="6.5.3.9">Logging - Cache hit/miss, generation, retry attempts, cache write</criterion>
+    <criterion id="6.5.3.10">Environment Configuration - DOCUMENT_CACHE_TTL, DOCUMENT_RETRY_MAX_ATTEMPTS, DOCUMENT_RETRY_BASE_DELAY</criterion>
+    <criterion id="6.5.3.11">Unit Tests - Cache hit/miss, retry scenarios, cache write failure</criterion>
+    <criterion id="6.5.3.12">Integration Tests - End-to-end PDF/Excel with cache/retry</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-6.5-document-generator-cache-retry.md</path>
+        <title>Epic 6.5: Document Generator Cache & Retry</title>
+        <section>Story 6.5-3</section>
+        <snippet>Integration of CacheService and RetryService into DocumentGeneratorService. Cache-Aside pattern with cache check before generation and cache write after successful generation. Retry pattern for Puppeteer PDF and Excel generation operations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-6.5.md</path>
+        <title>Tech Spec Epic 6.5</title>
+        <section>Integration Points, Workflows and Sequencing</section>
+        <snippet>CacheService integration with SHA-256 hash-based cache keys. RetryService integration with exponential backoff (2^(attempt-1) * baseDelay). Configuration via environment variables (DOCUMENT_CACHE_TTL, DOCUMENT_RETRY_MAX_ATTEMPTS, DOCUMENT_RETRY_BASE_DELAY).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6.5-1-common-cache-service-sha-256-hash-based.md</path>
+        <title>Story 6.5-1: Common Cache Service (SHA-256 Hash-Based)</title>
+        <section>CacheService Methods</section>
+        <snippet>CacheService.generateCacheKey() for consistent cache key generation. CacheService.get&lt;T&gt;() for cache retrieval (null on miss). CacheService.set&lt;T&gt;() for cache write with TTL. Graceful error handling with non-blocking cache write failures.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6.5-2-common-retry-service-exponential-backoff.md</path>
+        <title>Story 6.5-2: Common Retry Service (Exponential Backoff)</title>
+        <section>RetryService Methods</section>
+        <snippet>RetryService.executeWithRetry() wraps async operations. Retry options: maxAttempts (default 3), baseDelay (default 1000ms), context string for logging. Exponential backoff delay sequence: 0ms → 1000ms → 2000ms → 4000ms.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/modules/document-generator/services/document-generator.service.ts</path>
+        <kind>service</kind>
+        <symbol>DocumentGeneratorService</symbol>
+        <lines>1-100</lines>
+        <reason>Main service to integrate cache and retry mechanisms. Already has CacheService and RetryService as optional dependencies via @Optional and @Inject decorators. Need to implement cache check before generation and cache write after successful generation, wrap Puppeteer and Excel generation with retry logic.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/services/cache.service.ts</path>
+        <kind>service</kind>
+        <symbol>CacheService</symbol>
+        <lines>1-50</lines>
+        <reason>Generic cache service from Story 6.5-1. Provides generateCacheKey(), get&lt;T&gt;(), and set&lt;T&gt;() methods. SHA-256 hash-based key generation with consistent hashing. Default TTL: 1 hour (3600000ms).</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/services/retry.service.ts</path>
+        <kind>service</kind>
+        <symbol>RetryService</symbol>
+        <lines>1-50</lines>
+        <reason>Generic retry service from Story 6.5-2. Provides executeWithRetry() method with exponential backoff. Default max attempts: 3, base delay: 1000ms. Context-based logging for debugging.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/document-generator/interfaces/cache-service.interface.ts</path>
+        <kind>interface</kind>
+        <symbol>ICacheService</symbol>
+        <reason>Interface definition for cache service dependency injection</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/document-generator/interfaces/retry-service.interface.ts</path>
+        <kind>interface</kind>
+        <symbol>IRetryService</symbol>
+        <reason>Interface definition for retry service dependency injection</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/document-generator/services/__tests__/document-generator.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>DocumentGeneratorService unit tests</symbol>
+        <reason>Existing unit test file to update with cache and retry test scenarios</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/cache-manager" version="^3.0.1" />
+        <package name="cache-manager" version="^7.2.4" />
+        <package name="cache-manager-redis-store" version="^3.0.1" />
+        <package name="ioredis" version="^5.8.2" />
+        <package name="puppeteer" version="^24.29.1" />
+        <package name="exceljs" version="^4.4.0" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="@nestjs/testing" version="^11.0.1" />
+        <package name="jest" version="^30.0.0" />
+      </nodejs>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Service Integration Pattern: DocumentGeneratorService must use dependency injection for CacheService and RetryService via @Optional and @Inject decorators (already implemented)</constraint>
+    <constraint>Cache-Aside Pattern: Check cache before generation (cache hit → return cached, cache miss → generate), write to cache after successful generation (non-blocking)</constraint>
+    <constraint>Cache Key Format: document:{format}:{templateName}:{dataHash} using CacheService.generateCacheKey() with SHA-256 hashing</constraint>
+    <constraint>Retry Pattern: Wrap external/expensive operations (Puppeteer PDF generation, Excel generation) with RetryService.executeWithRetry()</constraint>
+    <constraint>Non-blocking Cache Writes: Cache write failures must log warning but not fail generation (try-catch wrapper)</constraint>
+    <constraint>Configuration Management: Environment variables DOCUMENT_CACHE_TTL, DOCUMENT_RETRY_MAX_ATTEMPTS, DOCUMENT_RETRY_BASE_DELAY with default fallback values</constraint>
+    <constraint>Error Handling: Cache miss returns null (normal flow), generation failures throw existing exceptions, retry exhausted throws last error</constraint>
+    <constraint>Import Organization: 8-group import order - Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events</constraint>
+    <constraint>Testing: Arrange-Act-Assert pattern, mock CacheService and RetryService, verify cache/retry calls and logging</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>CacheService.generateCacheKey</name>
+      <kind>method</kind>
+      <signature>generateCacheKey(prefix: string, ...parts: any[]): string</signature>
+      <path>src/common/services/cache.service.ts</path>
+    </interface>
+    <interface>
+      <name>CacheService.get</name>
+      <kind>method</kind>
+      <signature>get&lt;T&gt;(key: string): Promise&lt;T | null&gt;</signature>
+      <path>src/common/services/cache.service.ts</path>
+    </interface>
+    <interface>
+      <name>CacheService.set</name>
+      <kind>method</kind>
+      <signature>set&lt;T&gt;(key: string, value: T, ttl?: number): Promise&lt;void&gt;</signature>
+      <path>src/common/services/cache.service.ts</path>
+    </interface>
+    <interface>
+      <name>RetryService.executeWithRetry</name>
+      <kind>method</kind>
+      <signature>executeWithRetry&lt;T&gt;(operation: () =&gt; Promise&lt;T&gt;, options?: RetryOptions): Promise&lt;T&gt;</signature>
+      <path>src/common/services/retry.service.ts</path>
+    </interface>
+    <interface>
+      <name>RetryOptions</name>
+      <kind>interface</kind>
+      <signature>{ maxAttempts?: number; baseDelay?: number; context?: string; onRetry?: (attempt: number, error: any) =&gt; void; }</signature>
+      <path>src/common/services/interfaces/retry-options.interface.ts</path>
+    </interface>
+    <interface>
+      <name>GenerationResult</name>
+      <kind>interface</kind>
+      <signature>{ url: string; format: string; size: number; }</signature>
+      <path>src/modules/document-generator/interfaces/generation-result.interface.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Testing follows Arrange-Act-Assert pattern with Jest framework. Unit tests use mocking for dependencies (CacheService, RetryService) to isolate DocumentGeneratorService logic. Integration tests verify end-to-end cache and retry behavior with real service instances. Test files use .spec.ts extension for unit tests and .integration-spec.ts for integration tests. Coverage requirements: all acceptance criteria must have corresponding test scenarios.
+    </standards>
+    <locations>
+      <location>src/modules/document-generator/services/__tests__/document-generator.service.spec.ts</location>
+      <location>test/document-generator.integration-spec.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="6.5.3.3">Unit Test: Cache hit scenario - Mock CacheService.get() to return cached result, verify DocumentGeneratorService returns cached value without calling generation logic</idea>
+      <idea ac="6.5.3.3">Unit Test: Cache miss scenario - Mock CacheService.get() to return null, verify DocumentGeneratorService proceeds with generation and calls CacheService.set() after success</idea>
+      <idea ac="6.5.3.6">Unit Test: PDF generation retry - Mock Puppeteer to fail twice then succeed, verify RetryService.executeWithRetry() is called with correct options (maxAttempts: 3, baseDelay: 1000ms)</idea>
+      <idea ac="6.5.3.7">Unit Test: Excel generation retry - Mock ExcelAdapter to fail twice then succeed, verify RetryService.executeWithRetry() handles retry correctly</idea>
+      <idea ac="6.5.3.8">Unit Test: Retry exhaustion - Mock operation to always fail, verify error is thrown after max attempts and includes context information</idea>
+      <idea ac="6.5.3.5">Unit Test: Cache write failure - Mock CacheService.set() to throw error, verify generation continues successfully and warning is logged (non-blocking)</idea>
+      <idea ac="6.5.3.12">Integration Test: PDF generation with cache miss - Real CacheService and RetryService, verify full workflow from cache check to S3 upload to cache write</idea>
+      <idea ac="6.5.3.12">Integration Test: PDF generation with cache hit - Generate PDF twice, verify second call returns cached result without regeneration</idea>
+      <idea ac="6.5.3.12">Integration Test: Excel generation with cache miss - Real services, verify Excel generation workflow with cache integration</idea>
+      <idea ac="6.5.3.12">Integration Test: Excel generation with cache hit - Generate Excel twice, verify caching works correctly</idea>
+      <idea ac="6.5.3.12">Integration Test: Retry integration - Simulate transient failure, verify RetryService successfully retries and completes operation</idea>
+    </ideas>
+  </tests>
+</story-context>

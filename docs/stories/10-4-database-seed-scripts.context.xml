@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>10</epicId>
+    <storyId>4</storyId>
+    <title>Database Seed Scripts</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/10-4-database-seed-scripts.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>seed scripts ile development data</iWant>
+    <soThat>testing için sample data oluşturabileyim</soThat>
+    <tasks>Task 1: Enhance prisma/seed.ts with comprehensive seed data
+  - Subtask 1.1: Read existing seed.ts from Epic 1
+  - Subtask 1.2: Enhance User seed (10 users with realistic data)
+  - Subtask 1.3: Add Role seed (3 roles: admin, manager, user)
+  - Subtask 1.4: Add Permission seed (all core permissions from Epic 3)
+  - Subtask 1.5: Add File metadata seed (Epic 4)
+
+Task 2: Implement idempotency pattern
+  - Subtask 2.1: Use upsert for all entities
+  - Subtask 2.2: Check existing data before insert
+  - Subtask 2.3: Safe to run multiple times without errors
+
+Task 3: Add npm run prisma:seed script
+  - Subtask 3.1: Add script to package.json
+  - Subtask 3.2: Test seed command locally
+  - Subtask 3.3: Verify script works with .env.development
+
+Task 4: Docker Compose seed integration
+  - Subtask 4.1: Test: docker-compose exec app npm run prisma:seed
+  - Subtask 4.2: Optional: Add auto-seed to docker-compose.yml
+  - Subtask 4.3: Document seed workflow in README.md</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. prisma/seed.ts enhanced with comprehensive seed data (Epic 1'den)
+2. Additional seed data created:
+   - 10 sample users (different roles)
+   - All core permissions (Epic 3)
+   - 3 sample roles (admin, manager, user)
+   - Sample files metadata (Epic 4)
+3. Seed idempotent (tekrar çalıştırılabilir - re-runnable without errors)
+4. Seed command available: npm run prisma:seed
+5. Docker Compose integration: Seed after migration
+   - Command: docker-compose exec app npm run prisma:seed
+   - Auto-seed option in docker-compose.yml (optional)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-10-development-environment.md" title="Epic 10: Development Environment" section="Story 10.4: Database Seed Scripts" snippet="Story 10.4 focuses on providing seed scripts for development data. AC includes: prisma/seed.ts enhanced, 10 sample users, all core permissions, 3 roles, sample files metadata. Dependencies: Story 10.3"/>
+      <doc path="docs/tech-spec-epic-10.md" title="Epic Technical Specification: Development Environment" section="Data Models and Contracts → Seed Data Entities" snippet="Seed Data Entities from Epic 1, 2, 3: User Entity (Epic 2) with UUID, domainID, phone, passwordHash, etc.; Role Entity (Epic 3) with name, domainID, description; Permission Entity with resource and action; File Metadata (Epic 4) with S3 key, filename, mimeType"/>
+      <doc path="docs/stories/10-3-environment-variable-management.md" title="Story 10.3: Environment Variable Management" section="Dev Agent Record" snippet="Environment management complete with .env.example, .env.development, config validation in src/main.ts. Database configuration ready with DATABASE_URL for Docker services"/>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Test Coverage Requirements" snippet="Minimum 70% test coverage enforced. Coverage breakdown: Utilities 100%, Services 80%+, Controllers 70%+, Repositories 70%+. Pattern: Arrange-Act-Assert"/>
+    </docs>
+    <code>
+      <file path="prisma/seed.ts" kind="seed-script" symbol="seed" lines="30-140" reason="Existing seed script with 2 users (admin, test) and 4 USERS permissions. Uses upsert pattern for idempotency. Needs enhancement for 10 users, roles, all permissions"/>
+      <file path="prisma/schema.prisma" kind="schema" symbol="User, Role, Permission models" lines="1-100" reason="Prisma schema defining User, Role, Permission entities with proper relationships for seed data generation"/>
+      <file path="package.json" kind="config" symbol="prisma:seed script" lines="26" reason="Already has prisma:seed script: ts-node prisma/seed.ts. Docker integration available via npm scripts"/>
+      <file path=".env.example" kind="env-config" symbol="DATABASE_URL" lines="1-50" reason="All required environment variables documented including DATABASE_URL for seed connection"/>
+      <file path="docker/docker-compose.yml" kind="config" symbol="postgres, mongodb services" lines="10-50" reason="PostgreSQL 15, MongoDB 6 services configured with environment variable injection. Seed script will use these services"/>
+    </code>
+    <dependencies>
+      <ecosystem name="Node.js">
+        <package name="@prisma/client" version="^6.18.0" reason="Prisma client for database access in seed script"/>
+        <package name="prisma" version="^6.18.0" reason="Prisma ORM for database schema and migrations"/>
+        <package name="bcrypt" version="^6.0.0" reason="Password hashing for seed user accounts (10 rounds)"/>
+        <package name="ts-node" version="^10.9.2" reason="TypeScript execution for seed script"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="Environment">Use .env.development for database connection (DATABASE_URL). All Epic 1-9 environment variables must be available for seed script</constraint>
+    <constraint type="Data">Seed data must use default domainID: 123e4567-e89b-12d3-a456-426614174000 for multi-tenancy consistency</constraint>
+    <constraint type="Security">Passwords for development only. Use bcrypt hash with 10 rounds. No secrets in committed code</constraint>
+    <constraint type="Idempotency">All seed operations must use upsert pattern. Safe to run multiple times without errors or duplicates</constraint>
+    <constraint type="Docker">Seed must work via: docker-compose exec app npm run prisma:seed. Database services must be healthy before seed</constraint>
+  </constraints>
+  <interfaces></interfaces>
+  <tests>
+    <standards>Jest testing framework with Arrange-Act-Assert pattern. Minimum 70% coverage required (80%+ for services, 70%+ for controllers/repositories). Unit tests use @nestjs/testing module with Test.createTestingModule(). Seed script should be tested for idempotency and data integrity. Use ts-jest for TypeScript support.</standards>
+    <locations>Test files in __tests__ directories alongside source files. E2E tests in /test directory. Mock factories available from Story 9.6. Seed data can be used in test setup.</locations>
+    <ideas>
+      <test idea="Seed execution" ac="AC3" description="Test that seed script runs successfully without errors"/>
+      <test idea="Idempotency" ac="AC3" description="Run seed twice and verify no duplicates or errors"/>
+      <test idea="Data validation" ac="AC2" description="Verify 10 users, 3 roles, and all permissions are created"/>
+      <test idea="Docker integration" ac="AC5" description="Test seed works via docker-compose exec command"/>
+      <test idea="Environment isolation" ac="AC1" description="Verify seed uses correct DATABASE_URL from .env.development"/>
+    </ideas>
+  </tests>
+</story-context>

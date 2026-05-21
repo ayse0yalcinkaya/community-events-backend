@@ -1,0 +1,270 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6.5</epicId>
+    <storyId>6.5.4</storyId>
+    <title>S3 Service Retry Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6.5-4-s3-service-retry-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>S3Service'te retry mekanizmasını Common RetryService ile entegre etmek</iWant>
+    <soThat>file upload/download/delete işlemlerinde geçici network hataları otomatik retry edilsin ve code duplication azalsın</soThat>
+    <tasks>
+- Task 1: S3Service Dependencies Update (AC: 6.5.4.1)
+  - Subtask 1.1: Constructor'a RetryService inject et
+  - Subtask 1.2: Import statement ekle
+  - Subtask 1.3: Private readonly property
+  - Subtask 1.4: Remove custom retry fields
+  - Subtask 1.5: Remove custom delay method
+
+- Task 2: Environment Configuration (AC: 6.5.4.6)
+  - Subtask 2.1: .env.example dosyasına yeni variables ekle
+  - Subtask 2.2: Constructor'da ConfigService'den config değerlerini al
+  - Subtask 2.3: Private readonly properties
+
+- Task 3: Upload Operation Retry Integration (AC: 6.5.4.2)
+  - Subtask 3.1: uploadFile() method'u refactor et - Remove manual retry loop
+  - Subtask 3.2: Wrap PutObjectCommand send with RetryService
+  - Subtask 3.3: Update logging
+  - Subtask 3.4: Error handling
+
+- Task 4: Download Operation Retry Integration (AC: 6.5.4.3)
+  - Subtask 4.1: Wrap getSignedUrl() call with RetryService
+  - Subtask 4.2: Error handling
+
+- Task 5: Delete Operation Retry Integration (AC: 6.5.4.4)
+  - Subtask 5.1: Wrap DeleteObjectCommand send with RetryService
+  - Subtask 5.2: Error handling
+
+- Task 6: Error Classification and Handling (AC: 6.5.4.5)
+  - Subtask 6.1: Add error classification logic
+  - Subtask 6.2: Wrap RetryService errors with custom exceptions
+  - Subtask 6.3: Preserve existing error messages and logging
+
+- Task 7: Logging Integration (AC: 6.5.4.7)
+  - Subtask 7.1: Keep operation start logs
+  - Subtask 7.2: Remove manual retry logs
+  - Subtask 7.3: Keep success and final failure logs
+  - Subtask 7.4: RetryService logging otomatik
+
+- Task 8: testConnection() Method (AC: 6.5.4.8)
+  - Subtask 8.1: Keep testConnection() as-is
+  - Subtask 8.2: Health checks should be fast
+
+- Task 9: Unit Tests (AC: 6.5.4.10)
+  - Subtask 9.1: Test file güncelle
+  - Subtask 9.2: Mock RetryService
+  - Subtask 9.3-9.9: Various test scenarios
+
+- Task 10: Integration Tests (Optional) (AC: 6.5.4.11)
+  - Subtask 10.1-10.5: Integration test scenarios
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-6.5.4.1:** S3Service Dependencies Update
+   - src/modules/files/services/s3.service.ts güncellendi
+   - Constructor'da RetryService inject edilmiş
+   - RetryService (Story 6.5-2'den) import edilmiş
+   - Mevcut custom retry logic kaldırılmış
+
+2. **AC-6.5.4.2:** Upload Operation Retry Integration
+   - uploadFile() method'u RetryService ile wrap edilmiş
+   - Max attempts: 5, Base delay: 2000ms
+   - Context: "S3 Upload: ${key}"
+
+3. **AC-6.5.4.3:** Download Operation Retry Integration
+   - getPresignedUrl() method için getSignedUrl() call'ı RetryService ile wrap edilmiş
+   - Max attempts: 5, Base delay: 2000ms
+   - Context: "S3 Presigned URL: ${key}"
+
+4. **AC-6.5.4.4:** Delete Operation Retry Integration
+   - deleteFile() method'u RetryService ile wrap edilmiş
+   - Max attempts: 3, Base delay: 1000ms
+   - Context: "S3 Delete: ${key}"
+
+5. **AC-6.5.4.5:** Error Handling
+   - Network timeout/connection errors: Retry
+   - 5xx server errors: Retry
+   - 4xx client errors: Don't retry, throw immediately
+   - Retry exhausted: Wrap with custom exception
+
+6. **AC-6.5.4.6:** Environment Configuration
+   - S3_RETRY_MAX_ATTEMPTS=5
+   - S3_RETRY_BASE_DELAY=2000
+
+7. **AC-6.5.4.7:** Logging
+   - Operation start, retry attempts, success, failure
+
+8. **AC-6.5.4.8:** testConnection() Method
+   - NO RETRY needed for health checks
+
+9. **AC-6.5.4.9:** Remove Custom Retry Logic
+   - Remove maxRetries, retryDelays fields
+   - Remove delay() method
+   - Remove manual retry loops
+
+10. **AC-6.5.4.10:** Unit Tests
+    - Upload, download, delete retry scenarios
+    - Error classification tests
+    - Mock RetryService
+
+11. **AC-6.5.4.11:** Integration Tests (Optional)
+    - End-to-end retry scenarios
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-6.5-document-generator-cache-retry.md</path>
+        <title>Epic 6.5: Common Cache & Retry Services</title>
+        <section>Story 6.5-4: S3 Service Retry Integration</section>
+        <snippet>As a developer, I want S3Service'te retry mekanizmasını entegre etmek, so that file upload/download işlemlerinde geçici network hataları otomatik retry edilsin. Includes upload, download, delete operations with RetryService integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-6.5.md</path>
+        <title>Epic Technical Specification: Common Cache & Retry Services</title>
+        <section>Integration Points</section>
+        <snippet>S3Service: Retry mechanism entegrasyonu. RetryService ile wrap external S3 operations (PutObject, GetObject, DeleteObject). Exponential backoff with configurable attempts and delays.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-6.5.md</path>
+        <title>Epic Technical Specification: Common Cache & Retry Services</title>
+        <section>Retry Workflow</section>
+        <snippet>Exponential backoff formula: 2^(attempt-1) * baseDelay. Max attempts: 5 for S3 operations (network ops), 3 for delete. Base delay: 2000ms for upload/download, 1000ms for delete.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-6.5.md</path>
+        <title>Epic Technical Specification: Common Cache & Retry Services</title>
+        <section>Error Handling</section>
+        <snippet>4xx client errors (InvalidBucket, NoSuchKey, AccessDenied): Don't retry, throw immediately. 5xx server errors and network errors: Retry via RetryService. Retry exhausted: Throw custom exception.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6.5-2-common-retry-service-exponential-backoff.md</path>
+        <title>Story 6.5.2: Common Retry Service (Exponential Backoff)</title>
+        <section>RetryService Implementation</section>
+        <snippet>RetryService at src/common/services/retry.service.ts. executeWithRetry() method with RetryOptions: maxAttempts, baseDelay, context, onRetry callback. Exponential backoff with LoggerService integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6.5-3-document-generator-cache-retry-integration.md</path>
+        <title>Story 6.5.3: Document Generator Cache & Retry Integration</title>
+        <section>Learnings from Previous Stories</section>
+        <snippet>RetryService usage pattern: executeWithRetry() with context string. Configuration via environment variables. Error handling: Wrap RetryService error with custom exception. Remove code duplication.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/modules/files/services/s3.service.ts</path>
+        <kind>service</kind>
+        <symbol>S3Service</symbol>
+        <lines>54-237</lines>
+        <reason>Main target for refactoring - Currently has custom retry logic (maxRetries, retryDelays, delay() method) that needs to be replaced with RetryService</reason>
+      </file>
+      <file>
+        <path>src/modules/files/services/s3.service.ts</path>
+        <kind>service</kind>
+        <symbol>uploadFile</symbol>
+        <lines>100-155</lines>
+        <reason>Upload method with manual retry loop (lines 107-132) - Replace with RetryService.executeWithRetry()</reason>
+      </file>
+      <file>
+        <path>src/modules/files/services/s3.service.ts</path>
+        <kind>service</kind>
+        <symbol>getPresignedUrl</symbol>
+        <lines>160-185</lines>
+        <reason>Presigned URL generation - Add RetryService wrapping for getSignedUrl() call</reason>
+      </file>
+      <file>
+        <path>src/modules/files/services/s3.service.ts</path>
+        <kind>service</kind>
+        <symbol>deleteFile</symbol>
+        <lines>190-205</lines>
+        <reason>Delete operation - Add RetryService wrapping for DeleteObjectCommand</reason>
+      </file>
+      <file>
+        <path>src/modules/files/services/s3.service.ts</path>
+        <kind>service</kind>
+        <symbol>testConnection</symbol>
+        <lines>210-229</lines>
+        <reason>Health check method - Keep as-is, NO RETRY needed for fast health checks</reason>
+      </file>
+      <file>
+        <path>src/common/services/retry.service.ts</path>
+        <kind>service</kind>
+        <symbol>RetryService</symbol>
+        <lines>all</lines>
+        <reason>Common retry service from Story 6.5-2 - Will be injected into S3Service constructor</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.x" usage="Injectable, Logger decorators" />
+        <package name="@nestjs/config" version="^11.x" usage="ConfigService for environment variables" />
+        <package name="@aws-sdk/client-s3" version="latest" usage="S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand" />
+        <package name="@aws-sdk/s3-request-presigner" version="latest" usage="getSignedUrl for presigned URLs" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **Service Integration Pattern:** S3Service injects RetryService via constructor (NestJS dependency injection)
+- **Code Deduplication:** Remove custom retry logic (maxRetries, retryDelays, delay() method) to eliminate code duplication
+- **Single Responsibility:** RetryService handles all retry logic, S3Service focuses on S3 operations
+- **Error Classification:** Classify errors before retry - 4xx errors skip retry (throw immediately), 5xx/network errors retry
+- **Retry Configuration:** Higher retry attempts for network operations (5 vs 3), longer base delay (2000ms vs 1000ms)
+- **Import Organization:** 8-group import order - Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events
+- **Logging:** Remove manual retry logs (RetryService handles), keep operation start/success/failure logs
+- **Health Checks:** testConnection() should NOT use retry (fast response needed)
+- **Error Wrapping:** Wrap RetryService errors with custom S3 exceptions (ServiceUnavailableException, BadRequestException)
+- **Configuration Management:** Use ConfigService for S3_RETRY_MAX_ATTEMPTS and S3_RETRY_BASE_DELAY with defaults
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>RetryService.executeWithRetry</name>
+      <kind>function signature</kind>
+      <signature>async executeWithRetry&lt;T&gt;(operation: () =&gt; Promise&lt;T&gt;, options?: RetryOptions): Promise&lt;T&gt;</signature>
+      <path>src/common/services/retry.service.ts</path>
+      <usage>Wrap S3 operations (upload, download, delete) with this method. Provide context string for logging.</usage>
+    </interface>
+    <interface>
+      <name>RetryOptions</name>
+      <kind>interface</kind>
+      <signature>{ maxAttempts?: number; baseDelay?: number; context?: string; onRetry?: (attempt: number, error: Error) =&gt; void; }</signature>
+      <path>src/common/services/retry.service.ts</path>
+      <usage>Configure retry behavior per operation. Use higher maxAttempts (5) and baseDelay (2000ms) for S3 network operations.</usage>
+    </interface>
+    <interface>
+      <name>IS3Service</name>
+      <kind>interface</kind>
+      <signature>Interface with uploadFile, getPresignedUrl, deleteFile, testConnection methods</signature>
+      <path>src/modules/files/services/s3.service.ts</path>
+      <usage>S3Service implements this interface - Keep interface intact while refactoring implementation</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Unit tests using Jest with NestJS testing utilities. Follow Arrange-Act-Assert pattern. Mock RetryService using jest.mock() or createMock(). Test successful operations, retry scenarios, error classification (4xx no retry, 5xx retry), and retry exhaustion. Integration tests (optional) with real RetryService to verify end-to-end retry behavior.
+    </standards>
+    <locations>
+- src/modules/files/services/__tests__/s3.service.spec.ts (unit tests)
+- test/s3.integration-spec.ts (integration tests - optional)
+    </locations>
+    <ideas>
+- AC-6.5.4.1: Test RetryService injection and custom retry logic removal
+- AC-6.5.4.2: Test upload successful on first attempt, retry on network error, no retry for 4xx errors, retry exhaustion
+- AC-6.5.4.3: Test presigned URL generation retry on network error
+- AC-6.5.4.4: Test delete retry on network error, no retry for 4xx errors (NoSuchKey)
+- AC-6.5.4.5: Test error classification (4xx immediate throw, 5xx retry), retry exhaustion wrapping
+- AC-6.5.4.6: Test configuration loading from environment variables
+- AC-6.5.4.7: Test logging (operation start, success, failure - no manual retry logs)
+- AC-6.5.4.8: Test testConnection() without retry (fast health check)
+- Integration: Test end-to-end upload/download/delete with real RetryService and transient failures
+    </ideas>
+  </tests>
+</story-context>

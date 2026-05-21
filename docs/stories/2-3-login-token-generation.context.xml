@@ -1,0 +1,163 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.3</storyId>
+    <title>Admin Login &amp; Token Generation (Phone + Password)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-3-login-token-generation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>admin user</asA>
+    <iWant>phoneNumber ve password ile login olabilmek</iWant>
+    <soThat>access token ve refresh token alabileyim ve sisteme güvenli bir şekilde erişebileyim</soThat>
+    <tasks>
+      - Task 1: LoginAdminDto ve AuthResponseDto oluştur (AC: 2, 8)
+      - Task 2: TokenService oluştur ve token generation logic implement et (AC: 6, 7)
+      - Task 3: AuthService.loginAdmin() method implement et (AC: 3, 4, 5, 6, 7, 8, 9)
+      - Task 4: AuthController.loginAdmin() endpoint oluştur (AC: 1, 8, 10)
+      - Task 5: Rate limiting yapılandırması (AC: 10)
+      - Task 6: JWT configuration doğrulama (AC: 6)
+      - Task 7: Unit test yaz (AC: All)
+      - Task 8: Integration test yaz (AC: 1, 2, 8, 9, 10)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-2.3.1: POST /auth/login/admin endpoint oluşturulmuş ve çalışıyor
+    AC-2.3.2: LoginAdminDto validation yapılıyor (phoneNumber: E.164 format, password: required)
+    AC-2.3.3: phoneNumber ile user bulunuyor ve role === 'admin' kontrolü yapılıyor (değilse 403 Forbidden)
+    AC-2.3.4: phoneVerified === true kontrolü yapılıyor (false → 403 Forbidden: "Phone not verified")
+    AC-2.3.5: password bcrypt.compare() ile validate ediliyor (mismatch → 401 Unauthorized: "Invalid credentials")
+    AC-2.3.6: Valid credentials → Access token (JWT) generate ediliyor (15-60 min expiry, payload: sub, phoneNumber, domainID, roles)
+    AC-2.3.7: Valid credentials → Refresh token (UUID) database'e kaydediliyor (7-30 day expiry)
+    AC-2.3.8: Response döndürülüyor: { accessToken, refreshToken, user: UserResDto, expiresIn }
+    AC-2.3.9: Invalid credentials → 401 Unauthorized (generic message: "Invalid credentials" - no phone/password disclosure)
+    AC-2.3.10: Rate limiting uygulanıyor: 5 attempts / 15 min per IP (@nestjs/throttler)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Story 2.3: Admin Login &amp; Token Generation">
+        Comprehensive technical specification for Story 2.3 including API endpoints (POST /auth/login/admin), data models (LoginAdminDto, AuthResponseDto), token architecture (JWT + UUID refresh tokens), admin login flow, security requirements (bcrypt, rate limiting, generic error messages), and acceptance criteria AC-2.3.1 through AC-2.3.10. Performance targets: &lt;300ms p95 for admin login.
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Services and Modules - TokenService">
+        TokenService specification: JWT generation (15-60 min expiry, payload structure), Refresh token generation (UUID, database-stored, 7-30 day expiry), generateTokens() helper method. Dependencies: JwtService, PrismaService, ConfigService. Token rotation pattern for refresh flow.
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Data Models and Contracts">
+        Complete DTO specifications: LoginAdminDto (phoneNumber: E.164, password: required), AuthResponseDto (accessToken, refreshToken, user: UserResDto, expiresIn), JwtPayload interface (sub, phoneNumber, domainID, roles, iat, exp). Validation decorators: @IsPhoneNumber('TR'), @IsString, @IsNotEmpty.
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Workflows and Sequencing - Flow 2: Admin Login">
+        Complete admin login workflow: Rate limit check (5/15min) → User lookup by phoneNumber → Role check (admin only) → Phone verification check → Password validation (bcrypt.compare) → Token generation → Response. Error handling: 401 for invalid credentials (generic), 403 for phone not verified or non-admin role, 429 for rate limit exceeded.
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="NFR Security - Password Security">
+        Password validation using bcrypt.compare() (~100-150ms), timing-safe comparison. Password policy: minimum 8 characters, at least 1 letter and 1 number. Generic error messages to prevent phone enumeration attacks ("Invalid credentials" for both invalid phone and wrong password).
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="NFR Security - Rate Limiting">
+        @nestjs/throttler integration: 5 attempts / 15 minutes per IP address. In-memory storage for MVP (Redis-based distributed rate limiting in Phase 2). Prevents brute-force password attacks. Returns 429 Too Many Requests after limit exceeded.
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture Documentation" section="Authentication &amp; Authorization">
+        Phone-based JWT authentication decision. Hybrid token architecture: JWT access tokens (stateless, 15-60 min) + database-stored refresh tokens (revokable, 7-30 days). Auth module structure: services (auth.service.ts, token.service.ts), strategies (jwt.strategy.ts), guards (jwt-auth.guard.ts), decorators (@Public()).
+      </doc>
+      <doc path="docs/stories/2-3-login-token-generation.md" title="Story 2.3 Documentation" section="Dev Notes - Technical Implementation">
+        Complete implementation patterns for TokenService, AuthService.loginAdmin(), LoginAdminDto, AuthResponseDto, AuthController with code examples. Security considerations: generic error messages, rate limiting, phone verification enforcement, bcrypt password validation. Performance targets: phone lookup ~5ms, password comparison ~100-150ms, token generation ~50ms, total login time ~200-300ms.
+      </doc>
+      <doc path="docs/stories/2-2-user-registration.md" title="Story 2.2 Completion Notes" section="Learnings from Previous Story">
+        AuthService ready with register() method, PrismaService and ConfigService injected. bcrypt already imported for password hashing. UserResDto available with @Exclude decorators. Database schema updated in migration 20251105122316 with phoneNumber, passwordHash, role, phoneVerified fields. Testing patterns established: 12 E2E tests passing.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/modules/auth/auth.service.ts" kind="service" symbol="AuthService" reason="Existing service with register() method. Ready to add loginAdmin() method. Already imports bcrypt, PrismaService, ConfigService, OtpService. Pattern established: Use plainToInstance for UserResDto response sanitization." />
+      <artifact path="src/modules/auth/auth.controller.ts" kind="controller" symbol="AuthController" reason="Existing controller with POST /auth/register endpoint. Ready to add POST /auth/login/admin endpoint. Uses @Public() decorator pattern for authentication bypass." />
+      <artifact path="src/modules/auth/auth.module.ts" kind="module" symbol="AuthModule" reason="JwtModule configured with async configuration. PassportModule registered. Need to add: TokenService to providers, ThrottlerModule import for rate limiting." />
+      <artifact path="src/modules/auth/dto/user-res.dto.ts" kind="dto" symbol="UserResDto" reason="Response DTO that excludes passwordHash, deletedAt, domainID. Ready to be reused in AuthResponseDto for login response." />
+      <artifact path="src/modules/auth/decorators/public.decorator.ts" kind="decorator" symbol="Public" reason="Decorator to bypass JWT authentication guard. Use for /auth/login/admin endpoint (authentication not required for login itself)." />
+      <artifact path="src/modules/auth/interfaces/jwt-payload.interface.ts" kind="interface" symbol="JwtPayload" reason="JWT payload structure: sub (user ID), phoneNumber, domainID, roles (array), iat, exp. Use as return type for JWT token generation in TokenService." />
+      <artifact path="src/common/guards/jwt-auth.guard.ts" kind="guard" symbol="JwtAuthGuard" reason="Extends AuthGuard('jwt'), checks @Public() metadata. Handles authentication errors. Already configured globally in AuthModule exports." />
+      <artifact path="prisma/schema.prisma" kind="schema" symbol="User" lines="20-50" reason="User model with phoneNumber (unique), passwordHash, role, phoneVerified, domainID fields. Use for user lookup and validation in loginAdmin()." />
+      <artifact path="prisma/schema.prisma" kind="schema" symbol="RefreshToken" lines="56-72" reason="RefreshToken model with userID, domainID, token (unique), expiresAt, createdAt. Use for storing refresh tokens in TokenService.generateRefreshToken()." />
+      <artifact path="test/jest-e2e-setup.ts" kind="test-setup" symbol="setupTestEnvironment" reason="Sets NODE_ENV=development, JWT_SECRET, JWT_ACCESS_EXPIRATION=15m, JWT_REFRESH_EXPIRATION=7d for E2E tests." />
+      <artifact path="test/auth-registration.e2e-spec.ts" kind="test" symbol="auth-registration-tests" reason="E2E test pattern established: beforeAll setup with AppModule, afterEach cleanup, 12 passing tests. Follow same pattern for auth-login-admin.e2e-spec.ts." />
+      <artifact path="src/config/env-validation.schema.ts" kind="config" symbol="envValidationSchema" lines="18-21" reason="JWT environment variables already validated: JWT_SECRET (min 32 chars), JWT_ACCESS_EXPIRATION (default 15m), JWT_REFRESH_EXPIRATION (default 7d)." />
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/jwt" version="^11.0.1" note="JWT token generation and signing. Already installed." />
+        <package name="@nestjs/passport" version="^11.0.5" note="Passport.js integration for NestJS. Already installed." />
+        <package name="passport" version="^0.7.0" note="Authentication middleware. Already installed." />
+        <package name="passport-jwt" version="^4.0.1" note="JWT strategy for Passport. Already installed." />
+        <package name="bcrypt" version="^6.0.0" note="Password hashing and comparison. Already installed." />
+        <package name="class-validator" version="^0.14.2" note="DTO validation decorators. Already installed." />
+        <package name="class-transformer" version="^0.5.1" note="Response transformation and @Exclude. Already installed." />
+        <package name="uuid" version="^13.0.0" note="UUID generation for refresh tokens. Already installed." />
+        <package name="@prisma/client" version="^6.18.0" note="Database client. Already installed." />
+        <package name="@nestjs/throttler" version="NOT INSTALLED" note="Rate limiting middleware. MUST INSTALL for Story 2.3 AC-2.3.10." />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. **Token Architecture:** JWT access tokens must be stateless (15-60 min expiry). Refresh tokens must be database-stored UUIDs (7-30 day expiry, revokable).
+    2. **Security - Generic Error Messages:** Always return "Invalid credentials" for authentication failures. Never disclose if phone exists or password is wrong (prevents phone enumeration).
+    3. **Security - Password Validation:** Use bcrypt.compare() for timing-safe comparison (~100-150ms). Never log or return plain-text passwords.
+    4. **Security - Phone Verification:** Enforce phoneVerified === true before allowing login. Return 403 Forbidden if not verified.
+    5. **Security - Role Enforcement:** Only allow role === 'admin' for this endpoint. Return 403 Forbidden for non-admin users.
+    6. **Rate Limiting:** Implement @nestjs/throttler with 5 attempts / 15 minutes per IP. Return 429 Too Many Requests after limit exceeded.
+    7. **Performance Target:** Admin login must complete in &lt;300ms (p95). Phone lookup: ~5ms (indexed), password comparison: ~100-150ms (bcrypt), token generation: ~50ms.
+    8. **Module Organization:** Place TokenService in src/modules/auth/services/, DTOs in src/modules/auth/dto/. Follow NestJS best practices.
+    9. **Response Format:** Use { success: boolean, data: AuthResponseDto } format. Exclude passwordHash, deletedAt, domainID from user response.
+    10. **Testing Requirements:** Write unit tests for TokenService and AuthService.loginAdmin(). Write E2E tests covering all acceptance criteria including rate limiting.
+    11. **JWT Configuration:** Use ConfigService for JWT_SECRET, JWT_ACCESS_EXPIRATION, JWT_REFRESH_EXPIRATION. All values validated in env-validation.schema.ts.
+    12. **Database Operations:** Use PrismaService for User lookup (findUnique by phoneNumber) and RefreshToken creation. Leverage existing indexes on phoneNumber (unique) and token (unique).
+  </constraints>
+
+  <interfaces>
+    <interface name="POST /auth/login/admin" kind="REST endpoint" signature="@Public() @Throttle(5, 900) @Post('login/admin') async loginAdmin(@Body() loginDto: LoginAdminDto): Promise&lt;{ success: boolean; data: AuthResponseDto }&gt;" path="src/modules/auth/auth.controller.ts" />
+    <interface name="TokenService.generateAccessToken" kind="method" signature="async generateAccessToken(user: User): Promise&lt;string&gt;" path="src/modules/auth/services/token.service.ts (NEW)" />
+    <interface name="TokenService.generateRefreshToken" kind="method" signature="async generateRefreshToken(user: User): Promise&lt;string&gt;" path="src/modules/auth/services/token.service.ts (NEW)" />
+    <interface name="TokenService.generateTokens" kind="method" signature="async generateTokens(user: User): Promise&lt;{ accessToken: string; refreshToken: string; expiresIn: number }&gt;" path="src/modules/auth/services/token.service.ts (NEW)" />
+    <interface name="AuthService.loginAdmin" kind="method" signature="async loginAdmin(loginDto: LoginAdminDto): Promise&lt;AuthResponseDto&gt;" path="src/modules/auth/auth.service.ts" />
+    <interface name="LoginAdminDto" kind="class" signature="class LoginAdminDto { @IsPhoneNumber('TR') @IsNotEmpty() phoneNumber: string; @IsString() @IsNotEmpty() password: string; }" path="src/modules/auth/dto/login-admin.dto.ts (NEW)" />
+    <interface name="AuthResponseDto" kind="class" signature="class AuthResponseDto { accessToken: string; refreshToken: string; user: UserResDto; expiresIn: number; }" path="src/modules/auth/dto/auth-response.dto.ts (NEW)" />
+    <interface name="JwtPayload" kind="interface" signature="interface JwtPayload { sub: string; phoneNumber: string; domainID: string; roles: string[]; iat: number; exp: number; }" path="src/modules/auth/interfaces/jwt-payload.interface.ts (EXISTING)" />
+    <interface name="User Model" kind="Prisma model" signature="model User { id String @id @default(uuid()); phoneNumber String @unique; passwordHash String?; role String @default('staff'); phoneVerified Boolean @default(false); domainID String @db.Uuid; ... }" path="prisma/schema.prisma (EXISTING)" />
+    <interface name="RefreshToken Model" kind="Prisma model" signature="model RefreshToken { id String @id @default(uuid()); userID String @db.Uuid; domainID String @db.Uuid; token String @unique; expiresAt DateTime; createdAt DateTime @default(now()); ... }" path="prisma/schema.prisma (EXISTING)" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Jest with @nestjs/testing. Unit tests: Mock PrismaService, JwtService, ConfigService. E2E tests: Use real database with test data cleanup in afterEach. Test structure: beforeAll (setup app module), afterEach (cleanup test data), afterAll (close app). Validation: Test all acceptance criteria, error scenarios, edge cases. E2E test pattern established in test/auth-registration.e2e-spec.ts (12 passing tests). Coverage target: All acceptance criteria covered.
+    </standards>
+    <locations>
+      Unit tests: src/modules/auth/services/token.service.spec.ts (NEW), src/modules/auth/auth.service.spec.ts (EXTEND)
+      E2E tests: test/auth-login-admin.e2e-spec.ts (NEW)
+    </locations>
+    <ideas>
+      **TokenService Unit Tests:**
+      - generateAccessToken() returns valid JWT with correct payload (sub, phoneNumber, domainID, roles)
+      - generateRefreshToken() stores UUID token in database with correct expiresAt
+      - generateTokens() returns both access and refresh tokens with correct expiresIn
+
+      **AuthService.loginAdmin() Unit Tests:**
+      - Valid admin credentials returns AuthResponseDto with tokens
+      - Invalid password throws UnauthorizedException("Invalid credentials")
+      - Non-admin role throws ForbiddenException("Access denied")
+      - Unverified phone throws ForbiddenException("Phone not verified")
+      - Non-existent phone throws UnauthorizedException("Invalid credentials")
+      - Generic error messages (no phone/password disclosure)
+
+      **E2E Tests:**
+      - POST /auth/login/admin with valid admin credentials → 200 OK, returns { accessToken, refreshToken, user, expiresIn }
+      - accessToken is valid JWT (decode and verify payload structure)
+      - refreshToken is stored in database with correct expiresAt
+      - Invalid password → 401 Unauthorized with generic message
+      - Non-admin user → 403 Forbidden
+      - Unverified phone → 403 Forbidden
+      - Non-existent phone → 401 Unauthorized with generic message
+      - Rate limiting: 6th attempt within 15 min → 429 Too Many Requests
+      - Error messages are generic (no credential disclosure)
+    </ideas>
+  </tests>
+</story-context>

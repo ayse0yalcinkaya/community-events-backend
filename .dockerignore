@@ -1,0 +1,137 @@
+# ============================================================================
+# Docker Ignore File
+# ============================================================================
+# Purpose: Exclude unnecessary files from Docker build context
+# Benefit: Reduces build context size, improves build performance
+# Note: Some files may already be in .gitignore, but .dockerignore is
+#       separate and specifically for Docker build optimization
+# ============================================================================
+
+# ============================================================================
+# Node.js & Dependencies
+# ============================================================================
+# node_modules: Exclude ALL dependency installations
+# Reason: Installed via Docker layers (more efficient and secure)
+# Impact: 500MB+ reduction in build context
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================================================
+# Build Artifacts
+# ============================================================================
+# dist/: Exclude compiled output
+# Reason: Built inside Docker container ( Stage 2 of Dockerfile )
+# Impact: 10-20MB reduction in build context
+dist/
+build/
+.next/
+out/
+
+# ============================================================================
+# Test Coverage
+# ============================================================================
+# coverage/: Exclude test coverage reports
+# Reason: Generated locally, not needed in production builds
+# Impact: 5-10MB reduction in build context
+coverage/
+.nyc_output/
+
+# ============================================================================
+# Version Control
+# ============================================================================
+# .git/: Exclude version control data
+# Reason: Not needed in container, accessed via volume in dev only
+# Impact: 50-100MB reduction in build context (in large repos)
+.git/
+.gitignore
+
+# ============================================================================
+# Environment & Secrets
+# ============================================================================
+# .env: Exclude environment configuration
+# Reason: Should be provided at runtime via environment variables or files
+# Security: Prevents accidentally committing sensitive data
+# Note: .env.example can be included for reference
+.env
+.env.local
+.env.*.local
+
+# ============================================================================
+# Test Files
+# ============================================================================
+# tests/: Exclude test files from production builds
+# Reason: Tests not needed in production image
+# Impact: 10-20MB reduction in build context
+test/
+tests/
+__tests__/
+*.test.ts
+*.spec.ts
+jest.config.*
+test/**
+tests/**
+
+# ============================================================================
+# Docker Configuration (Dev)
+# ============================================================================
+# docker-compose*.yml: Exclude development orchestration configs
+# Reason: Production uses different deployment strategy
+# Note: docker/Dockerfile and .dockerignore ARE needed
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.dev.yml
+*.dockerfile
+
+# ============================================================================
+# Documentation
+# ============================================================================
+# Exclude documentation and examples from build context
+# Reason: Not needed for application runtime
+*.md
+docs/
+README*
+
+# ============================================================================
+# IDE & Editor Files
+# ============================================================================
+# Exclude IDE configuration and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================================================
+# CI/CD & Deployment
+# ============================================================================
+# Exclude CI/CD configuration from build context
+# Reason: Executed externally, not needed in container
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+.travis.yml
+.circleci/
+
+# ============================================================================
+# Development Scripts & Tools
+# ============================================================================
+# Exclude development-only scripts and tools
+# Reason: Not needed in production builds
+scripts/
+tools/
+*.ts
+!src/**/*.ts
+!prisma/**/*.ts
+
+# ============================================================================
+# Logging & Cache
+# ============================================================================
+# Exclude logs and cache directories
+*.log
+logs/
+.cache/
+.parcel-cache/

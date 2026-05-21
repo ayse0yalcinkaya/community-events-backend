@@ -1,0 +1,82 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>11</epicId>
+    <storyId>11.4</storyId>
+    <title>CD Pipeline (Production)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10T16:46:51.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/11-4-cd-pipeline-production.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>production'a tag-based deployment</iWant>
+    <soThat>versioned release'ler deploy edebilleyim</soThat>
+    <tasks>Task 1: Create production CD workflow file (AC: #1, #2) - Task 2: Configure build job (AC: #3 - build) - Task 3: Configure deploy job (AC: #3 - deploy) - Task 4: Configure deployment strategy (AC: #4, #5)</tasks>
+  </story>
+
+  <acceptanceCriteria>1. `.github/workflows/cd-production.yml` oluşturulmuş - 2. Trigger: push tag (v*) - 3. Jobs: build (Docker image build, Tag: production-{version}, Push to container registry), deploy (Manual approval required, Deploy to production, Run migrations, Health check, Rollback on failure) - 4. Environment: production (protected) - 5. Deployment strategy: Blue-green or rolling (configurable)</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-11-cicd-deployment.md" title="Epic 11: CI/CD & Deployment" section="Story 11.4: CD Pipeline (Production)" snippet="As a developer, I want production'a tag-based deployment, So that versioned release'ler deploy edebilleyim. Acceptance Criteria: .github/workflows/cd-production.yml oluşturulmuş, Trigger: push tag (v*), Jobs: build (Docker image build, Tag: production-{version}), deploy (Manual approval required, Deploy to production, Run migrations, Health check, Rollback on failure)" />
+      <doc path="docs/tech-spec-epic-11.md" title="Epic Technical Specification: CI/CD & Deployment" section="CD Pipeline Workflow (Production)" snippet="Production deployment workflow using tag-based deployment (v1.0.0), manual approval via GitHub Environments, automatic rollback on failure, blue-green or rolling deployment strategy" />
+      <doc path="docs/tech-spec-epic-11.md" title="Epic Technical Specification: CI/CD & Deployment" section="Story 11.4: CD Pipeline (Production) - AC" snippet="Production workflow file, trigger: push tag v*, build and deploy jobs with Docker image build, production-{version} tagging, manual approval required, health check validation, rollback strategy" />
+      <doc path="docs/stories/11-1-production-dockerfile-multi-stage.md" title="Story 11.1: Production Dockerfile (Multi-Stage)" section="Architecture Patterns and Constraints" snippet="Multi-stage Docker build optimization, node:20-alpine base image, non-root user execution, .dockerignore configuration, HEALTHCHECK instruction" />
+      <doc path="docs/stories/11-2-ci-pipeline-github-actions.md" title="Story 11.2: CI Pipeline (GitHub Actions)" section="CI Pipeline Foundation" snippet="Node.js 20 runtime, pull_request trigger, test jobs (lint, unit, integration, e2e), build verification, GitHub Actions workflow structure" />
+      <doc path="docs/stories/11-3-cd-pipeline-staging.md" title="Story 11.3: CD Pipeline (Staging)" section="Staging CD Pipeline Foundation" snippet="GitHub Actions workflow with push to develop trigger, build job (Docker image build, staging-{sha} tagging), deploy job (SSH deployment, Prisma migrations, health checks, rollback), GitHub Environment configuration" />
+    </docs>
+    <code>
+      <code path="src/health/health.controller.ts" kind="controller" symbol="HealthController" lines="1-150" reason="Provides /health endpoint for deployment validation in CD pipeline" />
+      <code path="src/health/health.module.ts" kind="module" symbol="HealthModule" lines="1-20" reason="Health check module for production monitoring" />
+      <code path=".github/workflows/ci.yml" kind="workflow" symbol="CI Pipeline" lines="1-100" reason="Reference implementation for GitHub Actions workflow structure, Node.js 20 setup, test execution" />
+      <code path=".github/workflows/cd-staging.yml" kind="workflow" symbol="Staging CD Pipeline" lines="1-174" reason="Reference for build and deploy job structure, Docker build, Prisma migration, health check validation, rollback mechanism" />
+      <code path="docker/Dockerfile" kind="dockerfile" symbol="Production Dockerfile" lines="1-80" reason="Multi-stage production build with node:20-alpine, used by CD pipeline for image creation" />
+      <code path="test/jest-e2e.json" kind="test-config" symbol="E2E Test Configuration" lines="1-20" reason="E2E test configuration referenced in CI pipeline" />
+      <code path="jest.config.js" kind="test-config" symbol="Jest Configuration" lines="1-30" reason="Jest test configuration for unit and integration tests in CI pipeline" />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/core" version="^11.0.0" />
+        <package name="@nestjs/common" version="^11.0.0" />
+        <package name="@nestjs/platform-express" version="^11.0.0" />
+        <package name="typescript" version="^5.7.0" />
+        <package name="ts-node" version="^10.9.0" />
+        <package name="jest" version="^30.0.0" />
+        <package name="ts-jest" version="^29.0.0" />
+        <package name="@nestjs/testing" version="^11.0.0" />
+        <package name="supertest" version="^7.0.0" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must reuse GitHub Actions workflow structure from cd-staging.yml for consistency
+    - Node.js 20 runtime required (consistent with CI and staging pipelines)
+    - Must use existing docker/Dockerfile for multi-stage production build
+    - Health check endpoint /health must be available for deployment validation
+    - Prisma migration integration required (npx prisma migrate deploy)
+    - Docker multi-stage build pattern: deps → build → production
+    - Secrets management via GitHub Secrets (DOCKER_USERNAME, DOCKER_PASSWORD, PRODUCTION_SERVER_HOST)
+    - Non-root user execution in containers
+    - Semantic versioning (v1.0.0) for production releases
+    - GitHub Environment protection required for production deployments
+    - Manual approval gate for production deployments
+    - Rollback mechanism using previous image tag
+    - Environment variable validation via Joi (Story 10.3)
+  </constraints>
+
+  <interfaces>
+    <interface name="GitHub Actions Workflow API" kind="YAML workflow" signature="on: [push] with tags: ['v*']; jobs: build, deploy" path=".github/workflows" />
+    <interface name="Health Check Endpoint" kind="REST API" signature="GET /health → { status: 'ok', timestamp, version }" path="src/health/health.controller.ts" />
+    <interface name="Prisma Migration Command" kind="CLI" signature="npx prisma migrate deploy" path="docs/tech-spec-epic-11.md" />
+    <interface name="Docker Build Command" kind="CLI" signature="docker build -f docker/Dockerfile -t production-{version} ." path="docker/Dockerfile" />
+  </interfaces>
+
+  <tests>
+    <standards>Jest testing framework with unit, integration, and E2E test suites. Health check endpoints validated in tests. CI pipeline includes lint, unit tests, integration tests, E2E tests, and build verification. GitHub Actions workflow files tested through CI/CD execution. Docker image health checks validated in container runtime.</standards>
+    <locations>src/**/__tests__/*.spec.ts for unit tests, test/**/*.e2e-spec.ts for E2E tests, .github/workflows/*.yml for CI/CD workflow validation</locations>
+    <ideas>Test 1: Verify cd-production.yml workflow file structure and trigger configuration (AC: #1, #2) - Test 2: Validate Docker image build and production-{version} tagging (AC: #3 - build) - Test 3: Test manual approval gate in GitHub Environments (AC: #3 - deploy) - Test 4: Verify Prisma migration execution in production deployment (AC: #3 - deploy) - Test 5: Validate health check endpoint /health is accessible post-deployment (AC: #3 - deploy) - Test 6: Test rollback mechanism using previous image tag (AC: #3 - deploy) - Test 7: Verify production environment protection rules (AC: #4) - Test 8: Test blue-green or rolling deployment strategy implementation (AC: #5)</ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,104 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>10</epicId>
+    <storyId>5</storyId>
+    <title>Hot Reload Configuration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/10-5-hot-reload-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer working in a containerized environment</asA>
+    <iWant>my code changes to be automatically detected and the server to restart instantly</iWant>
+    <soThat>I can see the results of my changes immediately without manual intervention and maintain a fast development workflow</soThat>
+    <tasks>Task 1: Configure NestJS watch mode (AC: #1, #4, #6)
+  - Subtask 1.1: Add `start:dev` script to package.json with `--watch` flag
+  - Subtask 1.2: Verify NestJS CLI watch mode configuration
+  - Subtask 1.3: Test watch mode locally (outside Docker)
+
+Task 2: Configure Dockerfile.dev for hot reload (AC: #2, #3)
+  - Subtask 2.1: Verify volume mount: `.:/app` (source code)
+  - Subtask 2.2: Verify node_modules NOT mounted (excluded from volume)
+  - Subtask 2.3: Update CMD to use `npm run start:dev` (watch mode)
+
+Task 3: Test hot reload performance (AC: #5)
+  - Subtask 3.1: Measure restart time on file change
+  - Subtask 3.2: Verify < 3 saniye requirement
+  - Subtask 3.3: Optimize if necessary (tsconfig, nest-cli.json)
+
+Task 4: Docker Compose integration (AC: #7, #8, #9)
+  - Subtask 4.1: Test: `docker-compose up -d` → App starts with watch mode
+  - Subtask 4.2: Edit controller file → Verify auto-restart
+  - Subtask 4.3: Check logs: "Restarting..." message appears
+
+Task 5: End-to-end validation (AC: #7, #8)
+  - Subtask 5.1: Make change to existing file (e.g., add console.log)
+  - Subtask 5.2: Verify change reflected in running app
+  - Subtask 5.3: Test with database-dependent change (use seed data from Story 10-4)</tasks>
+  </story>
+
+  <acceptanceCriteria>1. nest start --watch configured in package.json
+2. Source code volume mount → container yapılmış (Dockerfile.dev)
+3. node_modules container içinde (mounted değil) - volume exclude edilmiş
+4. TypeScript compilation: Watch mode aktif
+5. Server restart on file change: < 3 saniye (measured)
+6. Console output: "Restarting..." mesajı görünüyor (file change detection)
+7. Docker Compose command: docker-compose up -d → Hot reload çalışıyor
+8. Edit source file → Server otomatik restart oluyor
+9. docker-compose logs -f app → "Restarting..." mesajı görünüyor</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-10.md" title="Epic 10 Technical Specification: Development Environment" section="Non-Functional Requirements → Performance → Hot Reload Performance" snippet="Target: Server restart &lt; 3 seconds (p95) on file change. Strategy: Incremental TypeScript compilation, Exclude node_modules from volume mount, Use Alpine base image for faster builds"/>
+      <doc path="docs/stories/10-1-development-dockerfile.md" title="Story 10.1: Development Dockerfile" section="Dev Notes → Dockerfile Configuration" snippet="Dockerfile.dev with node:20-alpine base image, working directory /app, npm ci for dependencies, volume mount support for hot reload"/>
+      <doc path="docs/stories/10-2-docker-compose-setup.md" title="Story 10.2: Docker Compose Setup" section="Dev Notes → Docker Services" snippet="Multi-service orchestration with PostgreSQL 15, MongoDB 6, Redis 7. Source code volume mount: .:/app, environment variables injected, port mappings configured"/>
+      <doc path="docs/stories/10-3-environment-variable-management.md" title="Story 10.3: Environment Variable Management" section="Dev Notes → Environment Configuration" snippet="All environment variables documented in .env.example, config validation in src/main.ts ensures fail-fast pattern, multi-environment templates ready"/>
+      <doc path="docs/stories/10-4-database-seed-scripts.md" title="Story 10.4: Database Seed Scripts" section="Dev Notes → Database Environment" snippet="Docker services running and healthy, seed data with 10 users, 3 roles, 11 permissions. Docker integration working: docker-compose exec app npm run prisma:seed"/>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests → Pattern: Arrange-Act-Assert" snippet="Test coverage requirements: 70% minimum enforced by CI/CD. Unit tests follow Arrange-Act-Assert pattern with proper mocking and verification"/>
+      <doc path="docs/PRD-NFR-CodingStandards.md" title="PRD - Non-Functional Requirements & Coding Standards" section="NFR-4: Maintainability & Code Quality" snippet="Code quality standards: TypeScript strict mode, ESLint configuration, consistent naming conventions, modular architecture with clear separation of concerns"/>
+    </docs>
+    <code>
+      <artifact path="docker/Dockerfile.dev" kind="dockerfile" symbol="Development Dockerfile" lines="1-58" reason="Container definition for hot reload development. CMD already configured: npm run start:dev (watch mode). Volume mount strategy: .:/app for source code, /app/node_modules excluded"/>
+      <artifact path="docker/docker-compose.yml" kind="compose-config" symbol="Docker Compose Services" lines="1-82" reason="Multi-service orchestration. App service: volume mount ..:/app, command: npm run start:dev, depends_on postgres/mongodb/redis. Environment variables properly injected"/>
+      <artifact path="package.json" kind="config" symbol="NPM Scripts" lines="8-36" reason="start:dev script: nest start --watch (line 12). Docker scripts: docker:up, docker:down, docker:logs, docker:exec for container management"/>
+      <artifact path="src/main.ts" kind="typescript" symbol="NestJS Bootstrap" lines="1-50" reason="Application entry point. Config validation enabled (fail-fast). Health check endpoint available at /health for container health monitoring"/>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/cli" version="^11.0.0" type="dev"/>
+        <package name="@nestjs/core" version="^11.0.1" type="runtime"/>
+        <package name="typescript" version="^5.7.3" type="dev"/>
+        <package name="ts-node" version="^10.9.2" type="dev"/>
+        <package name="jest" version="^30.0.0" type="dev"/>
+        <package name="docker" version="v24+" type="external"/>
+        <package name="docker-compose" version="v2+" type="external"/>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>File change → server restart: &lt; 3 seconds (measured, p95)</constraint>
+    <constraint>Source code volume mount: .:/app (bidirectional sync for hot reload)</constraint>
+    <constraint>node_modules: EXCLUDED from volume mount (prevents native module conflicts)</constraint>
+    <constraint>Base image: node:20-alpine (Alpine Linux, ~100MB vs ~900MB Debian)</constraint>
+    <constraint>Command: npm run start:dev (NestJS watch mode with file watching)</constraint>
+    <constraint>Database services: Independent (no restart when app restarts)</constraint>
+    <constraint>Environment variables: Injected via docker-compose env_file</constraint>
+    <constraint>Prisma Client: Regenerated at startup (reflects mounted schema changes)</constraint>
+  </constraints>
+  <interfaces></interfaces>
+  <tests>
+    <standards>Hot reload validation follows NestJS watch mode best practices with manual testing approach. Docker container startup: &lt; 10s, File change restart: &lt; 3s (p95), TypeScript compilation: incremental, &lt; 1s. Test coverage requirements: 70% minimum enforced by CI/CD. Unit tests follow Arrange-Act-Assert pattern with proper mocking. Integration tests use separate test database. All tests must pass before merge. Volume mount strategy validated to ensure node_modules not affected by file changes.</standards>
+    <locations>test/ (unit tests), test/integration/ (integration tests), test/e2e/ (end-to-end tests). Hot reload tests are manual validation: docker-compose up -d, edit file, measure restart time. Test files use .test.ts extension. Mock factories available in test/factories/ directory. Database tests use test database with clean setup/teardown.</locations>
+    <ideas>
+      <test idea="AC-1: NestJS watch mode configured" method="Test: npm run start:dev locally. Verify: Server starts with watch mode, console shows file watching active. Location: Terminal output, package.json script validation."/>
+      <test idea="AC-2,3: Volume mount configuration" method="Test: docker-compose up -d, then docker-compose exec app ls -la node_modules. Verify: node_modules exists in container, not mounted from host. Edit src/ file, verify change reflected immediately."/>
+      <test idea="AC-5: Hot reload performance" method="Test: docker-compose up -d, edit src/controller.ts, time from save to 'Restarting...' in logs. Verify: &lt; 3 seconds. Measure multiple times for p95. Location: docker-compose logs output."/>
+      <test idea="AC-7,8: Docker Compose integration" method="Test: docker-compose up -d, edit any .ts file. Verify: Server restarts automatically, no container restart. Location: docker-compose logs -f app"/>
+      <test idea="AC-9: Console output validation" method="Test: docker-compose logs -f app while editing files. Verify: 'Restarting...' message appears on each file change. Location: Container logs output."/>
+      <test idea="Database persistence across restarts" method="Test: After hot reload, query existing data (seed users from Story 10-4). Verify: Database connection persists, no data loss. Location: Application logs, database query results."/>
+    </ideas>
+  </tests>
+</story-context>

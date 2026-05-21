@@ -1,0 +1,372 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8.5</epicId>
+    <storyId>4</storyId>
+    <title>Test Fixes</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8.5-4-test-fixes.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>failing testlerin düzeltilmesi ve test infrastructure'ının refactoring ile uyumlu hale getirilmesi</iWant>
+    <soThat>npm run test ve test:e2e başarılı olsun ve kod değişikliklerinin doğruluğu otomatik olarak validate edilebilsin</soThat>
+    <tasks>- [ ] Task 1: Audit Current Test Status and Identify Failures (AC: 8.5-4.1, 8.5-4.2)
+- [ ] Task 2: Fix Jest Configuration and Module Resolution (AC: 8.5-4.6, 8.5-4.7)
+- [ ] Task 3: Create Common Test Mock Utilities (AC: 8.5-4.3)
+- [ ] Task 4: Fix Service Unit Tests - I18n and Logger Integration (AC: 8.5-4.1, 8.5-4.3)
+- [ ] Task 5: Fix Controller Unit Tests - I18n and Logger Integration (AC: 8.5-4.1, 8.5-4.3)
+- [ ] Task 6: Fix Guard and Interceptor Tests (AC: 8.5-4.1, 8.5-4.3)
+- [ ] Task 7: Configure Test Database and Prisma Test Client (AC: 8.5-4.5)
+- [ ] Task 8: Fix E2E Test Response Format Assertions (AC: 8.5-4.2, 8.5-4.4)
+- [ ] Task 9: Fix Import Errors and Deprecated Imports (AC: 8.5-4.7)
+- [ ] Task 10: Verify Test Isolation and Determinism (AC: 8.5-4.9)
+- [ ] Task 11: Verify Test Coverage and Add Missing Tests (AC: 8.5-4.8)
+- [ ] Task 12: Prepare for CI/CD Integration (AC: 8.5-4.10)
+- [ ] Task 13: Final Validation and Documentation (AC: 8.5-4.1, 8.5-4.2)</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-8.5-4.1">
+      <title>Unit testler başarılı</title>
+      <details>
+        - `npm run test` komutu hatasız çalışıyor
+        - Tüm service test'leri pass oluyor
+        - Tüm controller test'leri pass oluyor
+        - Tüm guard test'leri pass oluyor
+        - Tüm interceptor test'leri pass oluyor
+        - Hiçbir test fail, skip veya timeout olmuyor
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.2">
+      <title>E2E testler başarılı</title>
+      <details>
+        - `npm run test:e2e` komutu hatasız çalışıyor
+        - Tüm endpoint integration test'leri pass oluyor
+        - Test database bağlantısı çalışıyor
+        - Test isolation sağlanmış (testler birbirini etkilemiyor)
+        - Response format assertions yeni format ile uyumlu
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.3">
+      <title>Test mock'ları refactoring ile uyumlu</title>
+      <details>
+        - I18nService mock'u tüm ilgili test'lerde kullanılıyor
+        - Logger mock'u tüm ilgili test'lerde kullanılıyor
+        - BaseEntity ve BaseAuditEntity mock'ları kullanılıyor (eğer gerekiyorsa)
+        - TransformResponseInterceptor mock'lanmış (eğer unit test'lerde gerekiyorsa)
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.4">
+      <title>Response format assertions güncellendi</title>
+      <details>
+        - E2E test'ler yeni success response formatını kontrol ediyor
+        - Paginated response assertions güncellendi
+        - Error response assertions güncellendi
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.5">
+      <title>Test database configuration çalışıyor</title>
+      <details>
+        - Test database environment variable'ları doğru configure edilmiş
+        - Prisma test client doğru database'e bağlanıyor
+        - Migration'lar test başlamadan önce otomatik çalışıyor
+        - Test'ler arası database cleanup işliyor
+        - Test database production/development database'ini etkilemiyor
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.6">
+      <title>Jest configuration güncel</title>
+      <details>
+        - jest.config.js güncel ve doğru path mapping'ler var
+        - Coverage threshold'lar tanımlı ve geçerli
+        - Test environment doğru (node)
+        - Module name mapper path alias'ları çalışıyor
+        - Transform configuration TypeScript için doğru (ts-jest)
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.7">
+      <title>Import errors düzeltildi</title>
+      <details>
+        - Tüm test dosyalarında import path'ler doğru
+        - Deprecated import'lar güncellenmiş
+        - Missing dependencies yok
+        - TypeScript compile error'ları yok
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.8">
+      <title>Test coverage korundu</title>
+      <details>
+        - Coverage oranı düşmedi (mevcut seviyede veya daha iyi)
+        - Tüm critical path'ler test edilmiş
+        - Service layer coverage yüksek (%80+)
+        - Controller layer coverage yeterli (%70+)
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.9">
+      <title>Testler isolated ve deterministic</title>
+      <details>
+        - Her test diğerinden bağımsız çalışıyor
+        - Test execution order'ı sonucu etkilemiyor
+        - No race conditions
+        - No flaky tests (10 kez çalıştırıldığında 10 kez aynı sonuç)
+        - Parallel execution destekliyor
+      </details>
+    </criterion>
+    <criterion id="AC-8.5-4.10">
+      <title>CI/CD pipeline uyumlu</title>
+      <details>
+        - Test'ler CI environment'ında çalışabilir durumda
+        - Environment variable'lar CI için configure edilebilir
+        - Test database CI ortamında kurulabilir
+        - Test output CI-friendly
+        - npm run test:ci script'i var ve çalışıyor
+      </details>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-8.5-technical-refinement-code-quality.md</path>
+        <title>Epic 8.5: Technical Refinement & Code Quality</title>
+        <section>Story 8.5-4: Test Fixes</section>
+        <snippet>Test fixes story tanımı - Unit ve E2E testlerin düzeltilmesi, mock'ların güncellenmesi, test infrastructure'ın refactoring ile uyumlu hale getirilmesi</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-8.md</path>
+        <title>Epic Technical Specification: API Documentation (Swagger)</title>
+        <section>Response Wrapper Classes and API Response Format</section>
+        <snippet>API response format standardization - success, status, data, message yapısı. E2E testlerde bu format'a göre assertion yapılması gerekiyor.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/8.5-1-code-organization-standards-base-architecture.md</path>
+        <title>Story 8.5-1: Code Organization, Standards & Base Architecture</title>
+        <section>Base DTOs and Entities</section>
+        <snippet>Base class'lar (BaseEntity, BaseAuditEntity, BaseQueryDto) - Test mock'larında bu base class'lar için mock'lar oluşturulması gerekebilir</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/8.5-2-api-documentation-response-standardization.md</path>
+        <title>Story 8.5-2: API Documentation & Response Standardization</title>
+        <section>Global Response Interceptor and TransformResponseInterceptor</section>
+        <snippet>TransformResponseInterceptor oluşturuldu - E2E testlerde yeni response format'a göre assertion'lar güncellenmeli</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/8.5-3-internationalization-logging.md</path>
+        <title>Story 8.5-3: Internationalization & Logging</title>
+        <section>I18nService and Logger Integration</section>
+        <snippet>I18nService ve Logger tüm service ve controller'lara entegre edildi - Test'lerde bu service'ler için mock'lar eklenmesi gerekiyor</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Jest Configuration -->
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>jest configuration</symbol>
+        <lines>N/A</lines>
+        <reason>Jest configuration for unit tests - rootDir: src, testRegex: .*\.spec\.ts$, transform: ts-jest</reason>
+      </artifact>
+      <artifact>
+        <path>test/jest-e2e.json</path>
+        <kind>config</kind>
+        <symbol>E2E jest configuration</symbol>
+        <lines>N/A</lines>
+        <reason>E2E test configuration - testRegex: .e2e-spec.ts$, setupFiles for test environment</reason>
+      </artifact>
+
+      <!-- Existing Unit Test Files -->
+      <artifact>
+        <path>src/modules/auth/auth.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthService unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Service test requiring I18nService and Logger mocks after Story 8.5-3 implementation</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/services/token.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>TokenService unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Service test requiring mock updates</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/services/users.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersService unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Service test requiring I18nService and Logger mocks</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/users.controller.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersController unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Controller test requiring I18nService and Logger mocks</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/profile.controller.spec.ts</path>
+        <kind>test</kind>
+        <symbol>ProfileController unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Controller test requiring mock updates</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/services/authorization.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthorizationService unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Service test requiring Logger mock</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/services/files.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>FilesService unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Service test requiring mock updates</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/controllers/files.controller.spec.ts</path>
+        <kind>test</kind>
+        <symbol>FilesController unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Controller test requiring mock updates</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/permissions.guard.spec.ts</path>
+        <kind>test</kind>
+        <symbol>PermissionsGuard unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Guard test requiring Logger mock</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/interceptors/__tests__/logging.interceptor.spec.ts</path>
+        <kind>test</kind>
+        <symbol>LoggingInterceptor unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>Interceptor test requiring Logger mock</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/interceptors/__tests__/transform-response.interceptor.spec.ts</path>
+        <kind>test</kind>
+        <symbol>TransformResponseInterceptor unit tests</symbol>
+        <lines>N/A</lines>
+        <reason>New interceptor test from Story 8.5-2 - validates response transformation logic</reason>
+      </artifact>
+
+      <!-- Source Files Referenced in Tests -->
+      <artifact>
+        <path>src/modules/i18n/i18n.service.ts</path>
+        <kind>service</kind>
+        <symbol>I18nService</symbol>
+        <lines>N/A</lines>
+        <reason>Service to be mocked in all unit tests after Story 8.5-3 - provides t() method for translation</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/logger/logger.service.ts</path>
+        <kind>service</kind>
+        <symbol>Logger</symbol>
+        <lines>N/A</lines>
+        <reason>Service to be mocked in all unit tests - provides log(), error(), warn(), debug() methods</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/interceptors/transform-response.interceptor.ts</path>
+        <kind>interceptor</kind>
+        <symbol>TransformResponseInterceptor</symbol>
+        <lines>N/A</lines>
+        <reason>Global interceptor from Story 8.5-2 - wraps responses in { success, status, data, message } format</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="jest" version="^30.0.0">Testing framework for unit and integration tests</package>
+        <package name="ts-jest" version="^29.2.5">TypeScript preprocessor for Jest</package>
+        <package name="@nestjs/testing" version="^11.0.1">NestJS testing utilities and Test module</package>
+        <package name="@types/jest" version="^30.0.0">TypeScript definitions for Jest</package>
+        <package name="supertest" version="^7.0.0">HTTP assertions library for E2E tests</package>
+        <package name="@types/supertest" version="^6.0.2">TypeScript definitions for supertest</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Testing Strategy: Unit tests must mock all external dependencies (Prisma, I18nService, Logger, external APIs). Fast execution, no database, no network.</constraint>
+    <constraint>E2E Testing Strategy: Use actual test database (isolated from dev/prod). Test complete request-response flow through HTTP. Slower execution but critical for integration validation.</constraint>
+    <constraint>Test Organization: Unit tests co-located with source files (src/modules/*/__tests__/). E2E tests in test/ directory at project root.</constraint>
+    <constraint>Mock Strategy: External services always mocked (Prisma, S3, email, SMS). Internal services mocked in unit tests, real in E2E. I18nService and Logger mocked in unit tests.</constraint>
+    <constraint>Test Isolation: Each test independent, no shared state. Use beforeEach to reset mocks. Use afterEach to clean up. Tests must pass regardless of execution order.</constraint>
+    <constraint>Coverage Requirements: Service layer minimum 80%, Controller layer minimum 70%, Critical paths 100% (authentication, authorization).</constraint>
+    <constraint>Response Format: E2E tests must validate new response format from Story 8.5-2: { success, status, data, message } for success, { success, status, data, count, message } for paginated.</constraint>
+    <constraint>Test Database: Use separate test database (DATABASE_URL_TEST). Run migrations before E2E tests. Clean data between tests. Must not affect production/development databases.</constraint>
+    <constraint>Jest Configuration: rootDir: src for unit tests, testEnvironment: node, transform: ts-jest, moduleNameMapper for path aliases (@/common, @/modules).</constraint>
+    <constraint>Dependencies: This story depends on Stories 8.5-1, 8.5-2, 8.5-3 being completed. Test updates align with base classes, response format, and i18n/logger integration.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>I18nService.t()</name>
+      <kind>Service method</kind>
+      <signature>t(key: string): string</signature>
+      <path>src/modules/i18n/i18n.service.ts</path>
+    </interface>
+    <interface>
+      <name>Logger methods</name>
+      <kind>Service methods</kind>
+      <signature>log(message: string, context?: string): void; error(message: string, trace?: string, context?: string): void; warn(message: string, context?: string): void; debug(message: string, context?: string): void</signature>
+      <path>src/common/logger/logger.service.ts</path>
+    </interface>
+    <interface>
+      <name>TransformResponseInterceptor</name>
+      <kind>NestJS Interceptor</kind>
+      <signature>intercept(context: ExecutionContext, next: CallHandler): Observable&lt;any&gt;</signature>
+      <path>src/common/interceptors/transform-response.interceptor.ts</path>
+    </interface>
+    <interface>
+      <name>Success Response Format</name>
+      <kind>API Response Structure</kind>
+      <signature>{ success: true, status: number, data: T, message: string }</signature>
+      <path>Global response format from TransformResponseInterceptor</path>
+    </interface>
+    <interface>
+      <name>Paginated Response Format</name>
+      <kind>API Response Structure</kind>
+      <signature>{ success: true, status: number, data: T[], count: number, message: string }</signature>
+      <path>Global response format for paginated endpoints</path>
+    </interface>
+    <interface>
+      <name>Error Response Format</name>
+      <kind>API Response Structure</kind>
+      <signature>{ success: false, status: number, message: string, errors?: any[] }</signature>
+      <path>Global error response format</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Unit tests use NestJS Testing module with Test.createTestingModule(). All external dependencies mocked using jest.fn(). AAA pattern (Arrange-Act-Assert) followed. E2E tests use supertest for HTTP assertions. Test naming: describe blocks for class/feature, it blocks start with 'should'. Test files: *.spec.ts for unit, *.e2e-spec.ts for E2E. Coverage thresholds: Services 80%+, Controllers 70%+. Test database isolated from dev/prod with cleanup between tests. Mock utilities created in test/utils/ for reusable I18nService, Logger, and Prisma mocks.
+    </standards>
+    <locations>
+      <location>src/modules/*/__tests__/*.spec.ts - Unit tests for services, controllers</location>
+      <location>src/common/guards/*.spec.ts - Guard unit tests</location>
+      <location>src/common/interceptors/__tests__/*.spec.ts - Interceptor unit tests</location>
+      <location>src/common/utils/__tests__/*.spec.ts - Utility function tests</location>
+      <location>test/*.e2e-spec.ts - E2E integration tests</location>
+      <location>test/utils/ - Shared test utilities and mocks (to be created)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-8.5-4.1">Run npm run test, capture all failures, categorize by type (mock issues, import errors, assertion failures), create prioritized fix list</idea>
+      <idea ac="AC-8.5-4.2">Run npm run test:e2e, identify database connection issues, test isolation problems, response format assertion failures</idea>
+      <idea ac="AC-8.5-4.3">Create reusable mock utilities: mockI18nService with t() returning key, mockLogger with all log methods, mockPrismaService helpers, export from test/utils/index.ts</idea>
+      <idea ac="AC-8.5-4.3">Update all service tests to include I18nService mock in providers array, verify i18n.t() calls with correct keys</idea>
+      <idea ac="AC-8.5-4.3">Update all controller and service tests to include Logger mock, verify appropriate logging calls</idea>
+      <idea ac="AC-8.5-4.4">Update E2E response assertions to check new format: expect(res.body).toHaveProperty('success', true), expect(res.body).toHaveProperty('status'), expect(res.body).toHaveProperty('data'), expect(res.body).toHaveProperty('message')</idea>
+      <idea ac="AC-8.5-4.4">Create helper function for E2E response validation: validateSuccessResponse(body, expectedStatus), validatePaginatedResponse(body), validateErrorResponse(body, expectedStatus)</idea>
+      <idea ac="AC-8.5-4.5">Create .env.test file with DATABASE_URL_TEST, configure Prisma test client, implement beforeAll hook to run migrations, implement afterEach hook for data cleanup</idea>
+      <idea ac="AC-8.5-4.6">Review jest.config.js in package.json: verify moduleNameMapper for path aliases, check transform config, verify testEnvironment is 'node', update coverage thresholds if needed</idea>
+      <idea ac="AC-8.5-4.7">Scan all test files for import errors using grep, update deprecated imports, fix path aliases, verify all TypeScript types resolve correctly</idea>
+      <idea ac="AC-8.5-4.8">Run npm run test:cov to generate coverage report, identify uncovered critical paths, add missing unit tests for new base classes and interceptor from Story 8.5-2</idea>
+      <idea ac="AC-8.5-4.9">Test isolation: Run tests 10 times to check for flakiness, run with --shuffle flag to verify order independence, run with --maxWorkers=4 to test parallel execution, fix any race conditions</idea>
+      <idea ac="AC-8.5-4.10">Create test:ci script in package.json with --ci flag, configure CI-friendly reporters, document test database setup for Docker/CI, ensure tests run without local environment dependencies</idea>
+    </ideas>
+  </tests>
+</story-context>

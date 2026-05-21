@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PTT Chat Test Console</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+      :root {
+        --bg-primary: #0a0a0f;
+        --bg-secondary: #12121a;
+        --bg-tertiary: #1a1a24;
+        --bg-hover: #22222e;
+        --border-color: #2a2a3a;
+        --text-primary: #e8e8f0;
+        --text-secondary: #8888a0;
+        --text-muted: #5a5a70;
+        --accent-green: #00ff88;
+        --accent-cyan: #00d4ff;
+        --accent-orange: #ff9f43;
+        --accent-red: #ff5757;
+        --accent-purple: #a855f7;
+        --glow-green: 0 0 20px rgba(0, 255, 136, 0.3);
+        --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'JetBrains Mono', monospace;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        background-image:
+          linear-gradient(rgba(0, 255, 136, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 255, 136, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+      .connection-bar {
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .connection-bar .logo {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--accent-green);
+        text-shadow: var(--glow-green);
+      }
+      .connection-bar .logo span {
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+      .input-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .input-group label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .input-group input {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 12px;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: all 0.2s;
+      }
+      .input-group input:focus {
+        border-color: var(--accent-cyan);
+        box-shadow: var(--glow-cyan);
+      }
+      .input-group input.url-input {
+        width: 200px;
+      }
+      .input-group input.token-input {
+        width: 300px;
+      }
+      .btn {
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .btn-connect {
+        background: var(--accent-green);
+        color: var(--bg-primary);
+      }
+      .btn-connect:hover {
+        box-shadow: var(--glow-green);
+        transform: translateY(-1px);
+      }
+      .btn-disconnect {
+        background: var(--accent-red);
+        color: white;
+      }
+      .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+      }
+      .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--accent-cyan);
+      }
+      .btn-action {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        color: white;
+      }
+      .btn-action:hover {
+        box-shadow: var(--glow-cyan);
+      }
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--bg-tertiary);
+        border-radius: 20px;
+        font-size: 11px;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+      .status-dot.connected {
+        background: var(--accent-green);
+        box-shadow: var(--glow-green);
+        animation: pulse 2s infinite;
+      }
+      .status-dot.connecting {
+        background: var(--accent-orange);
+        animation: pulse 0.5s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .main-container {
+        display: grid;
+        grid-template-columns: 280px 1fr 320px;
+        height: calc(100vh - 120px);
+      }
+      .panel {
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+      }
+      .panel:last-child {
+        border-right: none;
+      }
+      .panel-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .panel-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-muted);
+      }
+      .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px;
+      }
+      .panel-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .panel-content::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+      }
+      .panel-content::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+      }
+      .conversation-item {
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 8px;
+        border: 1px solid transparent;
+      }
+      .conversation-item:hover {
+        background: var(--bg-hover);
+      }
+      .conversation-item.active {
+        background: var(--bg-tertiary);
+        border-color: var(--accent-cyan);
+      }
+      .conversation-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+      .conversation-name {
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .conversation-badge {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .badge-direct {
+        background: rgba(0, 212, 255, 0.2);
+        color: var(--accent-cyan);
+      }
+      .badge-group {
+        background: rgba(168, 85, 247, 0.2);
+        color: var(--accent-purple);
+      }
+      .conversation-preview {
+        font-size: 11px;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .conversation-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 6px;
+      }
+      .conversation-time {
+        font-size: 10px;
+        color: var(--text-muted);
+      }
+      .unread-badge {
+        background: var(--accent-green);
+        color: var(--bg-primary);
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 10px;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+      }
+      .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+      }
+      .messages-panel {
+        display: flex;
+        flex-direction: column;
+      }
+      .messages-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+      }
+      .message-item {
+        margin-bottom: 16px;
+        max-width: 80%;
+      }
+      .message-item.own {
+        margin-left: auto;
+      }
+      .message-bubble {
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: var(--bg-tertiary);
+        position: relative;
+      }
+      .message-item.own .message-bubble {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(168, 85, 247, 0.2));
+        border: 1px solid rgba(0, 212, 255, 0.3);
+      }
+      .message-sender {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent-cyan);
+        margin-bottom: 4px;
+      }
+      .message-content {
+        font-size: 13px;
+        line-height: 1.5;
+        word-wrap: break-word;
+      }
+      .message-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 6px;
+        font-size: 10px;
+        color: var(--text-muted);
+      }
+      .message-edited {
+        color: var(--accent-orange);
+      }
+      .message-actions {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: none;
+        gap: 4px;
+      }
+      .message-bubble:hover .message-actions {
+        display: flex;
+      }
+      .message-action-btn {
+        background: var(--bg-secondary);
+        border: none;
+        color: var(--text-muted);
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .message-action-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+      }
+      .typing-indicator {
+        padding: 12px 16px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-style: italic;
+        display: none;
+      }
+      .typing-indicator.visible {
+        display: block;
+      }
+      .message-input-container {
+        padding: 16px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+      }
+      .reply-indicator {
+        display: none;
+        padding: 8px 12px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        font-size: 11px;
+        color: var(--text-secondary);
+        position: relative;
+        border-left: 3px solid var(--accent-cyan);
+      }
+      .reply-indicator.visible {
+        display: block;
+      }
+      .reply-close {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .message-input-row {
+        display: flex;
+        gap: 12px;
+      }
+      .message-input {
+        flex: 1;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+        resize: none;
+        min-height: 44px;
+        max-height: 120px;
+      }
+      .message-input:focus {
+        border-color: var(--accent-cyan);
+      }
+      .send-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .btn-send {
+        background: var(--accent-green);
+        color: var(--bg-primary);
+        font-weight: 700;
+      }
+      .btn-send-rest {
+        font-size: 9px;
+        padding: 4px 8px;
+        background: var(--bg-tertiary);
+        color: var(--text-muted);
+      }
+      .debug-panel {
+        background: var(--bg-secondary);
+      }
+      .event-log {
+        font-size: 11px;
+      }
+      .event-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .event-timestamp {
+        color: var(--text-muted);
+        font-size: 9px;
+        margin-bottom: 4px;
+      }
+      .event-direction {
+        display: inline-block;
+        width: 20px;
+        font-weight: 700;
+      }
+      .event-direction.outgoing {
+        color: var(--accent-orange);
+      }
+      .event-direction.incoming {
+        color: var(--accent-green);
+      }
+      .event-name {
+        color: var(--accent-cyan);
+        font-weight: 600;
+      }
+      .event-data {
+        margin-top: 4px;
+        padding: 8px;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        overflow-x: auto;
+        color: var(--text-secondary);
+        font-size: 10px;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .actions-bar {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        padding: 12px 20px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .modal-overlay.visible {
+        display: flex;
+      }
+      .modal {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+        width: 400px;
+        max-width: 90vw;
+      }
+      .modal-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: var(--accent-cyan);
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 10px 12px;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+      }
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        border-color: var(--accent-cyan);
+      }
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+      }
+      .modal-actions .btn {
+        flex: 1;
+      }
+      .participants-sidebar {
+        position: fixed;
+        top: 0;
+        right: -350px;
+        width: 350px;
+        height: 100vh;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        transition: right 0.3s ease;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+      }
+      .participants-sidebar.visible {
+        right: 0;
+      }
+      .participant-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .participant-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .participant-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .participant-name {
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .participant-role {
+        font-size: 10px;
+        color: var(--accent-orange);
+        text-transform: uppercase;
+      }
+      .btn-remove-participant {
+        background: transparent;
+        border: none;
+        color: var(--accent-red);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 4px;
+      }
+      @media (max-width: 900px) {
+        .main-container {
+          grid-template-columns: 1fr;
+        }
+        .panel {
+          display: none;
+        }
+        .panel.active {
+          display: flex;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="connection-bar">
+      <div class="logo">PTT<span>Chat</span></div>
+      <div class="input-group">
+        <label>API URL</label>
+        <input type="text" id="apiUrl" class="url-input" value="http://localhost:3003" />
+      </div>
+      <div class="input-group">
+        <label>JWT Token</label>
+        <input type="text" id="jwtToken" class="token-input" placeholder="Paste your JWT token..." />
+      </div>
+      <button id="btnConnect" class="btn btn-connect">Connect</button>
+      <button id="btnDisconnect" class="btn btn-disconnect" style="display: none">Disconnect</button>
+      <div class="status-indicator">
+        <div id="statusDot" class="status-dot"></div>
+        <span id="statusText">Disconnected</span>
+      </div>
+      <div style="margin-left: auto">
+        <span id="currentUserId" style="font-size: 11px; color: var(--text-muted)"></span>
+      </div>
+    </div>
+
+    <div class="main-container">
+      <div class="panel" id="conversationsPanel">
+        <div class="panel-header">
+          <span class="panel-title">Conversations</span>
+          <button class="btn btn-secondary" onclick="loadConversations()">↻</button>
+        </div>
+        <div class="panel-content" id="conversationsList">
+          <div class="empty-state">
+            <div class="empty-state-icon">💬</div>
+            <p>Connect to load conversations</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel messages-panel" id="messagesPanel">
+        <div class="panel-header">
+          <span class="panel-title" id="activeConversationTitle">Select a conversation</span>
+          <button class="btn btn-secondary" id="btnParticipants" onclick="toggleParticipants()" style="display: none">
+            👥
+          </button>
+        </div>
+        <div class="messages-list" id="messagesList">
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <p>Select a conversation to view messages</p>
+          </div>
+        </div>
+        <div class="typing-indicator" id="typingIndicator"></div>
+        <div class="message-input-container">
+          <div class="reply-indicator" id="replyIndicator">
+            <span id="replyText">Replying to message...</span>
+            <button class="reply-close" onclick="cancelReply()">×</button>
+          </div>
+          <div class="message-input-row">
+            <textarea
+              id="messageInput"
+              class="message-input"
+              placeholder="Type a message..."
+              rows="1"
+              onkeydown="handleInputKeydown(event)"
+              oninput="handleTyping()"
+            ></textarea>
+            <div class="send-buttons">
+              <button class="btn btn-send" onclick="sendMessage()">Send</button>
+              <button class="btn btn-send-rest" onclick="sendMessageRest()">REST</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel debug-panel">
+        <div class="panel-header">
+          <span class="panel-title">Event Log</span>
+          <button class="btn btn-secondary" onclick="clearEventLog()">Clear</button>
+        </div>
+        <div class="panel-content event-log" id="eventLog"></div>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn btn-action" onclick="showCreateDirectModal()">+ Direct Chat</button>
+      <button class="btn btn-action" onclick="showCreateGroupModal()">+ Group Chat</button>
+      <button
+        class="btn btn-secondary"
+        onclick="showAddParticipantModal()"
+        id="btnAddParticipant"
+        style="display: none"
+      >
+        Add Participant
+      </button>
+      <button class="btn btn-secondary" onclick="leaveConversation()" id="btnLeave" style="display: none">Leave</button>
+    </div>
+
+    <div class="modal-overlay" id="createDirectModal">
+      <div class="modal">
+        <div class="modal-title">Start Direct Chat</div>
+        <div class="form-group">
+          <label>User ID</label><input type="text" id="directUserId" placeholder="Enter user UUID..." />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="hideModal('createDirectModal')">Cancel</button>
+          <button class="btn btn-action" onclick="createDirectConversation()">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="createGroupModal">
+      <div class="modal">
+        <div class="modal-title">Create Group Chat</div>
+        <div class="form-group">
+          <label>Group Name</label><input type="text" id="groupName" placeholder="Enter group name..." />
+        </div>
+        <div class="form-group">
+          <label>Participant IDs (comma-separated)</label
+          ><textarea id="groupParticipants" rows="3" placeholder="uuid1, uuid2..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="hideModal('createGroupModal')">Cancel</button>
+          <button class="btn btn-action" onclick="createGroupConversation()">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="addParticipantModal">
+      <div class="modal">
+        <div class="modal-title">Add Participant</div>
+        <div class="form-group">
+          <label>User ID</label><input type="text" id="newParticipantId" placeholder="Enter user UUID..." />
+        </div>
+        <div class="form-group">
+          <label>Role</label
+          ><select id="newParticipantRole">
+            <option value="false">Member</option>
+            <option value="true">Admin</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="hideModal('addParticipantModal')">Cancel</button>
+          <button class="btn btn-action" onclick="addParticipant()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="editMessageModal">
+      <div class="modal">
+        <div class="modal-title">Edit Message</div>
+        <div class="form-group"><label>Content</label><textarea id="editMessageContent" rows="4"></textarea></div>
+        <input type="hidden" id="editMessageId" />
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="hideModal('editMessageModal')">Cancel</button>
+          <button class="btn btn-action" onclick="saveEditedMessage()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="participants-sidebar" id="participantsSidebar">
+      <div class="panel-header">
+        <span class="panel-title">Participants</span>
+        <button class="btn btn-secondary" onclick="toggleParticipants()">×</button>
+      </div>
+      <div class="panel-content" id="participantsList"></div>
+    </div>
+
+    <script>
+      let socket = null,
+        currentUserId = null,
+        activeConversation = null,
+        conversations = [],
+        messages = [],
+        replyToMessageId = null,
+        typingTimeout = null,
+        isTyping = false;
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const savedUrl = localStorage.getItem('chat_api_url');
+        const savedToken = localStorage.getItem('chat_jwt_token');
+        if (savedUrl) document.getElementById('apiUrl').value = savedUrl;
+        if (savedToken) document.getElementById('jwtToken').value = savedToken;
+      });
+
+      document.getElementById('btnConnect').addEventListener('click', connect);
+      document.getElementById('btnDisconnect').addEventListener('click', disconnect);
+
+      function connect() {
+        const apiUrl = document.getElementById('apiUrl').value.trim();
+        const token = document.getElementById('jwtToken').value.trim();
+        if (!apiUrl || !token) {
+          logEvent('error', 'incoming', { message: 'API URL and JWT token required' });
+          return;
+        }
+        localStorage.setItem('chat_api_url', apiUrl);
+        localStorage.setItem('chat_jwt_token', token);
+        updateStatus('connecting');
+
+        socket = io(apiUrl + '/chat', { auth: { token }, transports: ['websocket', 'polling'] });
+
+        socket.on('connect', () => {
+          logEvent('connect', 'incoming', { socketId: socket.id });
+        });
+
+        socket.on('connection:ack', (data) => {
+          currentUserId = data.userId;
+          document.getElementById('currentUserId').textContent = 'User: ' + currentUserId.substring(0, 8) + '...';
+          updateStatus('connected');
+          logEvent('connection:ack', 'incoming', data);
+          loadConversations();
+        });
+
+        socket.on('connect_error', (error) => {
+          logEvent('connect_error', 'incoming', { message: error.message });
+          updateStatus('disconnected');
+        });
+
+        socket.on('disconnect', (reason) => {
+          updateStatus('disconnected');
+          logEvent('disconnect', 'incoming', { reason });
+        });
+
+        socket.on('error', (error) => logEvent('error', 'incoming', error));
+        socket.on('message:new', handleNewMessage);
+        socket.on('message:updated', handleMessageUpdated);
+        socket.on('message:deleted', handleMessageDeleted);
+        socket.on('message:read', handleMessageRead);
+        socket.on('typing:start', handleTypingStart);
+        socket.on('typing:stop', handleTypingStop);
+
+        document.getElementById('btnConnect').style.display = 'none';
+        document.getElementById('btnDisconnect').style.display = 'inline-block';
+      }
+
+      function disconnect() {
+        if (socket) {
+          socket.disconnect();
+          socket = null;
+        }
+        currentUserId = null;
+        activeConversation = null;
+        conversations = [];
+        messages = [];
+        document.getElementById('currentUserId').textContent = '';
+        renderEmptyConversations();
+        renderEmptyMessages();
+        document.getElementById('activeConversationTitle').textContent = 'Select a conversation';
+        updateStatus('disconnected');
+        document.getElementById('btnConnect').style.display = 'inline-block';
+        document.getElementById('btnDisconnect').style.display = 'none';
+      }
+
+      function updateStatus(status) {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        dot.className = 'status-dot';
+        if (status === 'connected') {
+          dot.classList.add('connected');
+          text.textContent = 'Connected';
+        } else if (status === 'connecting') {
+          dot.classList.add('connecting');
+          text.textContent = 'Connecting...';
+        } else {
+          text.textContent = 'Disconnected';
+        }
+      }
+
+      async function apiCall(method, endpoint, body = null) {
+        const apiUrl = document.getElementById('apiUrl').value.trim();
+        const token = document.getElementById('jwtToken').value.trim();
+        const options = { method, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' } };
+        if (body) options.body = JSON.stringify(body);
+
+        logEvent('REST ' + method + ' ' + endpoint, 'outgoing', body || {});
+
+        try {
+          const response = await fetch(apiUrl + endpoint, options);
+          const data = await response.json();
+          logEvent('REST Response', 'incoming', data);
+          return data;
+        } catch (err) {
+          logEvent('REST Error', 'incoming', { error: err.message });
+          throw err;
+        }
+      }
+
+      async function loadConversations() {
+        try {
+          const result = await apiCall('GET', '/chat/conversations?take=50');
+          // Backend returns { success, status, data: [...], count }
+          conversations = result.data || [];
+          renderConversations();
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+      }
+
+      function renderConversations() {
+        const container = document.getElementById('conversationsList');
+        container.textContent = '';
+
+        if (!conversations || conversations.length === 0) {
+          renderEmptyConversations();
+          return;
+        }
+
+        conversations.forEach((conv) => {
+          const item = document.createElement('div');
+          item.className = 'conversation-item' + (activeConversation?.id === conv.id ? ' active' : '');
+          item.onclick = () => selectConversation(conv.id);
+
+          const header = document.createElement('div');
+          header.className = 'conversation-header';
+
+          const name = document.createElement('span');
+          name.className = 'conversation-name';
+          name.textContent = conv.name || getDirectChatName(conv);
+
+          const badge = document.createElement('span');
+          badge.className = 'conversation-badge badge-' + (conv.type || 'direct').toLowerCase();
+          badge.textContent = conv.type || 'DIRECT';
+
+          header.appendChild(name);
+          header.appendChild(badge);
+
+          const preview = document.createElement('div');
+          preview.className = 'conversation-preview';
+          preview.textContent = conv.lastMessage?.content || 'No messages yet';
+
+          const meta = document.createElement('div');
+          meta.className = 'conversation-meta';
+
+          const time = document.createElement('span');
+          time.className = 'conversation-time';
+          time.textContent = conv.lastMessageAt ? formatTime(conv.lastMessageAt) : '';
+          meta.appendChild(time);
+
+          if (conv.unreadCount > 0) {
+            const unread = document.createElement('span');
+            unread.className = 'unread-badge';
+            unread.textContent = conv.unreadCount;
+            meta.appendChild(unread);
+          }
+
+          item.appendChild(header);
+          item.appendChild(preview);
+          item.appendChild(meta);
+          container.appendChild(item);
+        });
+      }
+
+      function renderEmptyConversations() {
+        const container = document.getElementById('conversationsList');
+        container.textContent = '';
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        const icon = document.createElement('div');
+        icon.className = 'empty-state-icon';
+        icon.textContent = '💬';
+        const p = document.createElement('p');
+        p.textContent = conversations.length === 0 ? 'No conversations yet' : 'Connect to load conversations';
+        empty.appendChild(icon);
+        empty.appendChild(p);
+        container.appendChild(empty);
+      }
+
+      function renderEmptyMessages() {
+        const container = document.getElementById('messagesList');
+        container.textContent = '';
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        const icon = document.createElement('div');
+        icon.className = 'empty-state-icon';
+        icon.textContent = '📝';
+        const p = document.createElement('p');
+        p.textContent = 'Select a conversation';
+        empty.appendChild(icon);
+        empty.appendChild(p);
+        container.appendChild(empty);
+      }
+
+      function getDirectChatName(conv) {
+        if (conv.type !== 'DIRECT' || !conv.participants) return 'Direct Chat';
+        const other = conv.participants.find((p) => p.user?.id !== currentUserId);
+        return other?.user ? other.user.firstName + ' ' + other.user.lastName : 'Direct Chat';
+      }
+
+      async function selectConversation(conversationId) {
+        const conv = conversations.find((c) => c.id === conversationId);
+        if (!conv) return;
+
+        activeConversation = conv;
+        document.getElementById('activeConversationTitle').textContent = conv.name || getDirectChatName(conv);
+        document.getElementById('btnParticipants').style.display = conv.type === 'GROUP' ? 'inline-block' : 'none';
+        document.getElementById('btnAddParticipant').style.display = conv.type === 'GROUP' ? 'inline-block' : 'none';
+        document.getElementById('btnLeave').style.display = 'inline-block';
+
+        if (socket && socket.connected) {
+          socket.emit('conversation:join', { conversationId });
+          logEvent('conversation:join', 'outgoing', { conversationId });
+        }
+
+        await loadMessages(conversationId);
+        renderConversations();
+      }
+
+      async function loadMessages(conversationId) {
+        try {
+          const result = await apiCall('GET', '/chat/conversations/' + conversationId + '/messages?take=50');
+          // Backend returns { success, status, data: [...], count }
+          messages = (result.data || []).slice().reverse();
+          renderMessages();
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+      }
+
+      function renderMessages() {
+        const container = document.getElementById('messagesList');
+        container.textContent = '';
+
+        if (!messages || messages.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          const icon = document.createElement('div');
+          icon.className = 'empty-state-icon';
+          icon.textContent = '📝';
+          const p = document.createElement('p');
+          p.textContent = 'No messages yet. Start the conversation!';
+          empty.appendChild(icon);
+          empty.appendChild(p);
+          container.appendChild(empty);
+          return;
+        }
+
+        messages.forEach((msg) => {
+          const senderId = msg.senderID || msg.senderId;
+          const isOwn = senderId === currentUserId;
+
+          const item = document.createElement('div');
+          item.className = 'message-item' + (isOwn ? ' own' : '');
+          item.dataset.id = msg.id;
+
+          const bubble = document.createElement('div');
+          bubble.className = 'message-bubble';
+
+          if (!isOwn) {
+            const sender = document.createElement('div');
+            sender.className = 'message-sender';
+            const senderName = msg.sender ? msg.sender.firstName + ' ' + (msg.sender.lastName || '') : 'Unknown';
+            sender.textContent = senderName;
+            bubble.appendChild(sender);
+          }
+
+          const content = document.createElement('div');
+          content.className = 'message-content';
+          content.textContent = msg.content || '';
+
+          const meta = document.createElement('div');
+          meta.className = 'message-meta';
+
+          const time = document.createElement('span');
+          time.textContent = formatTime(msg.createdAt);
+          meta.appendChild(time);
+
+          if (msg.isEdited) {
+            const edited = document.createElement('span');
+            edited.className = 'message-edited';
+            edited.textContent = '(edited)';
+            meta.appendChild(edited);
+          }
+
+          const actions = document.createElement('div');
+          actions.className = 'message-actions';
+
+          if (isOwn) {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'message-action-btn';
+            editBtn.textContent = '✏️';
+            editBtn.onclick = (e) => {
+              e.stopPropagation();
+              showEditModal(msg.id, msg.content);
+            };
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'message-action-btn';
+            delBtn.textContent = '🗑️';
+            delBtn.onclick = (e) => {
+              e.stopPropagation();
+              deleteMessage(msg.id);
+            };
+
+            actions.appendChild(editBtn);
+            actions.appendChild(delBtn);
+          } else {
+            const replyBtn = document.createElement('button');
+            replyBtn.className = 'message-action-btn';
+            replyBtn.textContent = '↩️';
+            replyBtn.onclick = (e) => {
+              e.stopPropagation();
+              setReplyTo(msg.id, msg.content);
+            };
+            actions.appendChild(replyBtn);
+          }
+
+          bubble.appendChild(content);
+          bubble.appendChild(meta);
+          bubble.appendChild(actions);
+          item.appendChild(bubble);
+          container.appendChild(item);
+        });
+
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function sendMessage() {
+        if (!socket || !socket.connected) {
+          logEvent('error', 'incoming', { message: 'Not connected to WebSocket' });
+          return;
+        }
+        if (!activeConversation) {
+          logEvent('error', 'incoming', { message: 'No conversation selected' });
+          return;
+        }
+
+        const input = document.getElementById('messageInput');
+        const content = input.value.trim();
+        if (!content) return;
+
+        const payload = { conversationId: activeConversation.id, content, type: 'TEXT' };
+        if (replyToMessageId) payload.replyToId = replyToMessageId;
+
+        logEvent('message:send', 'outgoing', payload);
+
+        socket.emit('message:send', payload, (response) => {
+          logEvent('message:send callback', 'incoming', response);
+          if (response && response.success && response.message) {
+            const msg = response.message;
+            messages.push({
+              id: msg.id,
+              content: msg.content,
+              senderID: msg.senderId,
+              createdAt: msg.createdAt,
+              isEdited: false,
+              sender: { firstName: 'You', lastName: '' },
+            });
+            renderMessages();
+          }
+        });
+
+        input.value = '';
+        cancelReply();
+        stopTyping();
+      }
+
+      async function sendMessageRest() {
+        if (!activeConversation) {
+          logEvent('error', 'incoming', { message: 'No conversation selected' });
+          return;
+        }
+
+        const input = document.getElementById('messageInput');
+        const content = input.value.trim();
+        if (!content) return;
+
+        const body = { content, type: 'TEXT' };
+        if (replyToMessageId) body.replyToId = replyToMessageId;
+
+        try {
+          const result = await apiCall('POST', '/chat/conversations/' + activeConversation.id + '/messages', body);
+          if (result.data) {
+            const msg = result.data;
+            messages.push({
+              id: msg.id,
+              content: msg.content,
+              senderID: msg.senderID || msg.senderId,
+              createdAt: msg.createdAt,
+              isEdited: false,
+              sender: { firstName: 'You', lastName: '' },
+            });
+            renderMessages();
+          }
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+
+        input.value = '';
+        cancelReply();
+      }
+
+      function handleNewMessage(message) {
+        logEvent('message:new', 'incoming', message);
+        if (activeConversation && message.conversationId === activeConversation.id) {
+          messages.push({
+            id: message.id,
+            content: message.content,
+            senderID: message.senderId,
+            createdAt: message.createdAt,
+            isEdited: message.isEdited,
+            sender: {
+              firstName: message.senderName?.split(' ')[0] || 'Unknown',
+              lastName: message.senderName?.split(' ')[1] || '',
+            },
+          });
+          renderMessages();
+        }
+        loadConversations();
+      }
+
+      function handleMessageUpdated(message) {
+        logEvent('message:updated', 'incoming', message);
+        const idx = messages.findIndex((m) => m.id === message.id);
+        if (idx !== -1) {
+          messages[idx].content = message.content;
+          messages[idx].isEdited = true;
+          renderMessages();
+        }
+      }
+
+      function handleMessageDeleted(data) {
+        logEvent('message:deleted', 'incoming', data);
+        const idx = messages.findIndex((m) => m.id === data.messageId);
+        if (idx !== -1) {
+          messages.splice(idx, 1);
+          renderMessages();
+        }
+      }
+
+      function handleMessageRead(data) {
+        logEvent('message:read', 'incoming', data);
+      }
+
+      function handleTyping() {
+        if (!socket || !socket.connected || !activeConversation) return;
+        if (!isTyping) {
+          isTyping = true;
+          socket.emit('typing:start', { conversationId: activeConversation.id });
+          logEvent('typing:start', 'outgoing', { conversationId: activeConversation.id });
+        }
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(stopTyping, 2000);
+      }
+
+      function stopTyping() {
+        if (!socket || !socket.connected || !activeConversation || !isTyping) return;
+        isTyping = false;
+        socket.emit('typing:stop', { conversationId: activeConversation.id });
+        logEvent('typing:stop', 'outgoing', { conversationId: activeConversation.id });
+      }
+
+      function handleTypingStart(data) {
+        logEvent('typing:start', 'incoming', data);
+        if (activeConversation && data.conversationId === activeConversation.id) {
+          const indicator = document.getElementById('typingIndicator');
+          indicator.textContent = data.userName + ' is typing...';
+          indicator.classList.add('visible');
+        }
+      }
+
+      function handleTypingStop(data) {
+        logEvent('typing:stop', 'incoming', data);
+        if (activeConversation && data.conversationId === activeConversation.id) {
+          document.getElementById('typingIndicator').classList.remove('visible');
+        }
+      }
+
+      function setReplyTo(messageId, content) {
+        replyToMessageId = messageId;
+        document.getElementById('replyText').textContent = 'Replying to: "' + (content || '').substring(0, 50) + '..."';
+        document.getElementById('replyIndicator').classList.add('visible');
+        document.getElementById('messageInput').focus();
+      }
+
+      function cancelReply() {
+        replyToMessageId = null;
+        document.getElementById('replyIndicator').classList.remove('visible');
+      }
+
+      function showEditModal(messageId, content) {
+        document.getElementById('editMessageId').value = messageId;
+        document.getElementById('editMessageContent').value = content || '';
+        showModal('editMessageModal');
+      }
+
+      async function saveEditedMessage() {
+        const messageId = document.getElementById('editMessageId').value;
+        const content = document.getElementById('editMessageContent').value.trim();
+        if (!content) return;
+        try {
+          await apiCall('PATCH', '/chat/messages/' + messageId, { content });
+          const idx = messages.findIndex((m) => m.id === messageId);
+          if (idx !== -1) {
+            messages[idx].content = content;
+            messages[idx].isEdited = true;
+            renderMessages();
+          }
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+        hideModal('editMessageModal');
+      }
+
+      async function deleteMessage(messageId) {
+        if (!confirm('Delete this message?')) return;
+        try {
+          await apiCall('DELETE', '/chat/messages/' + messageId);
+          const idx = messages.findIndex((m) => m.id === messageId);
+          if (idx !== -1) {
+            messages.splice(idx, 1);
+            renderMessages();
+          }
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+      }
+
+      async function createDirectConversation() {
+        const userId = document.getElementById('directUserId').value.trim();
+        if (!userId) {
+          alert('User ID is required');
+          return;
+        }
+
+        try {
+          const result = await apiCall('POST', '/chat/conversations', { type: 'DIRECT', participantIds: [userId] });
+          hideModal('createDirectModal');
+          document.getElementById('directUserId').value = '';
+
+          if (result.success && result.data) {
+            await loadConversations();
+            await selectConversation(result.data.id);
+          }
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+      }
+
+      async function createGroupConversation() {
+        const name = document.getElementById('groupName').value.trim();
+        const participantsStr = document.getElementById('groupParticipants').value.trim();
+        if (!name) {
+          alert('Group name is required');
+          return;
+        }
+
+        const participantIds = participantsStr
+          .split(',')
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0);
+        if (participantIds.length === 0) {
+          alert('At least one participant is required');
+          return;
+        }
+
+        try {
+          const result = await apiCall('POST', '/chat/conversations', { type: 'GROUP', name, participantIds });
+          hideModal('createGroupModal');
+          document.getElementById('groupName').value = '';
+          document.getElementById('groupParticipants').value = '';
+
+          if (result.success && result.data) {
+            await loadConversations();
+            await selectConversation(result.data.id);
+          }
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+      }
+
+      function toggleParticipants() {
+        const sidebar = document.getElementById('participantsSidebar');
+        sidebar.classList.toggle('visible');
+        if (sidebar.classList.contains('visible') && activeConversation) renderParticipants();
+      }
+
+      function renderParticipants() {
+        const container = document.getElementById('participantsList');
+        container.textContent = '';
+        const participants = activeConversation?.participants || [];
+
+        participants.forEach((p) => {
+          const item = document.createElement('div');
+          item.className = 'participant-item';
+
+          const info = document.createElement('div');
+          info.className = 'participant-info';
+
+          const avatar = document.createElement('div');
+          avatar.className = 'participant-avatar';
+          avatar.textContent = (p.user?.firstName?.[0] || '?').toUpperCase();
+
+          const details = document.createElement('div');
+          const name = document.createElement('div');
+          name.className = 'participant-name';
+          name.textContent = (p.user?.firstName || 'Unknown') + ' ' + (p.user?.lastName || '');
+          details.appendChild(name);
+
+          if (p.isAdmin) {
+            const role = document.createElement('div');
+            role.className = 'participant-role';
+            role.textContent = 'Admin';
+            details.appendChild(role);
+          }
+
+          info.appendChild(avatar);
+          info.appendChild(details);
+          item.appendChild(info);
+
+          if (p.user?.id !== currentUserId) {
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn-remove-participant';
+            removeBtn.textContent = '✕';
+            removeBtn.onclick = () => removeParticipant(p.user?.id);
+            item.appendChild(removeBtn);
+          }
+
+          container.appendChild(item);
+        });
+      }
+
+      async function addParticipant() {
+        if (!activeConversation) return;
+        const userId = document.getElementById('newParticipantId').value.trim();
+        const isAdmin = document.getElementById('newParticipantRole').value === 'true';
+        if (!userId) {
+          alert('User ID is required');
+          return;
+        }
+
+        try {
+          await apiCall('POST', '/chat/conversations/' + activeConversation.id + '/participants', { userId, isAdmin });
+          await loadConversations();
+          const conv = conversations.find((c) => c.id === activeConversation.id);
+          if (conv) {
+            activeConversation = conv;
+            renderParticipants();
+          }
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+        hideModal('addParticipantModal');
+        document.getElementById('newParticipantId').value = '';
+      }
+
+      async function removeParticipant(userId) {
+        if (!activeConversation || !confirm('Remove this participant?')) return;
+        try {
+          await apiCall('DELETE', '/chat/conversations/' + activeConversation.id + '/participants/' + userId);
+          await loadConversations();
+          const conv = conversations.find((c) => c.id === activeConversation.id);
+          if (conv) {
+            activeConversation = conv;
+            renderParticipants();
+          }
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+      }
+
+      async function leaveConversation() {
+        if (!activeConversation || !confirm('Leave this conversation?')) return;
+        try {
+          await apiCall('POST', '/chat/conversations/' + activeConversation.id + '/leave');
+          activeConversation = null;
+          messages = [];
+          renderEmptyMessages();
+          document.getElementById('activeConversationTitle').textContent = 'Select a conversation';
+          document.getElementById('btnParticipants').style.display = 'none';
+          document.getElementById('btnAddParticipant').style.display = 'none';
+          document.getElementById('btnLeave').style.display = 'none';
+          await loadConversations();
+        } catch (e) {
+          logEvent('error', 'incoming', { message: e.message });
+        }
+      }
+
+      function logEvent(name, direction, data) {
+        const container = document.getElementById('eventLog');
+        const item = document.createElement('div');
+        item.className = 'event-item';
+
+        const timestamp = document.createElement('div');
+        timestamp.className = 'event-timestamp';
+        timestamp.textContent = new Date().toLocaleTimeString();
+
+        const dir = document.createElement('span');
+        dir.className = 'event-direction ' + direction;
+        dir.textContent = direction === 'outgoing' ? '→' : '←';
+
+        const eventName = document.createElement('span');
+        eventName.className = 'event-name';
+        eventName.textContent = ' ' + name;
+
+        const eventData = document.createElement('div');
+        eventData.className = 'event-data';
+        try {
+          eventData.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          eventData.textContent = String(data);
+        }
+
+        item.appendChild(timestamp);
+        item.appendChild(dir);
+        item.appendChild(eventName);
+        item.appendChild(eventData);
+        container.insertBefore(item, container.firstChild);
+
+        while (container.children.length > 100) container.lastChild.remove();
+      }
+
+      function clearEventLog() {
+        document.getElementById('eventLog').textContent = '';
+      }
+
+      function showModal(id) {
+        document.getElementById(id).classList.add('visible');
+      }
+
+      function hideModal(id) {
+        document.getElementById(id).classList.remove('visible');
+      }
+
+      function showCreateDirectModal() {
+        showModal('createDirectModal');
+      }
+      function showCreateGroupModal() {
+        showModal('createGroupModal');
+      }
+      function showAddParticipantModal() {
+        showModal('addParticipantModal');
+      }
+
+      document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) overlay.classList.remove('visible');
+        });
+      });
+
+      function handleInputKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      }
+
+      function formatTime(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = now - date;
+        if (diff < 60000) return 'Just now';
+        if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+        if (diff < 86400000) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleDateString();
+      }
+    </script>
+  </body>
+</html>

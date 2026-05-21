@@ -1,0 +1,113 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>10</epicId>
+    <storyId>3</storyId>
+    <title>Environment Variable Management</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/10-3-environment-variable-management.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>environment variable management</iWant>
+    <soThat>configuration can be easily changed without code modifications</soThat>
+    <tasks>
+      - Task 1: Create comprehensive `.env.example` file (AC: 10.3.1)
+        - Subtask 1.1: Document all environment variables from Epic 1-9
+        - Subtask 1.2: Add descriptive comments for each variable
+        - Subtask 1.3: Include default/placeholder values
+
+      - Task 2: Create environment templates (AC: 10.3.2-10.3.4)
+        - Subtask 2.1: Create `.env.development` template with local values
+        - Subtask 2.2: Create `.env.test` template with test credentials
+        - Subtask 2.3: Create `.env.production` template with secure placeholders
+
+      - Task 3: Update `.gitignore` (AC: 10.3.5)
+        - Subtask 3.1: Add `.env.*` pattern to ignore all env files
+        - Subtask 3.2: Ensure `.env.example` is NOT ignored (positive pattern)
+
+      - Task 4: Add README setup instructions (AC: 10.3.6)
+        - Subtask 4.1: Add "Environment Setup" section
+        - Subtask 4.2: Document copy command: `.env.example` → `.env.development`
+        - Subtask 4.3: List required values to fill
+        - Subtask 4.4: Add Docker Compose integration notes
+
+      - Task 5: Implement config validation (AC: 10.3.7)
+        - Subtask 5.1: Add ConfigModule validation
+        - Subtask 5.2: Check all required variables at startup
+        - Subtask 5.3: Throw clear error for missing variables
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. `.env.example` comprehensive (all required variables documented)
+    2. `.env.development` template created
+    3. `.env.test` template created
+    4. `.env.production` template created (with secure value placeholders)
+    5. `.gitignore` updated: `.env.*` files ignored (except `.env.example`)
+    6. README.md: Setup instructions added
+       - Copy `.env.example` → `.env.development` step
+       - Fill required values instructions
+    7. Config validation: Missing variables cause error at startup
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-10-development-environment.md" title="Epic 10: Development Environment" section="Story 10.3: Environment Variable Management" snippet="Environment variable management, config kolayca değiştirebilleyim. AC: .env.example comprehensive, .env.development/.env.test/.env.production templates, .gitignore update, README setup instructions, config validation."/>
+      <doc path="docs/tech-spec-epic-10.md" title="Epic 10 Technical Specification" section="Data Models and Contracts → Environment Variables Contract" snippet="Multi-Environment Support: Development, test, and production templates. Security by Default: All .env* files except .env.example are gitignored. Validation Layer: Application validates all required variables at startup."/>
+      <doc path="docs/tech-spec-epic-10.md" title="Epic 10 Technical Specification" section="Dependencies and Integrations → Environment Variable Dependencies" snippet="Epic 1: DATABASE_URL. Epic 2: JWT_SECRET, JWT_ACCESS_EXPIRATION, JWT_REFRESH_EXPIRATION. Epic 4: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET. Epic 5: SENDGRID_API_KEY, MAIL_FROM, FONIVA_*."/>
+      <doc path="docs/tech-spec-epic-10.md" title="Epic 10 Technical Specification" section="Security → Environment Variables" snippet="No secrets committed to git. .env* files in .gitignore (except .env.example). .env.example contains placeholder values only. README warns against committing real credentials."/>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Test Coverage Requirements" snippet="Minimum Coverage: 70% enforced by CI/CD. Coverage Breakdown: Utilities 100%, Services 80%+, Controllers 70%+, Repositories 70%+."/>
+    </docs>
+    <code>
+      <code path="src/main.ts" kind="bootstrap" symbol="main" lines="1-100" reason="Application bootstrap and configuration validation entry point"/>
+      <code path="src/config/env-validation.schema.ts" kind="validation-schema" symbol="envSchema" lines="1-56" reason="Joi validation schema defining all required environment variables and their constraints"/>
+      <code path="src/config/app.config.ts" kind="config-service" symbol="registerAs('app')" lines="1-8" reason="Application configuration service using @nestjs/config registerAs pattern"/>
+      <code path="docker/docker-compose.yml" kind="compose-config" symbol="services" lines="1-76" reason="Docker Compose service definitions with environment variable injection using ${VARIABLE} syntax"/>
+      <code path="docker/.env" kind="env-file" symbol="environment variables" lines="1-30" reason="Development environment values for Docker Compose (already implemented)"/>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="@nestjs/config" version="^4.0.2" reason="NestJS configuration module for environment variable management"/>
+        <package name="joi" version="^17.12.0" reason="Joi validation library for environment variable schema validation"/>
+        <package name="dotenv" version="^16.4.0" reason="Environment variable loader for Node.js applications"/>
+      </nodejs>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="security">All .env* files except .env.example must be in .gitignore. No secrets in git.</constraint>
+    <constraint type="validation">Application must validate all required environment variables at startup using Joi schema.</constraint>
+    <constraint type="multi-env">Support for development, test, and production environments with appropriate templates.</constraint>
+    <constraint type="docker">Environment variables must work with both Docker Compose (docker/.env) and application-level .env files.</constraint>
+    <constraint type="epic-deps">Must include all environment variables from Epic 1-9 dependencies.</constraint>
+  </constraints>
+  <interfaces>
+    <interface name="Environment Variable Configuration" kind="nestjs-config" signature="registerAs('app', () => ({...}))" path="src/config/app.config.ts"/>
+    <interface name="Joi Validation Schema" kind="validation" signature="Joi.object({...})" path="src/config/env-validation.schema.ts"/>
+    <interface name="ConfigModule" kind="nestjs-module" signature="ConfigModule.forRoot({...})" path="src/main.ts"/>
+  </interfaces>
+  <tests>
+    <standards>NestJS testing with Jest. Arrange-Act-Assert pattern. Unit tests: 70%+ coverage, Integration tests: Separate test database via DATABASE_URL.</standards>
+    <locations>test/, src/**/*.spec.ts, test/jest-e2e.json, test/setup.ts</locations>
+    <ideas>
+      <test idea="Test 1: Environment File Creation" ac="AC-10.3.1">
+        Verify .env.example exists and contains all required variables from env-validation.schema.ts with descriptive comments.
+      </test>
+      <test idea="Test 2: Environment Templates" ac="AC-10.3.2-10.3.4">
+        Verify .env.development, .env.test, and .env.production templates exist with appropriate placeholder values.
+      </test>
+      <test idea="Test 3: Git Ignore Validation" ac="AC-10.3.5">
+        Verify .env.development, .env.test, .env.production are ignored by git, while .env.example is tracked.
+      </test>
+      <test idea="Test 4: README Setup Instructions" ac="AC-10.3.6">
+        Verify README.md contains Environment Setup section with copy command and required values list.
+      </test>
+      <test idea="Test 5: Config Validation" ac="AC-10.3.7">
+        Start application without required environment variable and verify clear error message about missing variable.
+      </test>
+    </ideas>
+  </tests>
+</story-context>

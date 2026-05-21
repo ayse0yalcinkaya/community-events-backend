@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>16</epicId>
+    <storyId>4</storyId>
+    <title>Registration Flow Update (Role Assignment)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/16-4-registration-flow-update.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>registration to automatically assign default role</iWant>
+    <soThat>new users have proper permissions from creation</soThat>
+    <tasks>
+      1. Registration flow updated (Epic 2 Story 2.2)
+      2. Create User → Assign default role via UserRole
+      3. Domain context required
+      4. Default role from domain's seed data
+      5. Role validation before assignment
+      6. Transaction-based (all or nothing)
+      7. OTP SMS after role assignment
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Registration flow updated (Epic 2 Story 2.2)</ac>
+    <ac id="2">Create User → Assign default role via UserRole</ac>
+    <ac id="3">Domain context required</ac>
+    <ac id="4">Default role from domain's seed data</ac>
+    <ac id="5">Role validation before assignment</ac>
+    <ac id="6">Transaction-based (all or nothing)</ac>
+    <ac id="7">OTP SMS after role assignment</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-16-clean-relational-role-design.md">
+        <title>Epic 16: Clean Relational Role Design</title>
+        <section>Story 16.4: Registration Flow Update</section>
+        <snippet>Registration flow automatically assigns default role via UserRole junction table with domain context</snippet>
+      </doc>
+      <doc path="docs/epics/epic-3-user-management-rbac.md">
+        <title>Epic 3: User Management & RBAC</title>
+        <section>Story 2.2: User Registration</section>
+        <snippet>Existing registration flow implementation that needs updating for clean relational design</snippet>
+      </doc>
+      <doc path="docs/architecture.md">
+        <title>System Architecture</title>
+        <section>Authentication & Authorization</section>
+        <snippet>Multi-tenant architecture with domain-scoped role management</snippet>
+      </doc>
+      <doc path="prisma/schema/user.prisma">
+        <title>User Prisma Model</title>
+        <section>Clean Relational Design</section>
+        <snippet>User model with ONLY userRoles relation, NO role string field</snippet>
+      </doc>
+      <doc path="prisma/schema/permissions.prisma">
+        <title>Permissions Prisma Model</title>
+        <section>Role & UserRole Entities</section>
+        <snippet>Domain-scoped role management with @@unique([domainID, name])</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/auth/auth.service.ts">
+        <kind>service</kind>
+        <symbol>AuthService.register()</symbol>
+        <lines>68-147</lines>
+        <reason>Current registration implementation with legacy role field usage</reason>
+      </file>
+      <file path="src/modules/auth/dto/register.dto.ts">
+        <kind>dto</kind>
+        <symbol>RegisterDto</symbol>
+        <lines>1-44</lines>
+        <reason>DTO requiring role field removal - currently has @IsEnum(['admin', 'staff', 'manager'])</reason>
+      </file>
+      <file path="src/modules/permissions/services/authorization.service.ts">
+        <kind>service</kind>
+        <symbol>AuthorizationService</symbol>
+        <lines>1-136</lines>
+        <reason>Clean authorization service supporting UserRole junction table - already implemented</reason>
+      </file>
+      <file path="src/modules/auth/services/otp.service.ts">
+        <kind>service</kind>
+        <symbol>OtpService</symbol>
+        <reason>OTP service used after registration for phone verification</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^10.0.0">Framework core</package>
+        <package name="@prisma/client" version="^5.0.0">Database ORM</package>
+        <package name="class-validator" version="^0.14.0">DTO validation</package>
+        <package name="class-transformer" version="^0.5.0">DTO transformation</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use prisma.$transaction for atomic operations</constraint>
+    <constraint>Default role lookup: WHERE domainID = user.domainID AND name = 'staff'</constraint>
+    <constraint>Insert into UserRole junction table with proper foreign keys</constraint>
+    <constraint>Error handling with rollback on failure</constraint>
+    <constraint>No role field in User model - use ONLY UserRole</constraint>
+    <constraint>Domain context required for all role operations</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="RegisterDto">
+      <kind>TypeScript DTO</kind>
+      <signature>
+        {
+          phoneNumber: string;
+          firstName: string;
+          lastName: string;
+          email?: string;
+          password?: string;
+          // role field REMOVED - automatically assigned
+        }
+      </signature>
+      <path>src/modules/auth/dto/register.dto.ts</path>
+    </interface>
+    <interface name="UserResDto">
+      <kind>TypeScript DTO</kind>
+      <signature>
+        {
+          id: string;
+          phoneNumber: string;
+          firstName: string;
+          lastName: string;
+          email?: string;
+          // NO role field - roles accessed via userRoles relation
+        }
+      </signature>
+      <path>src/modules/auth/dto/user-res.dto.ts</path>
+    </interface>
+    <interface name="AuthService.register()">
+      <kind>NestJS Service Method</kind>
+      <signature>async register(registerDto: RegisterDto): Promise&lt;UserResDto&gt;</signature>
+      <path>src/modules/auth/auth.service.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Jest unit tests with @nestjs/testing, Prisma test database, transaction rollback testing</standards>
+    <locations>
+      test/modules/auth/
+      test/integration/registration/
+    </locations>
+    <ideas>
+      <test idea="User registration creates user with default 'staff' role via UserRole junction">ac:2</test>
+      <test idea="Registration uses transaction - failure rolls back user creation">ac:6</test>
+      <test idea="Default role selected from domain's seed data">ac:4</test>
+      <test idea="Role assignment happens AFTER user creation in transaction">ac:2,ac:6</test>
+      <test idea="OTP SMS sent after successful role assignment">ac:7</test>
+      <test idea="RegisterDto no longer requires role field">ac:1</test>
+      <test idea="New user has userRoles relation populated with default role">ac:2</test>
+    </ideas>
+  </tests>
+</story-context>

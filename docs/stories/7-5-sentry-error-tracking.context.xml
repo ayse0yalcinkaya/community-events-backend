@@ -1,0 +1,351 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>5</storyId>
+    <title>Sentry Error Tracking</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-5-sentry-error-tracking.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>automatic error tracking with Sentry</iWant>
+    <soThat>I can monitor production errors, debug issues quickly, and receive alerts when critical failures occur</soThat>
+    <tasks>
+- Task 1: Install @sentry/node package (AC: 7.5.1)
+- Task 2: Create Sentry configuration (AC: 7.5.2)
+- Task 3: Implement beforeSend hook for sensitive data scrubbing (AC: 7.5.9)
+- Task 4: Initialize Sentry in main.ts (AC: 7.5.1, 7.5.7, 7.5.8)
+- Task 5: Create SentryExceptionFilter (AC: 7.5.3, 7.5.4)
+- Task 6: Set user context in exception filter (AC: 7.5.5)
+- Task 7: Set request context in exception filter (AC: 7.5.6)
+- Task 8: Return formatted HTTP error response (AC: 7.5.4)
+- Task 9: Register SentryExceptionFilter globally (AC: 7.5.3)
+- Task 10: Configure source maps in tsconfig.json (AC: 7.5.8)
+- Task 11: Add Sentry environment variables to .env.example
+- Task 12: Write comprehensive tests (AC: all)
+- Task 13: Manual verification (AC: all)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC-7.5.1: @sentry/node package installed and Sentry.init() configured in main.ts
+  - Install @sentry/node package (version ^7.99.0)
+  - Sentry.init() called early in application bootstrap (main.ts)
+  - Integration configured before NestJS application creation
+  - Sentry SDK initialized with appropriate options
+
+AC-7.5.2: Sentry configuration reads SENTRY_DSN and SENTRY_ENVIRONMENT from env
+  - Create src/config/sentry.config.ts for Sentry configuration
+  - Load SENTRY_DSN from environment variable (required)
+  - Load SENTRY_ENVIRONMENT from environment variable (development, staging, production)
+  - Load SENTRY_TRACES_SAMPLE_RATE for performance monitoring (optional)
+  - Load SENTRY_DEBUG flag for debug logging (optional)
+  - Configuration validation: Fail gracefully if DSN missing (disable Sentry, log warning)
+
+AC-7.5.3: SentryExceptionFilter created and registered globally
+  - Create src/common/filters/sentry-exception.filter.ts
+  - Implements NestJS ExceptionFilter interface
+  - Catches all exceptions using @Catch() decorator (no arguments = catch all)
+  - Registered globally in main.ts with app.useGlobalFilters()
+  - Filter runs after LoggingInterceptor and other error handling
+
+AC-7.5.4: All unhandled exceptions captured and sent to Sentry
+  - Filter captures exceptions via catch() method
+  - Uses Sentry.captureException(exception) to send error to Sentry
+  - Handles both HTTP exceptions (BadRequestException, NotFoundException, etc.) and unexpected errors
+  - Exception sent asynchronously (non-blocking)
+  - Returns appropriate HTTP error response to client
+
+AC-7.5.5: User context set in Sentry events (userID, domainID)
+  - Extract authenticated user from request.user (JWT payload from Story 2)
+  - Set Sentry user context: Sentry.setUser({ id: userId, ... })
+  - Include domainId if available (multi-tenant context)
+  - Only set user context if user authenticated (avoid null/undefined)
+  - User context appears in Sentry dashboard for error grouping
+
+AC-7.5.6: Request context set in Sentry events (URL, method, headers)
+  - Extract request details: method, URL, headers, query params
+  - Set Sentry request context via scope
+  - Include X-Request-ID header for correlation with logs (from Story 7.4)
+  - Sanitize headers (exclude Authorization, Cookie headers)
+  - Request context appears in Sentry error details
+
+AC-7.5.7: Breadcrumbs included (log trail before error)
+  - Sentry automatic breadcrumbs enabled (HTTP requests, console logs)
+  - Optional: Manual breadcrumbs for key operations
+  - Breadcrumb buffer: Last 100 events before error
+  - Breadcrumbs appear in Sentry timeline view
+  - Helps reconstruct error context
+
+AC-7.5.8: Source maps configured for TypeScript stack traces
+  - Enable source map generation in tsconfig.json (sourceMap: true)
+  - Configure Sentry to use source maps
+  - Stack traces show TypeScript file names and line numbers (not compiled JS)
+  - Sentry CLI integration for source map upload (optional for MVP)
+
+AC-7.5.9: Sensitive data scrubbed before sending to Sentry (passwords, tokens)
+  - Implement beforeSend hook in Sentry configuration
+  - Scrub sensitive fields from request body: password, token, secret, apiKey, creditCard, authorization, accessToken, refreshToken
+  - Scrub sensitive headers: Authorization, Cookie
+  - Replace sensitive values with '[REDACTED]'
+  - Ensure no PII (Personally Identifiable Information) sent to Sentry
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification: Developer Infrastructure</title>
+        <section>Story 7.5: Sentry Error Tracking</section>
+        <snippet>Sentry integration provides production error tracking with user context, request context, breadcrumbs, source maps, and sensitive data scrubbing. Initialize Sentry BEFORE NestFactory.create() to catch early errors.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Technical Specification</title>
+        <section>Acceptance Criteria - Story 7.5</section>
+        <snippet>AC-7.5.1 through AC-7.5.9 define complete Sentry integration requirements including DSN configuration, exception filter, user/request context, breadcrumbs, source maps, and sensitive data scrubbing via beforeSend hook.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Technical Specification</title>
+        <section>Security - Sentry Security</section>
+        <snippet>SENTRY_DSN in environment variables (never hardcoded). User context: Only non-sensitive data (userId, domainId, role). No PII sent to Sentry. BeforeSend hook scrubs passwords, tokens, API keys, credit cards.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Technical Specification</title>
+        <section>Performance - Sentry Performance</section>
+        <snippet>Error capture overhead &lt; 5ms (async send to Sentry). No user-facing latency impact. Breadcrumbs: Minimal memory overhead (circular buffer, max 100 items). Source map lookup: Lazy-loaded, doesn't block request.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Technical Specification</title>
+        <section>Reliability/Availability - Sentry Reliability</section>
+        <snippet>Network failures: Errors queued locally, sent when connection restored. Sentry down: Application continues normally. Retry mechanism with exponential backoff. Circuit breaker if Sentry consistently fails. Fallback: Critical errors still logged via Winston.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/7-4-request-response-logging-interceptor.md</path>
+        <title>Story 7.4: Request/Response Logging Interceptor</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>LoggingInterceptor generates UUID v4 request ID for every request, stored in request.requestId property. X-Request-ID header added to response. USE request.requestId in Sentry exception filter for log correlation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/7-3-structured-logging-winston.md</path>
+        <title>Story 7.3: Structured Logging (Winston)</title>
+        <section>Project Structure Notes</section>
+        <snippet>sanitizeContext() function in src/config/logger.config.ts detects sensitive fields (password, token, secret, apiKey, creditCard, authorization, accessToken, refreshToken), replaces with '[REDACTED]', recursive sanitization for nested objects. REUSE this pattern in Sentry beforeSend hook.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Error Handling Strategy</section>
+        <snippet>Global exception filters handle errors consistently. Exception filters run AFTER interceptors in NestJS request lifecycle. Sentry integration provides aggregation, alerting, and debugging beyond local Winston logs.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/main.ts</path>
+        <kind>application-bootstrap</kind>
+        <symbol>bootstrap</symbol>
+        <lines>1-46</lines>
+        <reason>Application entry point where Sentry.init() must be called BEFORE NestFactory.create(). LoggingInterceptor already registered globally. Need to add SentryExceptionFilter registration after line 16.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/interceptors/logging.interceptor.ts</path>
+        <kind>interceptor</kind>
+        <symbol>LoggingInterceptor</symbol>
+        <lines>all</lines>
+        <reason>Generates X-Request-ID for every request (UUID v4), stored in request.requestId. SentryExceptionFilter should extract this for log correlation. Interceptor runs BEFORE exception filter in request lifecycle.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/logger/logger.service.ts</path>
+        <kind>service</kind>
+        <symbol>LoggerService</symbol>
+        <lines>all</lines>
+        <reason>Winston logger service used throughout application. Sentry provides additional error tracking beyond Winston logs - no duplication concern. Both complement each other (Winston: logs, Sentry: aggregation/alerting).</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/logger.config.ts</path>
+        <kind>config</kind>
+        <symbol>sanitizeContext</symbol>
+        <lines>sensitive-data-scrubbing-section</lines>
+        <reason>Contains sanitization pattern for sensitive data (passwords, tokens, secrets). REUSE this pattern in Sentry beforeSend hook for consistent data protection across Winston and Sentry.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>all</lines>
+        <reason>JWT guard sets request.user after authentication. SentryExceptionFilter extracts user context from request.user (userId, domainId) for error grouping in Sentry dashboard.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="winston" version="^3.18.3" />
+        <package name="winston-daily-rotate-file" version="^4.7.1" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="@sentry/node" version="^7.99.0" status="TO_INSTALL" />
+      </nodejs>
+      <devDependencies>
+        <package name="@types/node" version="^22.10.7" />
+        <package name="@types/uuid" version="^10.0.0" />
+        <package name="jest" version="^30.0.0" />
+        <package name="ts-jest" version="^29.2.5" />
+        <package name="supertest" version="^7.0.0" />
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      Exception filters registered globally with app.useGlobalFilters() in main.ts. Execution order: Guards → Interceptors → Controller → Filters (on error). Filters run AFTER LoggingInterceptor, so request already logged.
+    </constraint>
+    <constraint type="initialization">
+      Sentry.init() MUST be called BEFORE NestFactory.create() to catch early bootstrap errors. Initialize in main.ts at the very beginning of bootstrap() function.
+    </constraint>
+    <constraint type="security">
+      CRITICAL: NEVER send passwords, tokens, API keys, credit cards to Sentry. BeforeSend hook is last line of defense. Scrub both request body AND headers (Authorization, Cookie). Sensitive fields: password, token, secret, apiKey, creditCard, authorization, accessToken, refreshToken.
+    </constraint>
+    <constraint type="performance">
+      Error capture overhead MUST be &lt; 5ms. Use async Sentry operations (non-blocking). No user-facing latency impact. Breadcrumbs: Circular buffer, max 100 items. Source map lookup: Lazy-loaded.
+    </constraint>
+    <constraint type="reliability">
+      Application MUST continue serving requests even if Sentry completely down. Missing SENTRY_DSN: Disable Sentry, log warning, continue. Sentry API unavailable: Queue errors locally, send when restored. Network timeout: Automatic retries with exponential backoff.
+    </constraint>
+    <constraint type="testing">
+      Mock Sentry.captureException(), Sentry.setUser(), Sentry.configureScope() in tests to avoid external API calls. Test with various exception types (HttpException, Error, custom). Test authenticated vs unauthenticated scenarios. E2E tests with actual HTTP requests triggering errors.
+    </constraint>
+    <constraint type="source-maps">
+      TypeScript source maps already enabled in tsconfig.json (sourceMap: true, line 14). Sentry should show TypeScript file names and line numbers in stack traces, not compiled JavaScript.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Sentry.captureException</name>
+      <kind>function</kind>
+      <signature>Sentry.captureException(exception: any, captureContext?: CaptureContext): string</signature>
+      <path>@sentry/node</path>
+      <description>Main method to capture and send exception to Sentry. Called in exception filter catch() method. Returns event ID.</description>
+    </interface>
+    <interface>
+      <name>Sentry.setUser</name>
+      <kind>function</kind>
+      <signature>Sentry.setUser(user: User | null): void</signature>
+      <path>@sentry/node</path>
+      <description>Set user context for error events. User object: { id: userId, domainId?: string }. Call before Sentry.captureException() if user authenticated.</description>
+    </interface>
+    <interface>
+      <name>Sentry.configureScope</name>
+      <kind>function</kind>
+      <signature>Sentry.configureScope(callback: (scope: Scope) => void): void</signature>
+      <path>@sentry/node</path>
+      <description>Configure Sentry scope to add request context, tags, extra data. Use scope.setContext('request', {...}), scope.setTag('requestId', ...).</description>
+    </interface>
+    <interface>
+      <name>ExceptionFilter</name>
+      <kind>interface</kind>
+      <signature>interface ExceptionFilter { catch(exception: any, host: ArgumentsHost): any }</signature>
+      <path>@nestjs/common</path>
+      <description>NestJS exception filter interface. Implement catch() method to handle exceptions. Use @Catch() decorator with no arguments to catch all exception types.</description>
+    </interface>
+    <interface>
+      <name>request.requestId</name>
+      <kind>property</kind>
+      <signature>request.requestId: string</signature>
+      <path>LoggingInterceptor sets this property</path>
+      <description>UUID v4 request ID set by LoggingInterceptor (Story 7.4). Available throughout request lifecycle. Use in Sentry exception filter for correlation with Winston logs. Also available as X-Request-ID header.</description>
+    </interface>
+    <interface>
+      <name>request.user</name>
+      <kind>property</kind>
+      <signature>request.user: JwtPayload (userId, domainId, phone)</signature>
+      <path>JwtAuthGuard sets this property</path>
+      <description>Authenticated user object set by JWT guard after successful authentication. Extract userId and domainId for Sentry user context. Only available if request passed JwtAuthGuard (not on @Public routes).</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing infrastructure: Jest for unit tests, supertest for E2E tests. Unit tests in __tests__/ subdirectories within src/. E2E tests in test/ directory. Target coverage: 80%+ overall, 90%+ for critical components (filters, config). Test file naming: *.spec.ts for unit, *.e2e-spec.ts for E2E. Mock Sentry SDK methods (captureException, setUser, configureScope) to avoid external API calls. Test authenticated vs unauthenticated scenarios. Test various exception types (HttpException, Error, custom).
+    </standards>
+    <locations>
+      <location>src/config/__tests__/sentry.config.spec.ts - Unit tests for Sentry configuration (getSentryConfig, scrubSensitiveData, initializeSentry)</location>
+      <location>src/common/filters/__tests__/sentry-exception.filter.spec.ts - Unit tests for SentryExceptionFilter (exception capture, user context, request context, error response)</location>
+      <location>test/sentry-error-tracking.e2e-spec.ts - E2E tests for actual error scenarios (404, 500, authenticated/unauthenticated errors)</location>
+    </locations>
+    <ideas>
+      <test ac="AC-7.5.1">
+        - Test: initializeSentry() calls Sentry.init() with correct DSN, environment, tracesSampleRate, debug from env vars
+        - Test: initializeSentry() does NOT call Sentry.init() if SENTRY_DSN missing (graceful degradation)
+        - Test: Sentry integrations include Http and Console for automatic breadcrumbs
+      </test>
+      <test ac="AC-7.5.2">
+        - Test: getSentryConfig() returns config object when SENTRY_DSN present
+        - Test: getSentryConfig() returns null when SENTRY_DSN missing, logs warning
+        - Test: getSentryConfig() uses default values for optional env vars (SENTRY_ENVIRONMENT, SENTRY_TRACES_SAMPLE_RATE, SENTRY_DEBUG)
+      </test>
+      <test ac="AC-7.5.3">
+        - Test: SentryExceptionFilter implements ExceptionFilter interface with catch() method
+        - Test: Filter catches all exceptions (HttpException, Error, custom exceptions)
+        - Test: Filter registered globally in main.ts with app.useGlobalFilters()
+      </test>
+      <test ac="AC-7.5.4">
+        - Test: Filter calls Sentry.captureException() with exception object
+        - Test: Filter extracts correct status code from HttpException (400, 404, 500, etc.)
+        - Test: Filter uses 500 status code for generic Error
+        - Test: Filter returns formatted error response to client (statusCode, message, timestamp, requestId)
+      </test>
+      <test ac="AC-7.5.5">
+        - Test: Filter sets Sentry user context (Sentry.setUser) if user authenticated
+        - Test: Filter does NOT set user context if user unauthenticated (request.user undefined)
+        - Test: User context includes userId and domainId from request.user
+      </test>
+      <test ac="AC-7.5.6">
+        - Test: Filter sets request context via Sentry.configureScope with method, URL, headers, query
+        - Test: Request context includes X-Request-ID header from LoggingInterceptor (request.requestId)
+        - Test: Filter sets requestId tag in Sentry scope for log correlation
+        - Test: Filter sanitizes headers (excludes Authorization, Cookie)
+      </test>
+      <test ac="AC-7.5.7">
+        - Test: Sentry initialized with Http and Console integrations for automatic breadcrumbs
+        - Test: Breadcrumbs configuration in Sentry.init() options
+      </test>
+      <test ac="AC-7.5.8">
+        - Test: tsconfig.json has sourceMap: true enabled (already exists)
+        - Test: Sentry configured to use source maps for stack traces
+      </test>
+      <test ac="AC-7.5.9">
+        - Test: scrubSensitiveData() removes password field from object
+        - Test: scrubSensitiveData() removes token, secret, apiKey, creditCard fields
+        - Test: scrubSensitiveData() handles nested objects recursively
+        - Test: scrubSensitiveData() handles arrays correctly
+        - Test: beforeSend hook scrubs request body sensitive data
+        - Test: beforeSend hook deletes Authorization and Cookie headers
+      </test>
+      <test type="E2E">
+        - Test: Trigger 404 error (NotFoundException) and verify Sentry.captureException called with correct exception
+        - Test: Trigger 500 error (InternalServerErrorException) and verify Sentry call
+        - Test: Authenticated request error includes user context (userId, domainId) in Sentry event
+        - Test: Unauthenticated request error does NOT include user context
+        - Test: Error response includes request ID matching LoggingInterceptor's X-Request-ID
+        - Test: Multiple concurrent errors captured separately with different request IDs
+      </test>
+      <test type="Manual">
+        - Manual: Create test Sentry project, configure DSN in .env
+        - Manual: Trigger test error in development, verify appears in Sentry dashboard
+        - Manual: Verify user context visible in Sentry event details
+        - Manual: Verify request context (method, URL, request ID) visible
+        - Manual: Verify breadcrumbs visible in Sentry timeline
+        - Manual: Verify TypeScript stack trace (not compiled JS)
+        - Manual: Verify sensitive data scrubbed (no passwords/tokens in Sentry event)
+        - Manual: Verify request ID matches Winston log entries (correlation)
+      </test>
+    </ideas>
+  </tests>
+</story-context>

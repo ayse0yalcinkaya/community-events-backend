@@ -1,0 +1,58 @@
+{
+  "USERS": {
+    "NAME": "Users",
+    "DESCRIPTION": "Manage system users"
+  },
+  "ROLES": {
+    "NAME": "Roles",
+    "DESCRIPTION": "Manage roles and permissions"
+  },
+  "PERMISSIONS": {
+    "NAME": "Permissions",
+    "DESCRIPTION": "View system permissions"
+  },
+  "FILES": {
+    "NAME": "Files",
+    "DESCRIPTION": "File management"
+  },
+  "NOTIFICATIONS": {
+    "NAME": "Notifications",
+    "DESCRIPTION": "System notifications"
+  },
+  "NOTIFICATION_PREFERENCES": {
+    "NAME": "Notification Preferences",
+    "DESCRIPTION": "Manage notification settings"
+  },
+  "OTP_VERIFICATIONS": {
+    "NAME": "OTP Verifications",
+    "DESCRIPTION": "View OTP logs"
+  },
+  "DEVICE_TOKENS": {
+    "NAME": "Device Tokens",
+    "DESCRIPTION": "Manage device tokens"
+  },
+  "REFRESH_TOKENS": {
+    "NAME": "Refresh Tokens",
+    "DESCRIPTION": "Manage session tokens"
+  },
+  "SMS": {
+    "NAME": "SMS",
+    "DESCRIPTION": "SMS logs and management"
+  },
+  "DOMAINS": {
+    "NAME": "Domains",
+    "DESCRIPTION": "Domain management"
+  },
+  "ANNOUNCEMENTS": {
+    "NAME": "Announcements",
+    "DESCRIPTION": "Organization-wide announcements"
+  },
+  "LOGS": {
+    "NAME": "Audit Logs",
+    "DESCRIPTION": "Search system activity across modules"
+  },
+  "CHAT": {
+    "NAME": "Chat",
+    "DESCRIPTION": "Live chat and messaging"
+  }
+}

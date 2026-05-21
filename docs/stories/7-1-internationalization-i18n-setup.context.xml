@@ -1,0 +1,268 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>1</storyId>
+    <title>Internationalization (i18n) Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-1-internationalization-i18n-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>multi-language support</iWant>
+    <soThat>response message'ları farklı dillerde döndürebilleyim</soThat>
+    <tasks>
+      - Task 1: Install and configure nestjs-i18n package (AC: 7.1.1, 7.1.3)
+      - Task 2: Create English translation files (AC: 7.1.2)
+      - Task 3: Create Turkish translation files (AC: 7.1.2)
+      - Task 4: Test translation service integration (AC: 7.1.4, 7.1.5, 7.1.6)
+      - Task 5: Integration testing with existing modules (AC: 7.1.5)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-7.1.1: nestjs-i18n package installed and configured in I18nModule
+      - Package: nestjs-i18n v10.4.0 installed
+      - I18nModule configured in AppModule
+      - Default language: EN
+      - Fallback language: EN
+
+    AC-7.1.2: Translation files created for TR and EN languages
+      - Created: src/modules/i18n/translations/en/common.json
+      - Created: src/modules/i18n/translations/en/auth.json
+      - Created: src/modules/i18n/translations/en/users.json
+      - Created: src/modules/i18n/translations/tr/common.json
+      - Created: src/modules/i18n/translations/tr/auth.json
+      - Created: src/modules/i18n/translations/tr/users.json
+
+    AC-7.1.3: I18nModule configured with language detection
+      - Language detection via Accept-Language header
+      - Default language: EN (if header missing)
+      - Fallback language: EN (if translation key missing)
+
+    AC-7.1.4: Translation usage works in services
+      - Service can inject I18nService
+      - Translation lookup works: this.i18n.t('auth.LOGIN_SUCCESS')
+
+    AC-7.1.5: Error messages use i18n translations
+      - Exception thrown with translated message
+      - Error responses include translated messages
+      - Language selection based on Accept-Language header
+
+    AC-7.1.6: Dynamic variables work in translations
+      - Translation with variable replacement: this.i18n.t('auth.OTP_SENT', { args: { phone: '...' } })
+      - Variables replaced correctly using {{variable}} syntax
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-7.md" title="Epic 7 Technical Specification" section="Story 7.1">
+        Complete technical specification for i18n setup including nestjs-i18n configuration, translation file structure (TR/EN for common, auth, users modules), Accept-Language header detection, variable replacement mechanism ({{variable}} syntax), and graceful degradation patterns.
+      </doc>
+      <doc path="docs/tech-spec-epic-7.md" title="Epic 7 Technical Specification" section="Data Models and Contracts">
+        Translation file structure with JSON format for EN and TR languages. Defines core translation keys: SUCCESS, ERROR, NOT_FOUND, UNAUTHORIZED, VALIDATION_ERROR, LOGIN_SUCCESS, LOGIN_FAILED, OTP_SENT (with {{phone}} variable), USER_CREATED, USER_NOT_FOUND.
+      </doc>
+      <doc path="docs/tech-spec-epic-7.md" title="Epic 7 Technical Specification" section="APIs and Interfaces">
+        I18nService interface with t() method for translation lookup, variable replacement via args parameter, and language override support. Usage examples for services and exception handling.
+      </doc>
+      <doc path="docs/tech-spec-epic-7.md" title="Epic 7 Technical Specification" section="Performance">
+        Translation lookup performance: < 1ms per key (in-memory cache). Translation files loaded once at application startup. Memory usage: < 10MB for all translation files (TR + EN).
+      </doc>
+      <doc path="docs/tech-spec-epic-7.md" title="Epic 7 Technical Specification" section="Reliability/Availability">
+        Graceful degradation: Missing translation key returns key itself (not an error). Invalid Accept-Language header falls back to EN. Translation file load error causes application to fail at startup (fail-fast).
+      </doc>
+      <doc path="docs/tech-spec-epic-7.md" title="Epic 7 Technical Specification" section="Test Strategy Summary">
+        Unit test coverage target: 90%+. Test translation lookup, missing keys (graceful degradation), variable replacement, language override, Accept-Language header detection. Integration tests for AuthService and UsersService error messages.
+      </doc>
+      <doc path="docs/epics.md" title="Boilerplate Epic Breakdown" section="Story 7.1">
+        Epic-level story breakdown: Multi-language support with nestjs-i18n. Translation files for EN/TR in common.json, auth.json, users.json namespaces. Translation key format: namespace.KEY (e.g., auth.LOGIN_SUCCESS). Dynamic variables using {{variableName}} syntax.
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Cross-Cutting Concerns">
+        I18n module is part of Cross-Cutting Concerns layer, providing shared infrastructure for all feature modules. Global module pattern allows all services to inject I18nService for translated messages.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/app.module.ts" kind="module" symbol="AppModule" lines="1-39" reason="
+        Root module where I18nModule needs to be imported and configured. Currently imports ConfigModule, PrismaModule, AuthModule, UsersModule, FilesModule, HealthModule. I18nModule configuration will be added to imports array with forRoot() method, AcceptLanguageResolver, and translations path configuration.
+      " />
+      <file path="src/modules/auth/auth.service.ts" kind="service" symbol="AuthService" lines="1-50" reason="
+        Auth service that will use I18nService for translated error messages. Currently throws ConflictException, BadRequestException, UnauthorizedException with hardcoded English messages (e.g., 'Phone number already exists', 'Password is required for admin role'). These will be replaced with i18n.t() calls.
+      " />
+      <file path="src/modules/users/services/users.service.ts" kind="service" symbol="UsersService" lines="1-50" reason="
+        Users service that will use I18nService for translated error messages. Currently throws NotFoundException with hardcoded message 'User not found'. Will be updated to use i18n.t('users.NOT_FOUND') for language-specific error messages.
+      " />
+      <file path="src/modules/auth/auth.module.ts" kind="module" symbol="AuthModule" lines="N/A" reason="
+        Auth module structure for reference. Shows existing module pattern with providers and exports. I18n module will follow similar pattern with I18nModule.forRoot() in AppModule imports.
+      " />
+      <file path="src/modules/users/users.module.ts" kind="module" symbol="UsersModule" lines="N/A" reason="
+        Users module structure for reference. Shows existing module pattern with controllers, providers, and imports. Services in this module will inject I18nService once i18n module is configured.
+      " />
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.0.1" reason="Core NestJS framework, required for Injectable, Module decorators" />
+        <package name="@nestjs/config" version="^4.0.2" reason="Configuration module for environment variables" />
+        <package name="@nestjs/core" version="^11.0.1" reason="Core NestJS functionality" />
+        <package name="class-transformer" version="^0.5.1" reason="Used for DTO transformations" />
+        <package name="class-validator" version="^0.14.2" reason="Used for DTO validation" />
+        <package name="nestjs-i18n" version="TO BE INSTALLED: ^10.4.0" reason="I18n module for multi-language support (Story 7.1)" />
+      </node>
+      <devDependencies>
+        <package name="@nestjs/testing" version="^11.0.1" reason="Testing utilities for NestJS modules and services" />
+        <package name="jest" version="^30.0.0" reason="Testing framework for unit and integration tests" />
+        <package name="ts-jest" version="^29.2.5" reason="TypeScript support for Jest" />
+        <package name="@types/node" version="^22.10.7" reason="TypeScript type definitions for Node.js" />
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - I18n Configuration Pattern: Use nestjs-i18n with AcceptLanguageResolver for language detection via Accept-Language HTTP header
+    - Translation Key Naming: Format must be namespace.KEY (e.g., auth.LOGIN_SUCCESS, users.NOT_FOUND) with UPPER_SNAKE_CASE
+    - Translation File Structure: JSON files organized by namespace (common.json, auth.json, users.json) under translations/en/ and translations/tr/
+    - Variable Replacement: Use {{variableName}} placeholder syntax, pass replacement values via args: { args: { phone: '+90...' } }
+    - Graceful Degradation: Missing translation key must return key itself (not throw error). Invalid Accept-Language header must fallback to default (EN)
+    - Performance Requirement: Translation lookup < 1ms per key (in-memory cache). Files loaded once at startup
+    - Module Integration: I18nModule must be configured as global module in AppModule using I18nModule.forRoot()
+    - Service Pattern: All services can inject I18nService via constructor for translation lookups
+    - Error Message Pattern: Replace all hardcoded error messages with i18n.t() calls (e.g., throw new NotFoundException(this.i18n.t('users.NOT_FOUND')))
+    - Testing Standards: Unit test coverage target 90%+. Test translation lookup, missing keys, variable replacement, language override, Accept-Language header
+    - File Organization: Create src/modules/i18n/translations/{lang}/{namespace}.json structure before implementing I18nModule
+    - Fail-Fast Principle: Translation file load errors must cause application to fail at startup (not runtime)
+  </constraints>
+
+  <interfaces>
+    <interface name="I18nService.t()" kind="method-signature" path="nestjs-i18n package">
+      <signature>
+        t(key: string, options?: I18nTranslateOptions): string
+
+        interface I18nTranslateOptions {
+          lang?: string;              // Override language
+          args?: Record<string, any>; // Variable replacement {{key}}
+          defaultValue?: string;      // Fallback if key not found
+        }
+
+        // Usage examples:
+        this.i18n.t('auth.LOGIN_SUCCESS')
+        // => "Login successful"
+
+        this.i18n.t('auth.OTP_SENT', { args: { phone: '+905551234567' } })
+        // => "OTP sent to +905551234567"
+
+        this.i18n.t('users.NOT_FOUND', { lang: 'tr' })
+        // => "Kullanıcı bulunamadı"
+      </signature>
+    </interface>
+    <interface name="I18nModule.forRoot()" kind="module-configuration" path="nestjs-i18n package">
+      <signature>
+        I18nModule.forRoot({
+          fallbackLanguage: 'en',
+          loaderOptions: {
+            path: path.join(__dirname, '/modules/i18n/translations/'),
+            watch: true,
+          },
+          resolvers: [
+            AcceptLanguageResolver,
+          ],
+        })
+      </signature>
+    </interface>
+    <interface name="Translation File Format" kind="json-structure" path="src/modules/i18n/translations/{lang}/{namespace}.json">
+      <signature>
+        // common.json
+        {
+          "SUCCESS": "Operation successful",
+          "ERROR": "An error occurred",
+          "NOT_FOUND": "Resource not found",
+          "UNAUTHORIZED": "Unauthorized access",
+          "FORBIDDEN": "Access forbidden",
+          "VALIDATION_ERROR": "Validation failed",
+          "INTERNAL_ERROR": "Internal server error"
+        }
+
+        // auth.json
+        {
+          "LOGIN_SUCCESS": "Login successful",
+          "LOGIN_FAILED": "Invalid credentials",
+          "LOGOUT_SUCCESS": "Logout successful",
+          "TOKEN_EXPIRED": "Token has expired",
+          "TOKEN_INVALID": "Invalid token",
+          "OTP_SENT": "OTP sent to {{phone}}",
+          "OTP_INVALID": "Invalid OTP code",
+          "PASSWORD_RESET_SUCCESS": "Password reset successful"
+        }
+
+        // users.json
+        {
+          "USER_CREATED": "User created successfully",
+          "USER_UPDATED": "User updated successfully",
+          "USER_DELETED": "User deleted successfully",
+          "USER_NOT_FOUND": "User not found",
+          "INVALID_CREDENTIALS": "Invalid credentials"
+        }
+      </signature>
+    </interface>
+    <interface name="Exception with i18n" kind="pattern" path="services">
+      <signature>
+        // Before (hardcoded):
+        throw new NotFoundException('User not found');
+
+        // After (i18n):
+        throw new NotFoundException(this.i18n.t('users.NOT_FOUND'));
+
+        // With variables:
+        throw new BadRequestException(
+          this.i18n.t('auth.OTP_SENT', { args: { phone: user.phoneNumber } })
+        );
+      </signature>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Jest (v30.0.0) with ts-jest for TypeScript support. Unit tests placed in __test__/ directories within modules. Integration tests verify Accept-Language header detection. E2E tests validate translated error messages in API responses. Coverage target: 90%+ for i18n service. Test file naming: *.spec.ts for unit tests.
+    </standards>
+    <locations>
+      - src/modules/i18n/__test__/i18n.service.spec.ts (unit tests for I18nService)
+      - src/modules/auth/auth.service.spec.ts (integration tests for i18n in AuthService)
+      - src/modules/users/services/users.service.spec.ts (integration tests for i18n in UsersService)
+      - test/**/*.e2e-spec.ts (E2E tests for Accept-Language header detection)
+    </locations>
+    <ideas>
+      AC-7.1.1, AC-7.1.3: Test I18nModule configuration
+        - Verify I18nModule is imported in AppModule
+        - Test default language is 'en'
+        - Test fallback language is 'en'
+        - Verify AcceptLanguageResolver is configured
+
+      AC-7.1.2: Test translation files exist
+        - Verify en/common.json exists with required keys (SUCCESS, ERROR, NOT_FOUND, etc.)
+        - Verify en/auth.json exists with required keys (LOGIN_SUCCESS, OTP_SENT, etc.)
+        - Verify en/users.json exists with required keys (USER_CREATED, USER_NOT_FOUND, etc.)
+        - Verify tr/common.json exists with Turkish translations
+        - Verify tr/auth.json exists with Turkish translations
+        - Verify tr/users.json exists with Turkish translations
+
+      AC-7.1.4: Test translation service integration (Unit)
+        - Test I18nService.t() returns correct string for existing key
+        - Test I18nService.t() returns key itself if translation missing (graceful degradation)
+        - Test I18nService.t() with language override (force 'tr' even if header says 'en')
+        - Mock I18nService in service tests
+
+      AC-7.1.5: Test error messages with i18n (Integration)
+        - Test AuthService throws exception with translated message
+        - Test UsersService throws exception with translated message
+        - Test error response includes correct language based on Accept-Language header
+        - E2E: Request with Accept-Language: en returns English error message
+        - E2E: Request with Accept-Language: tr returns Turkish error message
+
+      AC-7.1.6: Test dynamic variables (Unit)
+        - Test variable replacement: {{phone}} replaced with actual phone number
+        - Test multiple variables: {{firstName}} {{lastName}} both replaced
+        - Test variable replacement in different languages (EN and TR)
+        - Test missing variable (should gracefully handle undefined args)
+    </ideas>
+  </tests>
+</story-context>

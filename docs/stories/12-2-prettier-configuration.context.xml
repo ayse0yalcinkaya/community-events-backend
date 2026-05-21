@@ -1,0 +1,174 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>12</epicId>
+    <storyId>2</storyId>
+    <title>Prettier Configuration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/12-2-prettier-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Prettier configured</iWant>
+    <soThat>code formatting consistent olsun</soThat>
+    <tasks>5 main tasks with detailed subtasks for Prettier configuration</tasks>
+  </story>
+
+  <acceptanceCriteria>1. .prettierrc dosyası oluşturulmuş olmalı
+2. Konfigürasyon ayarları:
+   - Semi: true
+   - Single quote: true
+   - Tab width: 2
+   - Trailing comma: all
+   - Arrow parens: always
+3. .prettierignore: node_modules, dist, coverage dosyaları hariç
+4. package.json: "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"" script'i mevcut
+5. ESLint integration: eslint-config-prettier conflict resolution için aktif
+6. VS Code: Format on save özelliği etkinleştirilmiş</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-12.md</path>
+        <title>Epic 12: Code Quality & Standards - Tech Spec</title>
+        <section>AC 12.2: Prettier Configuration</section>
+        <snippet>Complete Prettier configuration requirements including .prettierrc structure, configuration settings (semi: true, singleQuote: true, tabWidth: 2, trailingComma: all, arrowParens: always), .prettierignore setup, package.json script integration, and ESLint conflict resolution via eslint-config-prettier.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-12-code-quality-standards.md</path>
+        <title>Epic 12: Code Quality & Standards</title>
+        <section>Story 12.2: Prettier Configuration</section>
+        <snippet>Story definition and acceptance criteria for Prettier configuration. Defines the user story: As a developer, I want Prettier configured, so that code formatting consistent olsun. Includes technical notes on Prettier + ESLint cooperation and format on save editor configuration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD-NFR-CodingStandards.md</path>
+        <title>PRD - Non-Functional Requirements: Coding Standards</title>
+        <section>NFR-4.3: Import Organization</section>
+        <snippet>Production-tested import organization rules from hrsync-backend. Defines 8-group import structure: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events. Prettier will enforce consistent formatting for organized imports.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/12-1-eslint-configuration.md</path>
+        <title>Story 12.1: ESLint Configuration</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Previous story in the same epic. ESLint foundation established with .eslintrc.js, VS Code integration, and CI/CD pipeline integration. Key integration point: Prettier must use eslint-config-prettier to prevent rule conflicts with existing ESLint configuration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Test Coverage Requirements</section>
+        <snippet>Minimum 70% test coverage enforced by CI/CD. Defines unit test patterns (Arrange-Act-Assert), integration test setup, and E2E test scenarios. Code quality tools (ESLint, Prettier) should integrate with testing workflow and not interfere with test execution.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>.eslintrc.js</path>
+        <kind>config</kind>
+        <symbol>ESLint Configuration</symbol>
+        <lines>1-83</lines>
+        <reason>Existing ESLint configuration from Story 12-1. Already includes 'plugin:prettier/recommended' in extends, providing Prettier integration foundation. Import order rules configured for organized imports.</reason>
+      </file>
+      <file>
+        <path>.vscode/settings.json</path>
+        <kind>config</kind>
+        <symbol>VS Code Settings</symbol>
+        <lines>1-16</lines>
+        <reason>VS Code integration configuration. Already has Prettier as default formatter for TypeScript and JavaScript, format on save enabled, and ESLint auto-fix on save configured. Prettier integration is partially complete.</reason>
+      </file>
+      <file>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>npm scripts</symbol>
+        <lines>15</lines>
+        <reason>Package.json with existing 'lint' script. Story 12-2 needs to add 'format' script for Prettier. Current lint script: eslint "{src,apps,libs,test}/**/*.ts" --fix</reason>
+      </file>
+    </code>
+    <dependencies>
+      <package>
+        <name>prettier</name>
+        <version>^3.4.2</version>
+        <type>devDependency</type>
+        <purpose>Code formatting tool (already installed, needs configuration)</purpose>
+      </package>
+      <package>
+        <name>eslint-config-prettier</name>
+        <version>^10.0.1</version>
+        <type>devDependency</type>
+        <purpose>Disables ESLint rules that Prettier handles (conflict resolution)</purpose>
+      </package>
+      <package>
+        <name>eslint-plugin-prettier</name>
+        <version>^5.2.2</version>
+        <type>devDependency</type>
+        <purpose>Runs Prettier as ESLint rule for integrated checking</purpose>
+      </package>
+      <package>
+        <name>eslint</name>
+        <version>^9.18.0</version>
+        <type>devDependency</type>
+        <purpose>Code quality tool (from Story 12-1, Prettier integrates with this)</purpose>
+      </package>
+      <package>
+        <name>typescript</name>
+        <version>^5.7.3</version>
+        <type>devDependency</type>
+        <purpose>TypeScript compiler (Epic 1), Prettier formats .ts files</purpose>
+      </package>
+      <package>
+        <name>typescript-eslint</name>
+        <version>^8.20.0</version>
+        <type>devDependency</type>
+        <purpose>TypeScript-specific ESLint rules (works with Prettier integration)</purpose>
+      </package>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Integration with existing ESLint configuration (Story 12-1). Must use eslint-config-prettier and eslint-plugin-prettier to resolve rule conflicts.</constraint>
+    <constraint>TypeScript 5.7.3 compatibility. All Prettier rules must work with NestJS + TypeScript codebase.</constraint>
+    <constraint>File patterns: src/**/*.ts, test/**/*.ts. Must follow existing NestJS project structure from Epic 1.</constraint>
+    <constraint>Performance requirement: Prettier format check must complete in < 1 second for single file (from tech spec NFR).</constraint>
+    <constraint>Import organization: Prettier should complement ESLint import/order rules from .eslintrc.js, not conflict with them.</constraint>
+    <constraint>CI/CD integration: Format check should integrate with existing pipeline structure from Epic 11, following same pattern as lint check.</constraint>
+    <constraint>VS Code integration: Format on save already enabled, but Prettier config file (.prettierrc) must exist for proper functionality.</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>CLI Commands Interface</name>
+      <kind>CLI</kind>
+      <signature>npm run format (prettier --write "src/**/*.ts" "test/**/*.ts")</signature>
+      <path>package.json</path>
+    </interface>
+    <interface>
+      <name>Prettier Configuration Contract</name>
+      <kind>Config</kind>
+      <signature>.prettierrc with semi, singleQuote, tabWidth, trailingComma, arrowParens settings</signature>
+      <path>.prettierrc (to be created)</path>
+    </interface>
+    <interface>
+      <name>ESLint + Prettier Integration Contract</name>
+      <kind>Config</kind>
+      <signature>eslint-config-prettier in .eslintrc.js extends array</signature>
+      <path>.eslintrc.js:12</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Minimum 70% test coverage enforced by CI/CD. Unit tests use Jest with Arrange-Act-Assert pattern. Integration tests use separate test database and test API endpoints. E2E tests cover critical user journeys. Code quality tools (ESLint, Prettier) should not interfere with test execution. Configuration files (.prettierrc, .prettierignore) can be tested for existence and valid structure. Prettier format command should work independently and in conjunction with ESLint without conflicts.</standards>
+    <locations>test/ (unit tests)
+test/integration/ (API integration tests)
+test/e2e/ (end-to-end tests)
+__test__/ (module-specific tests, following NestJS pattern)
+All tests use Jest framework configured in package.json</locations>
+    <ideas>
+      <idea ac="1">Test AC #1: Verify .prettierrc file exists and contains valid JSON with required configuration keys (semi, singleQuote, tabWidth, trailingComma, arrowParens)</idea>
+      <idea ac="2">Test AC #2: Validate each configuration setting individually - run prettier --config-check to verify config is properly formatted</idea>
+      <idea ac="3">Test AC #3: Verify .prettierignore exists and correctly excludes node_modules, dist, coverage directories by running prettier on these directories and confirming no changes</idea>
+      <idea ac="4">Test AC #4: Verify package.json has "format" script and it executes successfully without errors on sample TypeScript files</idea>
+      <idea ac="5">Test AC #5: Integration test - Run eslint --fix on files with formatting issues, verify no conflicts between ESLint and Prettier, confirm both tools can run together</idea>
+      <idea ac="6">Test AC #6: Editor integration test - Verify format on save works in VS Code, test with sample TypeScript file that has formatting issues</idea>
+      <idea>E2E: Test complete workflow - Create unformatted TypeScript file → Run npm run format → Verify file is formatted correctly → Run npm run lint → Verify no lint errors</idea>
+      <idea>Performance: Verify prettier formatting completes in < 1 second for single file, < 5 seconds for entire src/ directory (from NFR requirement)</idea>
+    </ideas>
+  </tests>
+</story-context>

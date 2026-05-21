@@ -1,0 +1,238 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>14</epicId>
+    <storyId>2</storyId>
+    <title>Enum Integerization</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/14-2-enum-integerization.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>backend developer</asA>
+    <iWant>convert all string-based enums to integer-based enums in the database schema and TypeScript code</iWant>
+    <soThat>the application has improved database performance, reduced storage costs, and better type safety</soThat>
+    <tasks>- Task 1: Prisma Schema Conversion (AC: 1)
+  - Task 2: TypeScript Enum Updates (AC: 2)
+  - Task 3: Database Migration (AC: 3)
+  - Task 4: Service Layer Updates (AC: 4)
+  - Task 5: Testing (AC: 5)
+  - Task 6: Performance Validation (AC: 6)
+  - Task 7: Documentation & Deployment (AC: 7)</tasks>
+  </story>
+
+  <acceptanceCriteria>1. [Prisma Schema Updates] All enum values in Prisma schema files converted from strings to integers
+   - [ ] DomainStatus: ACTIVE=0, PASSIVE=1
+   - [ ] SmsType: OTP=0, NOTIFICATION=1, MARKETING=2, ALERT=3
+   - [ ] SmsStatus: PENDING=0, SENT=1, DELIVERED=2, FAILED=3
+   - [ ] Platform: iOS=0, Android=1
+
+2. [TypeScript Enum Updates] All TypeScript enum files converted to numeric enums
+   - [ ] ActionEnum: 13 values mapped to 0-12
+   - [ ] NotificationType: 6 values mapped to 0-5
+   - [ ] NotificationChannel: 3 values mapped to 0-2
+   - [ ] Platform enum updated
+
+3. [Database Migration] Safe migration script created and applied
+   - [ ] Backup existing data before conversion
+   - [ ] Convert enum columns from string to integer type
+   - [ ] Verify data integrity after migration
+   - [ ] Test rollback procedure
+
+4. [Code Updates] Service layer and DTOs updated to work with integer enums
+   - [ ] Update DTO validation (@IsEnum decorators)
+   - [ ] Remove manual string-to-enum conversions
+   - [ ] Verify Prisma Client handles integer enums correctly
+   - [ ] Update API endpoints to accept integer values
+
+5. [Testing] Comprehensive test suite passes
+   - [ ] Unit tests for all enum files (100% coverage)
+   - [ ] DTO validation tests with integer enums
+   - [ ] Integration tests verify data conversion
+   - [ ] API endpoint tests with integer values
+   - [ ] Full regression test suite passes
+
+6. [Performance Validation] Performance improvements measured
+   - [ ] Database query performance improved on enum columns
+   - [ ] Storage reduction validated (~60% on enum columns)
+   - [ ] API response size reduced for enum fields
+   - [ ] No regression in application performance</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Technical Specification - Enum Integerization</title>
+        <section>Complete Technical Approach</section>
+        <snippet>Convert all string-based enums to integer-based enums with proper mapping. Prisma Schema Updates, TypeScript Enum Conversion, Migration Strategy, Code Refactoring.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Test Coverage Requirements and Patterns</section>
+        <snippet>Minimum Coverage: 70%. Utilities: 100%, Services: 80%+, Controllers: 70%+. Pattern: Arrange-Act-Assert for unit tests.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/14-1-domain-entity-implementation.context.xml</path>
+        <title>Epic 14 Story 1 Context</title>
+        <section>Domain Entity Implementation</section>
+        <snippet>Previous story in Epic 14. Provides context for domain entity management and related enum usage.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/common/enums/action.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>ActionEnum</symbol>
+        <lines>51-83</lines>
+        <reason>13 values (CREATE, VIEW, UPDATE, etc.) to be converted from string to integer enum (0-12)</reason>
+      </file>
+      <file>
+        <path>src/modules/notifications/enums/notification-type.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>NotificationType</symbol>
+        <reason>6 values to be converted to integer enum (0-5)</reason>
+      </file>
+      <file>
+        <path>src/modules/notifications/enums/notification-channel.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>NotificationChannel</symbol>
+        <reason>3 values to be converted to integer enum (0-2)</reason>
+      </file>
+      <file>
+        <path>src/modules/notifications/enums/platform.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>Platform</symbol>
+        <reason>iOS, Android values to be converted to 0, 1</reason>
+      </file>
+      <file>
+        <path>src/modules/sms/enums/sms-type.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>SmsType</symbol>
+        <reason>4 values (OTP, NOTIFICATION, MARKETING, ALERT) to be converted to 0-3</reason>
+      </file>
+      <file>
+        <path>src/modules/sms/enums/sms-status.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>SmsStatus</symbol>
+        <reason>4 values (PENDING, SENT, DELIVERED, FAILED) to be converted to 0-3</reason>
+      </file>
+      <file>
+        <path>prisma/schema/domain.prisma</path>
+        <kind>schema</kind>
+        <symbol>enum DomainStatus</symbol>
+        <lines>38-41</lines>
+        <reason>DomainStatus enum: ACTIVE, PASSIVE values to be converted to 0, 1</reason>
+      </file>
+      <file>
+        <path>prisma/schema/notifications.prisma</path>
+        <kind>schema</kind>
+        <symbol>enum SmsType, SmsStatus, Platform</symbol>
+        <reason>Prisma schema enums to be converted from string to integer values</reason>
+      </file>
+      <file>
+        <path>src/modules/notifications/services/notification.service.ts</path>
+        <kind>service</kind>
+        <symbol>NotificationService</symbol>
+        <lines>580</lines>
+        <reason>Line 580: type: type as string needs update to type: type as number for integer enum support</reason>
+      </file>
+      <file>
+        <path>src/modules/sms/services/sms.service.ts</path>
+        <kind>service</kind>
+        <symbol>SmsService</symbol>
+        <lines>178</lines>
+        <reason>Verify Prisma enum conversion handles automatic integer handling</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <@nestjs/core>11.0.1</@nestjs/core>
+        <@prisma/client>6.19.0</@prisma/client>
+        <class-validator>0.14.2</class-validator>
+        <typescript>5.7.3</typescript>
+        <jest>30.0.0</jest>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Prisma Schema: Multi-file schema structure in prisma/schema/, enums defined with explicit integer values
+    - TypeScript Enum Pattern: Kebab-case directory names (/enums/), UPPER_CASE enum values, single quotes
+    - DTO Validation: @IsEnum decorator works with numeric enums, class-validator accepts integer values
+    - Migration Safety: Backup required before migration, use CASE statements for string-to-int conversion
+    - Testing Coverage: Minimum 70% overall, enum files require 100% coverage
+    - Code Style: All files use single quotes, kebab-case file names, comprehensive JSDoc comments
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>SmsType</name>
+      <kind>Enum</kind>
+      <signature>enum SmsType { OTP = 0, NOTIFICATION = 1, MARKETING = 2, ALERT = 3 }</signature>
+      <path>prisma/schema/notifications.prisma</path>
+    </interface>
+    <interface>
+      <name>SmsStatus</name>
+      <kind>Enum</kind>
+      <signature>enum SmsStatus { PENDING = 0, SENT = 1, DELIVERED = 2, FAILED = 3 }</signature>
+      <path>prisma/schema/notifications.prisma</path>
+    </interface>
+    <interface>
+      <name>DomainStatus</name>
+      <kind>Enum</kind>
+      <signature>enum DomainStatus { ACTIVE = 0, PASSIVE = 1 }</signature>
+      <path>prisma/schema/domain.prisma</path>
+    </interface>
+    <interface>
+      <name>Platform</name>
+      <kind>Enum</kind>
+      <signature>enum Platform { iOS = 0, Android = 1 }</signature>
+      <path>prisma/schema/notifications.prisma</path>
+    </interface>
+    <interface>
+      <name>ActionEnum</name>
+      <kind>Enum</kind>
+      <signature>enum ActionEnum { CREATE = 0, VIEW = 1, UPDATE = 2, DELETE = 3, ASSIGN = 4, REVOKE = 5, ACTIVATE = 6, VIEW_ALL = 7, MARK_READ = 8, SEND = 9, MANAGE = 10, REGISTER = 11, VERIFY = 12, RESEND = 13 }</signature>
+      <path>src/common/enums/action.enum.ts</path>
+    </interface>
+    <interface>
+      <name>NotificationType</name>
+      <kind>Enum</kind>
+      <signature>enum NotificationType { VERIFICATION = 0, PASSWORD_RESET = 1, OTP = 2, GENERAL = 3, ALERT = 4, MARKETING = 5 }</signature>
+      <path>src/modules/notifications/enums/notification-type.enum.ts</path>
+    </interface>
+    <interface>
+      <name>NotificationChannel</name>
+      <kind>Enum</kind>
+      <signature>enum NotificationChannel { EMAIL = 0, SMS = 1, PUSH = 2 }</signature>
+      <path>src/modules/notifications/enums/notification-channel.enum.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest 30.0.0 framework with Arrange-Act-Assert pattern. Unit tests for enum definitions verify integer values. Integration tests for DTO validation with integer enums. Migration tests verify data conversion integrity. Minimum 70% coverage overall, 100% on enum files. Use actual enum values in tests - no mocks needed for simple enum tests.</standards>
+    <locations>Unit tests in __tests__ directories alongside enum files. Integration tests in test/ directory. API tests use supertest. Test files follow *.spec.ts naming pattern. Mock factories available in test/factories/.</locations>
+    <ideas>
+      <test>
+        <acId>5</acId>
+        <description>Unit tests for all enum files verify correct integer values (0, 1, 2, etc.)</description>
+        <example>describe('SmsType Enum', () => { it('should have correct integer values', () => { expect(SmsType.OTP).toBe(0); }); });</example>
+      </test>
+      <test>
+        <acId>5</acId>
+        <description>DTO validation tests accept valid integer enum values (0, 1, 2, 3)</description>
+        <example>const dto = plainToInstance(CreateSmsDto, { type: 0 }); expect(validateSync(dto).length).toBe(0);</example>
+      </test>
+      <test>
+        <acId>5</acId>
+        <description>Integration tests verify database operations work with integer enums</description>
+        <example>const sms = await prisma.sms.create({ data: { type: 0, status: 1 } }); expect(sms.type).toBe(0);</example>
+      </test>
+      <test>
+        <acId>3</acId>
+        <description>Migration tests verify data conversion accuracy from strings to integers</description>
+        <example>const domains = await prisma.domain.findMany(); domains.forEach(d => expect([0,1]).toContain(d.status));</example>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,422 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>4</storyId>
+    <title>E2E Test Infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-4-e2e-test-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>E2E test infrastructure</iWant>
+    <soThat>complete user journey'leri test edebilleyim</soThat>
+    <tasks>
+- Task 1: E2E Jest Configuration (AC: 9.4.1, 9.4.8)
+  - Subtask 1.1: `test/jest-e2e.json` dosyası oluştur
+  - Subtask 1.2: testRegex: `.e2e-spec.ts$` pattern ayarla
+  - Subtask 1.3: transform ve moduleNameMapper ayarları ekle
+  - Subtask 1.4: package.json'a `"test:e2e": "jest --config ./test/jest-e2e.json"` script ekle
+  - Subtask 1.5: Verify E2E config ile test discovery çalışıyor
+
+- Task 2: E2E Test Infrastructure Setup (AC: 9.4.3, 9.4.5)
+  - Subtask 2.1: `test/auth.e2e-spec.ts` dosyası oluştur
+  - Subtask 2.2: Import supertest (`import * as request from 'supertest'`)
+  - Subtask 2.3: Import test/setup.ts helpers (setupTestDatabase)
+  - Subtask 2.4: beforeAll: TestingModule.createTestingModule({ imports: [AppModule] })
+  - Subtask 2.5: beforeAll: app.init() - Full app bootstrap
+  - Subtask 2.6: beforeAll: Get PrismaService instance
+  - Subtask 2.7: beforeEach: Database cleanup (setupTestDatabase)
+  - Subtask 2.8: afterAll: app.close() - Cleanup
+
+- Task 3-8: Complete Auth Flow E2E Test - Registration, Email Verification, Login, Protected Route Access, Token Refresh, Logout
+- Task 9: Seed Data Helper for E2E (AC: 9.4.5)
+- Task 10: Run and Validate E2E Tests (AC: 9.4.8)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+### AC-9.4.1: E2E Jest Configuration
+**Given** E2E testleri için ayrı bir Jest konfigürasyonu gerekli
+**When** `test/jest-e2e.json` dosyası oluşturulduğunda
+**Then**:
+- E2E-specific Jest configuration mevcut
+- testRegex: `.e2e-spec.ts$` pattern ile sadece E2E testleri çalıştırılıyor
+- transform: ts-jest ile TypeScript desteği aktif
+- moduleNameMapper: Path aliases (@/) çalışıyor
+- testEnvironment: node
+
+### AC-9.4.2: Complete Auth Flow E2E Test
+**Given** authentication flow complete user journey olarak test edilmeli
+**When** `test/auth.e2e-spec.ts` dosyası oluşturulduğunda ve execute edildiğinde
+**Then**:
+- Test case: Complete auth flow journey
+  - Step 1: POST /auth/register - User registration
+  - Step 2: POST /auth/verify-email - Email verification with OTP
+  - Step 3: POST /auth/login - User login, JWT token alınıyor
+  - Step 4: GET /users/profile - Protected route access with JWT
+  - Step 5: POST /auth/refresh - Token refresh
+  - Step 6: POST /auth/logout - User logout
+- Her step'te HTTP status code ve response body doğrulanıyor
+- JWT token'lar successive request'lerde kullanılıyor
+- Database state verification her critical step'te yapılıyor
+
+### AC-9.4.3: Full Application Bootstrap for E2E
+**Given** E2E testleri production-like environment'ta çalışmalı
+**When** E2E test suite execute edildiğinde
+**Then**:
+- Full NestJS application bootstrap edilmiş (AppModule ile)
+- Real HTTP requests via supertest
+- Test database (`boilerplate_test`) ile bağlantı kurulmuş
+- Tüm modules, guards, interceptors, pipes aktif
+- ValidationPipe, ExceptionFilter gibi global config'ler uygulanmış
+- `app.init()` ile application initialize edilmiş
+
+### AC-9.4.4: Supertest HTTP Request Testing
+**Given** E2E testleri real HTTP request'ler göndermeli
+**When** supertest kullanılarak endpoint'ler test edildiğinde
+**Then**:
+- `request(app.getHttpServer())` pattern kullanılıyor
+- HTTP method'lar: GET, POST, PATCH, DELETE test ediliyor
+- Request headers set ediliyor (Authorization: Bearer <token>)
+- Request body JSON format'ında gönderiliyor
+- Response assertions: status code, body structure, data validation
+- Cookie handling (refresh token cookie varsa)
+
+### AC-9.4.5: Database Isolation and Seed Data
+**Given** E2E testleri isolated environment'ta çalışmalı
+**When** E2E test suite execute edildiğinde
+**Then**:
+- Test database kullanılıyor (production DB'ye dokunulmuyor)
+- `beforeAll`: Database connection kurulmuş
+- `beforeEach`: Database tables temizlenmiş (test/setup.ts kullanarak)
+- Test scenario'ya özgü seed data oluşturuluyor (domain, user, permissions)
+- `afterEach`: Test data cleanup yapılıyor
+- `afterAll`: Database connection kapatılmış, app.close() çağrılmış
+
+### AC-9.4.6-9: JWT Token Flow, Email Verification OTP, NPM Script, Error Handling
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic 9 Technical Specification - Testing Infrastructure</title>
+        <section>E2E Test Pattern</section>
+        <snippet>E2E testleri complete user journeys test eder. Full NestJS application bootstrap, real HTTP requests via supertest, production-like environment with all guards/pipes/filters active. Performance target: &lt; 30 seconds for complete auth flow.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic 9 Technical Specification</title>
+        <section>APIs and Interfaces → E2E Test Pattern</section>
+        <snippet>E2E test setup: TestingModule.createTestingModule({ imports: [AppModule] }), app.useGlobalPipes(ValidationPipe), supertest for HTTP requests, database state verification after operations.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic 9 Technical Specification</title>
+        <section>Workflows and Sequencing → E2E Test Workflow</section>
+        <snippet>E2E workflow: Bootstrap (full app startup) → Scenario (complete user journey: register → verify → login → access → refresh → logout) → Assertions (HTTP status, body, auth state, DB consistency) → Shutdown.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic 9 Technical Specification</title>
+        <section>Data Models and Contracts → E2E Configuration Schema</section>
+        <snippet>jest-e2e.json structure: testRegex: ".e2e-spec.ts$", transform: ts-jest, moduleNameMapper: path aliases, testEnvironment: node.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics/epic-9-testing-infrastructure.md</path>
+        <title>Epic 9: Testing Infrastructure</title>
+        <section>Story 9.4: E2E Test Infrastructure</section>
+        <snippet>E2E infrastructure for complete user journey testing. Requirements: jest-e2e.json configuration, complete auth flow E2E test, supertest integration, database isolation.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/stories/9-3-integration-test-setup.md</path>
+        <title>Story 9.3: Integration Test Setup</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Integration test infrastructure completed. Test database setup (test/setup.ts), guards override pattern, Turkish phone format (+905XXXXXXXXX), supertest import pattern, 12 tests passing in 1.262s.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>test/jest-e2e.json</path>
+        <kind>config</kind>
+        <symbol>jest-e2e.json</symbol>
+        <lines>1-20</lines>
+        <reason>ALREADY EXISTS - E2E Jest configuration with testRegex, transform, moduleNameMapper. Story 9.4 may need to verify or enhance this configuration.</reason>
+      </artifact>
+      <artifact>
+        <path>test/auth-registration.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthController - Registration (e2e)</symbol>
+        <lines>1-100</lines>
+        <reason>EXISTING E2E TEST - Auth registration E2E test already implemented. Pattern: TestingModule bootstrap, supertest, seedTestData, cleanupTestData, TransformResponseInterceptor.</reason>
+      </artifact>
+      <artifact>
+        <path>test/auth-login-otp.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthController - Login OTP (e2e)</symbol>
+        <lines>N/A</lines>
+        <reason>EXISTING E2E TEST - OTP-based login E2E test exists. May be referenced for OTP verification patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>test/auth-refresh-token.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthController - Refresh Token (e2e)</symbol>
+        <lines>N/A</lines>
+        <reason>EXISTING E2E TEST - Token refresh E2E test exists. May be referenced for refresh token flow.</reason>
+      </artifact>
+      <artifact>
+        <path>test/auth-logout.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>AuthController - Logout (e2e)</symbol>
+        <lines>N/A</lines>
+        <reason>EXISTING E2E TEST - Logout E2E test exists. May be referenced for logout flow.</reason>
+      </artifact>
+      <artifact>
+        <path>test/users-profile.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersController - Profile (e2e)</symbol>
+        <lines>N/A</lines>
+        <reason>EXISTING E2E TEST - User profile endpoint E2E test exists. May be referenced for protected route testing.</reason>
+      </artifact>
+      <artifact>
+        <path>test/setup.ts</path>
+        <kind>utility</kind>
+        <symbol>setupTestDatabase, connectTestDatabase, disconnectTestDatabase</symbol>
+        <lines>1-85</lines>
+        <reason>CRITICAL REUSE - Database cleanup utility from Story 9.3. Provides setupTestDatabase() for table cleanup in correct FK order. Essential for E2E test database isolation.</reason>
+      </artifact>
+      <artifact>
+        <path>test/utils.ts</path>
+        <kind>utility</kind>
+        <symbol>seedTestData, cleanupTestData, generateTestDomainId, generateUniquePhoneNumber</symbol>
+        <lines>N/A</lines>
+        <reason>EXISTING UTILITIES - Test data seeding and cleanup utilities used in existing E2E tests. Essential for E2E test data management.</reason>
+      </artifact>
+      <artifact>
+        <path>test/jest-e2e-setup.ts</path>
+        <kind>config</kind>
+        <symbol>jest-e2e-setup</symbol>
+        <lines>N/A</lines>
+        <reason>E2E setup file that loads .env.test before E2E tests run.</reason>
+      </artifact>
+      <artifact>
+        <path>src/app.module.ts</path>
+        <kind>module</kind>
+        <symbol>AppModule</symbol>
+        <lines>N/A</lines>
+        <reason>Full application module used for E2E test bootstrap. TestingModule.createTestingModule({ imports: [AppModule] }).</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>AuthController</symbol>
+        <lines>N/A</lines>
+        <reason>Auth endpoints under test: register, verify-email, login, refresh, logout.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthService</symbol>
+        <lines>N/A</lines>
+        <reason>Auth service with business logic for authentication flow. Real service (not mocked) in E2E tests.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/profile.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>ProfileController</symbol>
+        <lines>N/A</lines>
+        <reason>User profile endpoints (GET /users/profile) - protected routes for JWT testing.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/interceptors/transform-response.interceptor.ts</path>
+        <kind>interceptor</kind>
+        <symbol>TransformResponseInterceptor</symbol>
+        <lines>N/A</lines>
+        <reason>Response transformation interceptor applied globally in E2E tests (same as main.ts). Required for consistent response format.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="jest" version="^30.0.0">Core test framework for E2E tests</package>
+        <package name="@nestjs/testing" version="^11.0.1">NestJS testing utilities - TestingModule, Test</package>
+        <package name="supertest" version="^7.0.0">HTTP assertion library for E2E HTTP requests</package>
+        <package name="@types/supertest" version="^6.0.2">TypeScript types for supertest</package>
+        <package name="ts-jest" version="^29.2.5">TypeScript preprocessor for Jest</package>
+        <package name="@types/jest" version="^30.0.0">Jest type definitions</package>
+        <package name="@nestjs/passport" version="^11.0.5">Passport integration for JWT authentication</package>
+        <package name="@nestjs/jwt" version="^11.0.1">JWT module for token generation/validation</package>
+        <package name="@prisma/client" version="^6.18.0">Prisma ORM for database access</package>
+        <package name="nestjs-i18n">I18n service for response transformation interceptor</package>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **E2E vs Integration Tests**: E2E tests MUST use full application bootstrap with ALL guards/pipes/filters active (no guard overrides). Integration tests may override guards for speed.
+- **Real Authentication**: E2E tests MUST use real JWT authentication flow. No mocking of authentication - actual login required.
+- **Complete Journeys**: E2E tests focus on complete user flows across multiple endpoints, not isolated endpoint testing.
+- **Test File Location**: E2E tests must be in `test/*.e2e-spec.ts`, NOT in `src/modules/*/tests/`.
+- **Database Isolation**: MUST use test database (boilerplate_test). Production database must NEVER be touched by tests.
+- **Performance Target**: Complete auth flow E2E test MUST execute in < 30 seconds (per Tech Spec).
+- **Supertest Import**: Use `import request from 'supertest'` (default import) not `import * as request`.
+- **Response Format**: Expect transformed responses with { success, status, data, message } structure (TransformResponseInterceptor).
+- **Turkish Phone Format**: +905XXXXXXXXX (10 digits after +905 prefix) for phone number validation.
+- **Test Isolation**: Each test MUST start with clean database state. Use setupTestDatabase() in beforeEach.
+- **Seed Data Strategy**: Use test/utils seedTestData() and cleanupTestData() functions. Generate unique test domain IDs per test suite.
+- **Global Config**: Apply same global config as main.ts - ValidationPipe, TransformResponseInterceptor.
+- **Test Timeout**: E2E tests have 30 second timeout (configured in jest-e2e.json).
+  </constraints>
+
+  <interfaces>
+- **E2E Test Setup Pattern**:
+  ```typescript
+  describe('AuthController - Feature (e2e)', () => {
+    let app: INestApplication;
+    let prisma: PrismaService;
+    let testDomainID: string;
+
+    beforeAll(async () => {
+      const moduleFixture: TestingModule = await Test.createTestingModule({
+        imports: [AppModule],
+      }).compile();
+
+      app = moduleFixture.createNestApplication();
+      const i18nService = app.get<I18nService>(I18nService);
+
+      app.useGlobalInterceptors(new TransformResponseInterceptor(i18nService));
+      app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+
+      prisma = app.get<PrismaService>(PrismaService);
+      testDomainID = generateTestDomainId();
+      await seedTestData(prisma, testDomainID);
+      await app.init();
+    });
+
+    afterAll(async () => {
+      await cleanupTestData(prisma, testDomainID);
+      await app.close();
+    });
+
+    afterEach(async () => {
+      await prisma.user.deleteMany({ where: { domainID: testDomainID } });
+    });
+  });
+  ```
+
+- **Supertest HTTP Request Pattern**:
+  ```typescript
+  const response = await request(app.getHttpServer())
+    .post('/auth/register')
+    .send({ phoneNumber: '+905551234567', email: 'test@e2e.com', password: 'Test123!', firstName: 'Test', lastName: 'User' })
+    .expect(201);
+
+  expect(response.body).toEqual({
+    success: true,
+    status: 201,
+    data: expect.objectContaining({ id: expect.any(String), email: 'test@e2e.com' }),
+    message: expect.any(String)
+  });
+  ```
+
+- **JWT Protected Route Testing**:
+  ```typescript
+  // Login to get token
+  const loginRes = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send({ email: 'test@e2e.com', password: 'Test123!' })
+    .expect(200);
+
+  const accessToken = loginRes.body.data.accessToken;
+
+  // Access protected route with token
+  await request(app.getHttpServer())
+    .get('/users/profile')
+    .set('Authorization', `Bearer ${accessToken}`)
+    .expect(200);
+  ```
+
+- **Database State Verification**:
+  ```typescript
+  // After registration, verify user in database
+  const user = await prisma.user.findUnique({ where: { email: 'test@e2e.com' } });
+  expect(user).toBeDefined();
+  expect(user.emailVerified).toBe(false);
+
+  // After email verification, verify user.emailVerified updated
+  const verifiedUser = await prisma.user.findUnique({ where: { email: 'test@e2e.com' } });
+  expect(verifiedUser.emailVerified).toBe(true);
+  ```
+
+- **OTP Retrieval from Database**:
+  ```typescript
+  // Get OTP from database for email verification
+  const otp = await prisma.oTPVerification.findFirst({
+    where: { email: 'test@e2e.com' },
+    orderBy: { createdAt: 'desc' }
+  });
+  expect(otp).toBeDefined();
+  expect(otp.code).toBeDefined();
+  ```
+  </interfaces>
+
+  <tests>
+    <standards>
+E2E testing standards from Tech Spec Epic 9:
+1. **Full Application Bootstrap**: Use TestingModule with AppModule, apply all global pipes/interceptors/filters
+2. **Real Authentication**: No guard overrides, use actual JWT tokens from login
+3. **Complete Journeys**: Test full user flows (register → verify → login → access → refresh → logout)
+4. **Database Isolation**: Test database (boilerplate_test), clean state with setupTestDatabase()
+5. **Supertest**: Real HTTP requests to app.getHttpServer()
+6. **Performance**: < 30 seconds for complete auth flow
+7. **Existing E2E Tests**: Reference test/auth-registration.e2e-spec.ts, test/auth-login-otp.e2e-spec.ts for patterns
+8. **Test Utilities**: Use test/utils.ts functions (seedTestData, cleanupTestData, generateTestDomainId, generateUniquePhoneNumber)
+9. **Response Format**: Expect TransformResponseInterceptor format: { success, status, data, message }
+10. **Test Isolation**: Unique domain ID per test suite, cleanup after each test
+    </standards>
+    <locations>
+- `test/*.e2e-spec.ts` - E2E test files (NOT in src/)
+- `test/jest-e2e.json` - E2E Jest configuration
+- `test/setup.ts` - Database cleanup utilities
+- `test/utils.ts` - Test data seeding/cleanup utilities
+- `test/jest-e2e-setup.ts` - E2E setup to load .env.test
+- `test/jest-global-setup.ts` - Global setup for E2E tests
+- `test/jest-global-teardown.ts` - Global teardown for E2E tests
+    </locations>
+    <ideas>
+**Test Ideas for Story 9.4:**
+
+**IMPORTANT DISCOVERY**: Multiple E2E tests already exist for auth flow! Instead of creating new test, this story should:
+1. **Document/verify existing E2E infrastructure**: jest-e2e.json, test/utils.ts, seedTestData pattern
+2. **Create comprehensive auth flow test**: Combine existing separate tests (registration, login, refresh, logout) into ONE complete journey test
+3. **Verify all acceptance criteria**: Check that existing infrastructure meets AC 9.4.1, 9.4.3, 9.4.4, 9.4.5, 9.4.8
+
+**Test: Complete Auth Flow Journey (AC 9.4.2)**
+- Step 1: Register user (existing pattern in test/auth-registration.e2e-spec.ts)
+- Step 2: Verify email with OTP (pattern in test/auth-login-otp.e2e-spec.ts)
+- Step 3: Login (existing test/auth-login-*.e2e-spec.ts)
+- Step 4: Access protected route GET /users/profile (pattern in test/users-profile.e2e-spec.ts)
+- Step 5: Refresh token (existing test/auth-refresh-token.e2e-spec.ts)
+- Step 6: Logout (existing test/auth-logout.e2e-spec.ts)
+
+**Error Case Tests (AC 9.4.9)**
+- Register with existing email → 409
+- Login with wrong password → 401
+- Access protected route without token → 401
+- Refresh with invalid token → 401
+- Email verification with invalid OTP → 400
+
+**Verification Tests (AC 9.4.1, 9.4.8)**
+- Verify jest-e2e.json exists and configured correctly
+- Verify npm run test:e2e command works
+- Verify E2E tests run with correct pattern matching
+
+**Database Isolation Tests (AC 9.4.5)**
+- Verify test database used (not production)
+- Verify cleanup between tests
+- Verify seed data strategy
+    </ideas>
+  </tests>
+</story-context>

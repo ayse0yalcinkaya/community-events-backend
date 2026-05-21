@@ -1,0 +1,158 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>11</epicId>
+    <storyId>2</storyId>
+    <title>CI Pipeline (GitHub Actions)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/11-2-ci-pipeline-github-actions.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>automated testing pipeline</iWant>
+    <soThat>PR'larda tests otomatik çalışsın</soThat>
+    <tasks>Task 1: Create CI workflow file (AC: #1, #2)
+Task 2: Configure test jobs (AC: #3, #5)
+Task 3: Configure quality gates (AC: #4)
+Task 4: Optional enhancements (AC: #3)</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. .github/workflows/ci.yml oluşturulmuş
+2. Trigger: pull_request
+3. Jobs: test job with Node.js 20, npm ci, lint, unit tests, integration tests, E2E tests, build, coverage upload
+4. Status: PR merge'e kadar pass gerekli
+5. Parallel execution (test + lint)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-11-cicd-deployment.md</path>
+        <title>Epic 11: CI/CD & Deployment</title>
+        <section>Story 11.2: CI Pipeline (GitHub Actions)</section>
+        <snippet>As a developer, I want automated testing pipeline, So that PR'larda tests otomatik çalışsın. .github/workflows/ci.yml oluşturulmuş, Trigger: pull_request</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-11.md</path>
+        <title>Epic Technical Specification: CI/CD & Deployment</title>
+        <section>CI Pipeline Components</section>
+        <snippet>GitHub Actions ile automated test pipeline (lint, unit, integration, e2e), Pull Request'te otomatik test çalıştırma ve quality gate kontrolü</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/deployment-architecture.md</path>
+        <title>Deployment Architecture</title>
+        <section>Docker Configuration</section>
+        <snippet>Multi-stage Dockerfile pattern with node:20-alpine base, npm ci --only=production, npm run build, npx prisma generate</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Testing Infrastructure</section>
+        <snippet>Jest configuration, unit tests, integration tests, E2E tests, test coverage reporting</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/11-1-production-dockerfile-multi-stage.md</path>
+        <title>Story 11.1: Production Dockerfile (Multi-Stage)</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Production Dockerfile provides the build pattern for CI: Node.js 20-alpine base, npm ci, npm run build, npx prisma generate</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>docker/Dockerfile</path>
+        <kind>dockerfile</kind>
+        <symbol>Multi-stage production build</symbol>
+        <lines>1-135</lines>
+        <reason>Production Dockerfile with Node.js 20-alpine base, multi-stage build (deps, build, production) - used as reference for CI build process</reason>
+      </file>
+      <file>
+        <path>docker/docker-compose.yml</path>
+        <kind>docker-compose</kind>
+        <symbol>Development environment</symbol>
+        <lines>1-88</lines>
+        <reason>Docker Compose setup with app, postgres, mongodb, redis services - provides environment context for integration tests</reason>
+      </file>
+      <file>
+        <path>package.json</path>
+        <kind>package.json</kind>
+        <symbol>npm scripts</symbol>
+        <lines></lines>
+        <reason>Contains test scripts: npm run test, npm run test:integration, npm run test:e2e, npm run lint, npm run build - executed by CI pipeline</reason>
+      </file>
+      <file>
+        <path>src/main.ts</path>
+        <kind>typescript</kind>
+        <symbol>Application bootstrap</symbol>
+        <lines></lines>
+        <reason>NestJS application entry point, includes health check endpoints (/health, /health/db) for deployment validation</reason>
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="typescript" version="^5.x">TypeScript compiler for build process</package>
+        <package name="ts-node" version="^10.x">TypeScript execution environment for tests</package>
+        <package name="jest" version="^29.x">Unit testing framework (Epic 9)</package>
+        <package name="supertest" version="^6.x">HTTP testing for integration tests</package>
+        <package name="eslint" version="^8.x">Linting tool (Epic 12)</package>
+        <package name="prettier" version="^3.x">Code formatting (Epic 12)</package>
+        <package name="nestjs/common" version="^10.x">NestJS framework (Epic 1)</package>
+        <package name="prisma" version="^5.x">Database ORM with migrate command</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Node.js v20.x LTS runtime (consistent with production Dockerfile)
+- GitHub Actions syntax for workflow definition
+- Pull request trigger required (AC #2)
+- All tests must pass before merge (AC #4)
+- Quality gate enforcement required
+- Parallel execution for test + lint jobs (AC #5)
+- Environment variable validation via Joi schema
+- Database connectivity: PostgreSQL, MongoDB support
+- Docker integration: leverage existing docker/Dockerfile
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Health Check Endpoint</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /health - Returns { status: "ok", timestamp, version }</signature>
+      <path>src/main.ts</path>
+    </interface>
+    <interface>
+      <name>Database Health Check</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /health/db - Returns { database: "connected", type: "postgresql|mongodb" }</signature>
+      <path>src/main.ts</path>
+    </interface>
+    <interface>
+      <name>Test Scripts</name>
+      <kind>npm scripts</kind>
+      <signature>npm run test, npm run test:integration, npm run test:e2e, npm run lint, npm run build</signature>
+      <path>package.json</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest testing framework with TypeScript support. Unit tests focus on service layer (Epic 9). Integration tests verify API endpoints. E2E tests validate full workflows. Test coverage reporting configured. ESLint and Prettier for code quality. Tests run in CI pipeline on pull requests. Coverage threshold enforcement at 70% minimum.</standards>
+    <locations>tests/ directory structure - unit tests, integration tests, e2e tests. package.json npm test scripts. Test configuration in jest.config.js or package.json.</locations>
+    <ideas>
+- Test CI workflow file creation: Verify .github/workflows/ci.yml exists and has correct structure
+- Test pull request trigger: Verify workflow runs on pull_request event
+- Test Node.js 20 setup: Verify correct Node.js version in matrix
+- Test dependency installation: Verify npm ci executes successfully
+- Test lint check: Verify npm run lint executes without errors
+- Test unit tests: Verify npm run test passes with coverage threshold
+- Test integration tests: Verify npm run test:integration passes
+- Test E2E tests: Verify npm run test:e2e passes
+- Test build verification: Verify npm run build completes successfully
+- Test parallel execution: Verify test and lint jobs run concurrently
+- Test quality gates: Verify PR cannot merge if tests fail
+- Test Docker build: Verify integration with docker/Dockerfile from Story 11-1
+- Test environment validation: Verify .env validation via Joi schema
+- Test database connectivity: Verify PostgreSQL and MongoDB connections in tests
+    </ideas>
+  </tests>
+</story-context>

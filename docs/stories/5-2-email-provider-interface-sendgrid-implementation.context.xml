@@ -1,0 +1,159 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.2</storyId>
+    <title>Email Provider Interface & SendGrid Implementation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-2-email-provider-interface-sendgrid-implementation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>email provider abstraction</iWant>
+    <soThat>email provider'ı kolayca değiştirebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="5.2.1">Create Email Provider Interface</task>
+      <task id="2" ac="5.2.2">Install SendGrid SDK</task>
+      <task id="3" ac="5.2.2">Create SendGrid Provider</task>
+      <task id="4" ac="5.2.4">Create MailService</task>
+      <task id="5" ac="5.2.3">Create MailModule with Dynamic Provider Injection</task>
+      <task id="6" ac="5.2.2,5.2.3">Environment Configuration</task>
+      <task id="7" ac="All">Testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="5.2.1">Email Provider Interface oluşturulmuş (`src/modules/mail/interfaces/mail-provider.interface.ts`) - Interface: `IEmailProvider { send(to, subject, html, text?): Promise<EmailResult> }` - EmailResult interface: `{ messageId: string, success: boolean }`</ac>
+    <ac id="5.2.2">SendGrid Provider oluşturulmuş (`src/modules/mail/providers/sendgrid.provider.ts`) - SendGrid SDK configured (@sendgrid/mail) - Environment variables: SENDGRID_API_KEY, MAIL_FROM - Implements IEmailProvider interface - `send(to, subject, html, text?): Promise<EmailResult>` method - Error handling: Provider exceptions wrapped</ac>
+    <ac id="5.2.3">MailModule dynamic provider injection - MAIL_PROVIDER env var ile provider seçimi (default: 'sendgrid') - Dynamic provider injection pattern (factory pattern) - MailModule'de provider configuration</ac>
+    <ac id="5.2.4">MailService oluşturulmuş (provider-agnostic) - `src/modules/mail/services/mail.service.ts` - `sendEmail(to: string, subject: string, html: string, text?: string): Promise<void>` method - Provider-agnostic implementation (IEmailProvider interface kullanır) - Error handling: Provider exceptions wrapped ve logged</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md" title="Epic 5: Communication Infrastructure" section="Story 5.2: Email Provider Interface & SendGrid Implementation" snippet="Email provider abstraction via IEmailProvider interface. SendGrid SDK configured with SENDGRID_API_KEY and MAIL_FROM. MailModule dynamic provider injection via MAIL_PROVIDER env var. MailService provider-agnostic implementation." />
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Story 5.2: Email Provider Interface & SendGrid Implementation" snippet="Complete AC specifications (AC-5.2.1 through AC-5.2.4). MailService and SendGridProvider design. Provider abstraction pattern. IEmailProvider interface specification. SendGrid API integration details." />
+      <doc path="docs/stories/5-1-sms-provider-interface-twilio-implementation.md" title="Story 5.1: SMS Provider Interface" section="Learnings from Previous Story" snippet="Provider abstraction pattern established: Interface-based provider abstraction, environment variable-based provider selection, dynamic provider injection via factory pattern. Module structure pattern: Standard NestJS module structure with clear separation (Interface → Provider → Service)." />
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Error Handling Pattern" snippet="Provider exceptions wrapped in service layer. Network failures: Log error, don't block main flow. Invalid credentials: Throw BadRequestException with i18n translated message." />
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests" snippet="Pattern: Arrange-Act-Assert. Mock dependencies (ConfigService, external SDKs). Minimum coverage: 70%. Services: 80%+ coverage. Controllers: 70%+ coverage." />
+    </docs>
+    <code>
+      <artifact path="src/modules/sms/sms.module.ts" kind="module" symbol="SmsModule" reason="Reference for module structure pattern: providers array, exports array, imports array. Similar structure needed for MailModule." />
+      <artifact path="src/modules/sms/services/sms.service.ts" kind="service" symbol="SmsService" lines="1-100" reason="Reference for service pattern: Injectable decorator, Logger usage, dependency injection (PrismaService, FonivaService), error handling with i18n. Similar pattern for MailService." />
+      <artifact path="src/modules/sms/services/foniva.service.ts" kind="service" symbol="FonivaService" lines="1-100" reason="Reference for provider pattern: Injectable decorator, ConfigService injection for environment variables, constructor initialization with config validation, error handling. Similar pattern for SendGridProvider." />
+      <artifact path="src/app.module.ts" kind="module" symbol="AppModule" lines="30-70" reason="Reference for ConfigModule setup: ConfigModule.forRoot with isGlobal: true, load array for config factories. MailModule will need to import ConfigModule similarly." />
+      <artifact path="src/config/env-validation.schema.ts" kind="config" symbol="envSchema" reason="Reference for environment variable validation: Joi schema pattern. Need to add SENDGRID_API_KEY, MAIL_FROM, MAIL_PROVIDER validation." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/config" version="^4.0.2" />
+        <package name="@sendgrid/mail" version="^8.1.0" reason="SendGrid SDK for email sending" />
+        <package name="nestjs-i18n" version="^10.5.1" reason="Internationalized error messages" />
+        <package name="winston" version="^3.18.3" reason="Structured logging for error tracking" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Provider Abstraction Pattern: Email provider abstraction via IEmailProvider interface (similar to SMS provider pattern from Story 5.1). Dynamic provider injection via environment variable (MAIL_PROVIDER). Easy provider switching: SendGrid → AWS SES (future story). [Source: docs/tech-spec-epic-5.md#System-Architecture-Alignment]</constraint>
+    <constraint>Module Structure Pattern: Follow standard NestJS module structure: `src/modules/mail/` with interfaces/, providers/, services/. Similar to SMS module structure from Story 5.1. Clear separation: Interface → Provider → Service. [Source: docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md#Story-5.2]</constraint>
+    <constraint>Error Handling Pattern: Provider exceptions wrapped in MailService. Log errors to Winston logger (Epic 7). Throw BadRequestException with i18n translated message. Don't expose provider-specific error details to clients. [Source: docs/architecture/implementation-patterns-ai-agent-consistency-rules.md#Error-Handling-Pattern]</constraint>
+    <constraint>Environment Configuration Pattern: Environment variables: SENDGRID_API_KEY, MAIL_FROM, MAIL_PROVIDER. ConfigService injection for type-safe config access. Validation on module initialization. [Source: docs/tech-spec-epic-5.md#External-Service-Integrations]</constraint>
+    <constraint>Service Layer Pattern: MailService is provider-agnostic (depends on IEmailProvider interface, not concrete provider). Provider implementation details hidden from consumers. Easy to test (mock IEmailProvider interface). [Source: docs/tech-spec-epic-5.md#Services-and-Modules]</constraint>
+    <constraint>Testing Constraint: Unit tests: Mock dependencies (ConfigService, external SDKs). Integration tests: Test real API calls with test credentials. E2E tests: Complete user flows. Minimum coverage: 70%. [Source: docs/architecture/testing-strategy.md]</constraint>
+    <constraint>Dependency Constraint: ConfigService (Epic 1) required for environment variable access. Winston Logger (Epic 7) required for error logging. i18n (Epic 7) required for internationalized error messages. [Source: docs/stories/5-2-email-provider-interface-sendgrid-implementation.md#Dependencies-from-Previous-Stories]</constraint>
+    <constraint>No Database Dependency: Email sending is stateless, no email tracking entity in this story. MailService does not require PrismaService. [Source: docs/stories/5-2-email-provider-interface-sendgrid-implementation.md#Module-Dependencies]</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>IEmailProvider</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface IEmailProvider {
+  send(to: string, subject: string, html: string, text?: string): Promise&lt;EmailResult&gt;;
+}
+
+interface EmailResult {
+  messageId: string;
+  success: boolean;
+}
+      </signature>
+      <path>src/modules/mail/interfaces/mail-provider.interface.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>ConfigService.get()</name>
+      <kind>NestJS Service Method</kind>
+      <signature>
+get&lt;T = string&gt;(key: string, defaultValue?: T): T | undefined
+// Examples:
+configService.get&lt;string&gt;('SENDGRID_API_KEY')
+configService.get&lt;string&gt;('MAIL_FROM')
+configService.get&lt;string&gt;('MAIL_PROVIDER', 'sendgrid')
+      </signature>
+      <path>@nestjs/config package</path>
+    </interface>
+    <interface>
+      <name>SendGrid SDK</name>
+      <kind>External SDK</kind>
+      <signature>
+import sgMail from '@sendgrid/mail';
+
+sgMail.setApiKey(apiKey);
+await sgMail.send({
+  to: string,
+  from: string,
+  subject: string,
+  html: string,
+  text?: string
+});
+      </signature>
+      <path>@sendgrid/mail package</path>
+    </interface>
+    <interface>
+      <name>MailService.sendEmail()</name>
+      <kind>Service Method</kind>
+      <signature>
+sendEmail(to: string, subject: string, html: string, text?: string): Promise&lt;void&gt;
+      </signature>
+      <path>src/modules/mail/services/mail.service.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>MailModule Provider Factory</name>
+      <kind>NestJS Factory Provider</kind>
+      <signature>
+{
+  provide: 'IEmailProvider',
+  useFactory: (configService: ConfigService) => {
+    const provider = configService.get&lt;string&gt;('MAIL_PROVIDER', 'sendgrid');
+    if (provider === 'sendgrid') {
+      return new SendGridProvider(configService);
+    }
+    throw new Error(`Unsupported mail provider: ${provider}`);
+  },
+  inject: [ConfigService]
+}
+      </signature>
+      <path>src/modules/mail/mail.module.ts (to be created)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Testing follows Arrange-Act-Assert pattern. Unit tests mock dependencies (ConfigService, external SDKs). Integration tests use real API calls with test credentials. E2E tests cover complete user flows. Minimum coverage: 70%. Services require 80%+ coverage. Controllers require 70%+ coverage. [Source: docs/architecture/testing-strategy.md]</standards>
+    <locations>
+      <location>src/modules/mail/__tests__/services/mail.service.spec.ts</location>
+      <location>src/modules/mail/__tests__/providers/sendgrid.provider.spec.ts</location>
+      <location>test/mail.e2e-spec.ts</location>
+    </locations>
+    <ideas>
+      <test ac="5.2.1">Unit test: IEmailProvider interface contract validation. Verify interface structure matches specification.</test>
+      <test ac="5.2.2">Unit test SendGridProvider.send(): Mock SendGrid SDK, test API call with correct parameters (to, from, subject, html, text), test error handling (invalid API key, network failures), verify EmailResult return format.</test>
+      <test ac="5.2.3">Unit test MailModule provider injection: Test factory function returns SendGridProvider when MAIL_PROVIDER=sendgrid, test error when unsupported provider specified.</test>
+      <test ac="5.2.4">Unit test MailService.sendEmail(): Mock IEmailProvider, test delegation to provider.send(), test error wrapping and logging, test BadRequestException on provider failure.</test>
+      <test ac="5.2.2,5.2.3">Integration test: MailService with SendGridProvider using real SendGrid API call (test environment), test invalid SENDGRID_API_KEY throws BadRequestException, test network failure handled gracefully.</test>
+      <test ac="All">E2E test: Email sending flow - MailService.sendEmail() → SendGrid API → Email delivered. Error flow - Invalid API key → Error logged → BadRequestException thrown.</test>
+    </ideas>
+  </tests>
+</story-context>
+

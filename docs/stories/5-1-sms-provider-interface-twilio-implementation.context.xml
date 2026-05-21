@@ -1,0 +1,422 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>1</storyId>
+    <title>SMS Provider Interface & Twilio Implementation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-1-sms-provider-interface-twilio-implementation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>FONIVA SMS integration with database tracking, delivery callbacks, retry mechanism</iWant>
+    <soThat>SMS gönderimi production-ready ve audit edilebilir olsun</soThat>
+    <tasks>
+- [ ] Task 1: Create SMS Entity (Prisma model) (AC: 5.1.1)
+  - [ ] Subtask 1.1: Add SMS model to prisma/schema.prisma with all required fields
+  - [ ] Subtask 1.2: Create SmsType enum (OTP, NOTIFICATION, MARKETING, ALERT)
+  - [ ] Subtask 1.3: Create SmsStatus enum (PENDING, SENT, DELIVERED, FAILED)
+  - [ ] Subtask 1.4: Add indexes: [domainID], [phoneNumber], [status], [createdAt]
+  - [ ] Subtask 1.5: Run Prisma migration: `npx prisma migrate dev --name add_sms_entity`
+  - [ ] Subtask 1.6: Create TypeScript entity file: `src/modules/sms/entities/sms.entity.ts` (Prisma generated)
+
+- [ ] Task 2: Create SMS Enums (AC: 5.1.7)
+  - [ ] Subtask 2.1: Create `src/modules/sms/enums/sms-type.enum.ts` (OTP, NOTIFICATION, MARKETING, ALERT)
+  - [ ] Subtask 2.2: Create `src/modules/sms/enums/sms-status.enum.ts` (PENDING, SENT, DELIVERED, FAILED)
+
+- [ ] Task 3: Create SMS DTOs (AC: 5.1.7)
+  - [ ] Subtask 3.1: Create `src/modules/sms/dto/send-sms.dto.ts` (phoneNumber, message, type)
+  - [ ] Subtask 3.2: Create `src/modules/sms/dto/delivery-callback.dto.ts` (providerId, status)
+  - [ ] Subtask 3.3: Add validation decorators (@IsString(), @IsEnum(), @IsPhoneNumber())
+
+- [ ] Task 4: Create FONIVA Service (AC: 5.1.2)
+  - [ ] Subtask 4.1: Install axios: `npm install axios`
+  - [ ] Subtask 4.2: Create `src/modules/sms/services/foniva.service.ts`
+  - [ ] Subtask 4.3: Inject ConfigService for FONIVA environment variables
+  - [ ] Subtask 4.4: Implement `sendSms(phoneNumber, message, type): Promise<FonivaResult>` method
+  - [ ] Subtask 4.5: FONIVA API call via axios (POST request with Basic Auth + API Key)
+  - [ ] Subtask 4.6: Error handling: Network failures, invalid credentials
+  - [ ] Subtask 4.7: Return FonivaResult interface: { providerId: string, success: boolean }
+
+- [ ] Task 5: Create SMS Service (Main Orchestrator) (AC: 5.1.3)
+  - [ ] Subtask 5.1: Create `src/modules/sms/services/sms.service.ts`
+  - [ ] Subtask 5.2: Inject PrismaService and FonivaService
+  - [ ] Subtask 5.3: Implement `sendSms(domainID, phoneNumber, message, type): Promise<SMS>` method
+  - [ ] Subtask 5.4: Create SMS record (status: PENDING, attemptCount: 0)
+  - [ ] Subtask 5.5: Call FonivaService.sendSms()
+  - [ ] Subtask 5.6: On success: Update SMS record (status: SENT, providerId, sentAt)
+  - [ ] Subtask 5.7: On failure: Update SMS record (status: FAILED, errorMessage, attemptCount++)
+  - [ ] Subtask 5.8: Return SMS entity
+
+- [ ] Task 6: Implement Retry Mechanism (AC: 5.1.4)
+  - [ ] Subtask 6.1: Implement `retrySms(smsId): Promise<SMS>` method in SmsService
+  - [ ] Subtask 6.2: Load SMS record by ID
+  - [ ] Subtask 6.3: Check attemptCount < 3 (throw error if exceeded)
+  - [ ] Subtask 6.4: Calculate exponential backoff delay: 1min → 5min → 15min
+  - [ ] Subtask 6.5: Wait for backoff delay (or schedule job for async retry)
+  - [ ] Subtask 6.6: Re-attempt FonivaService.sendSms()
+  - [ ] Subtask 6.7: Update SMS record with new attempt result
+
+- [ ] Task 7: Create Delivery Callback Endpoint (AC: 5.1.5)
+  - [ ] Subtask 7.1: Create `src/modules/sms/controllers/sms.controller.ts`
+  - [ ] Subtask 7.2: Add POST /sms/callback/delivery endpoint (public, no auth guard)
+  - [ ] Subtask 7.3: Implement webhook signature verification (FONIVA_API_KEY)
+  - [ ] Subtask 7.4: Extract DeliveryCallbackDto from request body
+  - [ ] Subtask 7.5: Find SMS record by providerId
+  - [ ] Subtask 7.6: Update SMS record (status: DELIVERED/FAILED, deliveredAt)
+  - [ ] Subtask 7.7: Return 200 OK response
+
+- [ ] Task 8: Create SMS Statistics Endpoint (AC: 5.1.6)
+  - [ ] Subtask 8.1: Add GET /sms/stats endpoint to SmsController
+  - [ ] Subtask 8.2: Apply @UseGuards(JwtAuthGuard, PermissionsGuard) with @Permission('SMS.VIEW_STATS')
+  - [ ] Subtask 8.3: Extract @CurrentUser() user and query params (startDate, endDate, type)
+  - [ ] Subtask 8.4: Implement statistics aggregation in SmsService.getStats()
+  - [ ] Subtask 8.5: Query: Total sent, delivered, failed counts
+  - [ ] Subtask 8.6: Calculate success rate by type (OTP, NOTIFICATION, etc.)
+  - [ ] Subtask 8.7: Apply date range filtering (startDate, endDate)
+  - [ ] Subtask 8.8: Apply domainID filtering (multi-tenant)
+  - [ ] Subtask 8.9: Return statistics DTO: { total: { sent, delivered, failed }, successRate, byType }
+
+- [ ] Task 9: Create SMS Module (AC: All)
+  - [ ] Subtask 9.1: Create `src/modules/sms/sms.module.ts`
+  - [ ] Subtask 9.2: Import PrismaModule, ConfigModule
+  - [ ] Subtask 9.3: Provide: SmsService, FonivaService
+  - [ ] Subtask 9.4: Export: SmsService (for use in Auth module)
+  - [ ] Subtask 9.5: Add SmsController to controllers array
+  - [ ] Subtask 9.6: Import SmsModule in AppModule
+
+- [ ] Task 10: Testing (AC: All)
+  - [ ] Subtask 10.1: Unit test FonivaService.sendSms() (mock axios, test error handling)
+  - [ ] Subtask 10.2: Unit test SmsService.sendSms() (mock FonivaService, test DB tracking)
+  - [ ] Subtask 10.3: Unit test SmsService.retrySms() (test attemptCount check, exponential backoff)
+  - [ ] Subtask 10.4: Unit test SmsService.getStats() (test aggregation, filtering)
+  - [ ] Subtask 10.5: Integration test POST /sms/callback/delivery (test webhook signature verification)
+  - [ ] Subtask 10.6: Integration test GET /sms/stats (test admin permission, domainID filtering)
+  - [ ] Subtask 10.7: E2E test SMS sending flow (sendSms → database record → callback → status update)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-5.1.1:** SMS Entity (Prisma model) oluşturulmuş (`src/modules/sms/entities/sms.entity.ts`)
+   - Fields: id, domainID, phoneNumber, message, type, status, provider, providerId, attemptCount, errorMessage, sentAt, deliveredAt, createdAt, updatedAt
+   - Type enum: 'OTP' | 'NOTIFICATION' | 'MARKETING' | 'ALERT'
+   - Status enum: 'PENDING' | 'SENT' | 'DELIVERED' | 'FAILED'
+   - Indexes: [domainID], [phoneNumber], [status], [createdAt]
+
+2. **AC-5.1.2:** FONIVA Service oluşturulmuş (`src/modules/sms/services/foniva.service.ts`)
+   - FONIVA REST API integration (axios)
+   - Environment variables: SMS_PROVIDER, FONIVA_API_URL, FONIVA_USERNAME, FONIVA_PASSWORD, FONIVA_API_KEY, FONIVA_SENDER
+   - `sendSms(phoneNumber, message, type): Promise<FonivaResult>` method
+   - Error handling: Network failures, invalid credentials
+
+3. **AC-5.1.3:** SMS Service (Main Orchestrator) oluşturulmuş (`src/modules/sms/services/sms.service.ts`)
+   - `sendSms(domainID, phoneNumber, message, type): Promise<SMS>` method
+   - Creates SMS record (status: PENDING)
+   - Calls FonivaService.sendSms()
+   - Updates SMS record: Success → status: SENT, providerId, sentAt | Failure → status: FAILED, errorMessage, attemptCount++
+   - Database tracking for all SMS (audit trail)
+
+4. **AC-5.1.4:** Retry Mechanism implemented
+   - `retrySms(smsId): Promise<SMS>` method
+   - attemptCount < 3 check
+   - Exponential backoff: 1min → 5min → 15min
+   - Re-attempts FONIVA send and updates SMS record
+
+5. **AC-5.1.5:** Delivery Callbacks (Webhook) endpoint oluşturulmuş
+   - POST /sms/callback/delivery endpoint (public, FONIVA webhook)
+   - Request DTO: providerId, status ('DELIVERED' | 'FAILED')
+   - SMS record update: Find by providerId, update status, deliveredAt
+   - Webhook signature verification (FONIVA_API_KEY)
+
+6. **AC-5.1.6:** SMS Statistics endpoint oluşturulmuş
+   - GET /sms/stats endpoint (admin only)
+   - Aggregation: Total sent, delivered, failed
+   - Success rate by type (OTP, NOTIFICATION, etc.)
+   - Date range filtering, domainID filtering (multi-tenant)
+
+7. **AC-5.1.7:** SMS DTOs ve Enums oluşturulmuş
+   - SendSmsDto: { phoneNumber, message, type }
+   - DeliveryCallbackDto: { providerId, status }
+   - SmsType enum: OTP, NOTIFICATION, MARKETING, ALERT
+   - SmsStatus enum: PENDING, SENT, DELIVERED, FAILED
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-5.md</path>
+        <title>Epic Technical Specification: Communication Infrastructure (FONIVA SMS Pattern)</title>
+        <section>Story 5.1: FONIVA SMS Module</section>
+        <snippet>Complete technical specification for SMS module including SMS Entity schema, FONIVA Service design, SMS Service orchestrator, retry mechanism, webhook callbacks, and statistics endpoint. Includes Prisma schema definitions, API contracts, and integration patterns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md</path>
+        <title>Epic 5: Communication Infrastructure (FONIVA SMS Pattern)</title>
+        <section>Story 5.1: FONIVA SMS Module (hrsync-backend Pattern)</section>
+        <snippet>Epic-level story breakdown with acceptance criteria, technical notes, and implementation strategy. Module can be copied from hrsync-backend: `/Users/ahmet/Documents/Bitbucket/hrsync-backend/src/sms`. Adapt TypeORM entities to Prisma.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/project-structure.md</path>
+        <title>Project Structure</title>
+        <section>SMS Module Structure</section>
+        <snippet>Standard NestJS module structure for SMS module: controllers/, services/, dto/, entities/, enums/. Module follows established pattern from Files module (Epic 4).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/security-architecture.md</path>
+        <title>Security Architecture</title>
+        <section>Multi-Tenancy Isolation</section>
+        <snippet>Every query includes domainID filter. Prisma middleware double-check for safety. All SMS records include domainID field for multi-tenant isolation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>Module Structure, Multi-Tenancy Pattern, Error Handling Pattern</section>
+        <snippet>Standard NestJS module structure with controllers/, services/, dto/, entities/, enums/. Multi-tenancy pattern: All queries filter by domainID from @CurrentUser decorator. Error handling: Network failures log error, update entity status, don't block main flow.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Unit Tests, Integration Tests, E2E Tests</section>
+        <snippet>Arrange-Act-Assert pattern for unit tests. Mock dependencies (PrismaService, external services). Integration tests for API endpoints with guards and permissions. E2E tests for complete user flows.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/4-5-file-list-endpoint.md</path>
+        <title>Story 4.5: File List Endpoint</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Module structure pattern established: Standard NestJS module structure with clear separation of concerns. Multi-tenancy pattern: All queries filtered by domainID. Database indexes pattern: Indexes on frequently queried fields. Error handling pattern: Network failures log error, update entity status.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD-NFR-CodingStandards.md</path>
+        <title>PRD NFR Coding Standards</title>
+        <section>Multi-Tenancy Pattern, Error Handling Pattern</section>
+        <snippet>Every entity has domainID column. All queries filter by domainID. Services always require domainID parameter. Controllers extract domainID from @CurrentUser decorator. Never trust domainID from request body.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>1-40</lines>
+        <reason>Global PrismaService for database operations. Extends PrismaClient, implements OnModuleInit/OnModuleDestroy. Used for SMS entity CRUD operations.</reason>
+      </file>
+      <file>
+        <path>src/database/prisma.module.ts</path>
+        <kind>module</kind>
+        <symbol>PrismaModule</symbol>
+        <lines>1-12</lines>
+        <reason>Global PrismaModule that exports PrismaService. Imported in SMS module for database access.</reason>
+      </file>
+      <file>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>1-68</lines>
+        <reason>JWT authentication guard for protected routes. Used on GET /sms/stats endpoint. Supports @Public() decorator to bypass authentication (for webhook endpoint).</reason>
+      </file>
+      <file>
+        <path>src/common/guards/permissions.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>PermissionsGuard</symbol>
+        <lines>1-122</lines>
+        <reason>Permission-based authorization guard. Used with @Permission('SMS.VIEW_STATS') decorator on GET /sms/stats endpoint. Checks user permissions via AuthorizationService.</reason>
+      </file>
+      <file>
+        <path>src/common/decorators/current-user.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>@CurrentUser()</symbol>
+        <lines>1-30</lines>
+        <reason>Parameter decorator to extract authenticated user from request. Returns JwtPayload with sub, phoneNumber, domainID, roles. Used to extract domainID for multi-tenant filtering.</reason>
+      </file>
+      <file>
+        <path>src/common/decorators/permission.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>@Permission()</symbol>
+        <reason>Metadata decorator for permission-based authorization. Used with PermissionsGuard. Format: @Permission('SMS.VIEW_STATS').</reason>
+      </file>
+      <file>
+        <path>src/common/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>@Public()</symbol>
+        <reason>Metadata decorator to mark routes as public (no authentication required). Used on POST /sms/callback/delivery webhook endpoint.</reason>
+      </file>
+      <file>
+        <path>src/modules/files/services/files.service.ts</path>
+        <kind>service</kind>
+        <symbol>FilesService.listFiles()</symbol>
+        <lines>553-636</lines>
+        <reason>Reference implementation for multi-tenant filtering, pagination, and access control. Shows domainID filtering pattern, query building, and error handling. Similar pattern applies to SMS statistics endpoint.</reason>
+      </file>
+      <file>
+        <path>src/modules/files/controllers/files.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>FilesController</symbol>
+        <reason>Reference implementation for controller structure with guards, decorators, and DTOs. Shows @UseGuards(JwtAuthGuard), @CurrentUser() decorator usage, and service method calls.</reason>
+      </file>
+      <file>
+        <path>src/modules/permissions/services/authorization.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthorizationService.hasPermission()</symbol>
+        <reason>Authorization service for permission checks. Used by PermissionsGuard. Method signature: hasPermission(userID: string, domainID: string, permission: string): Promise<boolean>.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.0.1"/>
+        <package name="@nestjs/config" version="^4.0.2"/>
+        <package name="@nestjs/core" version="^11.0.1"/>
+        <package name="@nestjs/swagger" version="^11.2.1"/>
+        <package name="@prisma/client" version="^6.18.0"/>
+        <package name="class-validator" version="^0.14.2"/>
+        <package name="class-transformer" version="^0.5.1"/>
+        <package name="axios" version="NOT_INSTALLED"/>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <rule>Module Structure Pattern</rule>
+      <description>Follow standard NestJS module structure: `src/modules/sms/` with controllers/, services/, dto/, entities/, enums/. Module can be copied from hrsync-backend: `/Users/ahmet/Documents/Bitbucket/hrsync-backend/src/sms`. Adapt TypeORM entities to Prisma.</description>
+    </constraint>
+    <constraint>
+      <rule>Multi-Tenancy Pattern (MANDATORY)</rule>
+      <description>All SMS records include domainID field. All queries filtered by domainID. Extract domainID from @CurrentUser() decorator (JWT payload). Never trust domainID from request body. Always filter by domainID in Prisma queries: `where: { domainID, ... }`.</description>
+    </constraint>
+    <constraint>
+      <rule>Database Tracking Pattern</rule>
+      <description>All SMS operations tracked in database (audit trail). SMS entity includes: domainID (multi-tenant), providerId (FONIVA message ID), status tracking. Status flow: PENDING → SENT → DELIVERED/FAILED.</description>
+    </constraint>
+    <constraint>
+      <rule>Error Handling Pattern</rule>
+      <description>Network failures: Log error, update SMS record (status: FAILED, errorMessage). Invalid credentials: Log error, throw BadRequestException. Webhook signature failure: Return 401 Unauthorized. Don't block main flow on communication failures.</description>
+    </constraint>
+    <constraint>
+      <rule>Webhook Security Pattern</rule>
+      <description>Public endpoint (no auth guard) but signature verification required. Verify webhook signature using FONIVA_API_KEY. Reject requests with invalid signatures (401 Unauthorized). Use @Public() decorator to bypass JwtAuthGuard.</description>
+    </constraint>
+    <constraint>
+      <rule>Retry Mechanism Pattern</rule>
+      <description>Exponential backoff: 1min → 5min → 15min delays. Max 3 attempts (attemptCount < 3 check). Retry can be manual (admin-triggered) or automatic (scheduled job) - manual for MVP.</description>
+    </constraint>
+    <constraint>
+      <rule>Database Indexes Pattern</rule>
+      <description>Indexes on frequently queried fields: [domainID], [phoneNumber], [status], [createdAt]. Performance optimization for SMS queries and statistics aggregation.</description>
+    </constraint>
+    <constraint>
+      <rule>Testing Standards</rule>
+      <description>Unit tests: Arrange-Act-Assert pattern, mock dependencies (PrismaService, FonivaService). Integration tests: Test API endpoints with guards and permissions. E2E tests: Complete SMS flow (sendSms → database record → callback → status update). Minimum coverage: 70%.</description>
+    </constraint>
+    <constraint>
+      <rule>Import Organization</rule>
+      <description>8-group order: Libraries, DTOs, Services, Repositories, Entities, Interfaces, Enums, Events. Use path aliases (@/common, @/modules) for imports.</description>
+    </constraint>
+    <constraint>
+      <rule>Response Format</rule>
+      <description>Controllers return DTOs directly. ResponseTransformInterceptor wraps automatically with { success, status, data, message }. Paginated responses return { data, meta: { page, limit, total, totalPages } }.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PrismaService.sms.create()</name>
+      <kind>Database query</kind>
+      <signature>prisma.sms.create({ data: { domainID, phoneNumber, message, type, status: 'PENDING', attemptCount: 0 } }): Promise&lt;SMS&gt;</signature>
+      <path>src/database/prisma.service.ts</path>
+      <description>Prisma query to create SMS record. Used in SmsService.sendSms() to create initial SMS record with status: PENDING.</description>
+    </interface>
+    <interface>
+      <name>PrismaService.sms.update()</name>
+      <kind>Database query</kind>
+      <signature>prisma.sms.update({ where: { id }, data: { status, providerId, sentAt, errorMessage, attemptCount } }): Promise&lt;SMS&gt;</signature>
+      <path>src/database/prisma.service.ts</path>
+      <description>Prisma query to update SMS record. Used to update SMS status after FONIVA API call (success or failure) and after webhook callback.</description>
+    </interface>
+    <interface>
+      <name>PrismaService.sms.findUnique()</name>
+      <kind>Database query</kind>
+      <signature>prisma.sms.findUnique({ where: { providerId } }): Promise&lt;SMS | null&gt;</signature>
+      <path>src/database/prisma.service.ts</path>
+      <description>Prisma query to find SMS record by providerId. Used in webhook callback handler to find SMS record for status update.</description>
+    </interface>
+    <interface>
+      <name>PrismaService.sms.aggregate()</name>
+      <kind>Database query</kind>
+      <signature>prisma.sms.aggregate({ where: { domainID, createdAt: { gte, lte }, type }, _count: { status: true } }): Promise&lt;{ _count: { status: number } }&gt;</signature>
+      <path>src/database/prisma.service.ts</path>
+      <description>Prisma aggregate query for SMS statistics. Used in SmsService.getStats() to calculate total sent/delivered/failed counts with date range and domainID filtering.</description>
+    </interface>
+    <interface>
+      <name>@CurrentUser()</name>
+      <kind>Parameter decorator</kind>
+      <signature>@CurrentUser() user: JwtPayload</signature>
+      <path>src/common/decorators/current-user.decorator.ts</path>
+      <description>Extract authenticated user from request. Returns JwtPayload with { sub, phoneNumber, domainID, roles }. Used to extract domainID for multi-tenant filtering in statistics endpoint.</description>
+    </interface>
+    <interface>
+      <name>@Permission()</name>
+      <kind>Metadata decorator</kind>
+      <signature>@Permission('SMS.VIEW_STATS')</signature>
+      <path>src/common/decorators/permission.decorator.ts</path>
+      <description>Metadata decorator for permission-based authorization. Used with PermissionsGuard on GET /sms/stats endpoint.</description>
+    </interface>
+    <interface>
+      <name>@Public()</name>
+      <kind>Metadata decorator</kind>
+      <signature>@Public()</signature>
+      <path>src/common/decorators/public.decorator.ts</path>
+      <description>Metadata decorator to mark routes as public (no authentication required). Used on POST /sms/callback/delivery webhook endpoint.</description>
+    </interface>
+    <interface>
+      <name>ConfigService.get()</name>
+      <kind>Service method</kind>
+      <signature>configService.get&lt;string&gt;('FONIVA_API_URL'): string</signature>
+      <path>@nestjs/config</path>
+      <description>ConfigService method to access environment variables. Used in FonivaService to get FONIVA credentials (FONIVA_API_URL, FONIVA_USERNAME, FONIVA_PASSWORD, FONIVA_API_KEY, FONIVA_SENDER).</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Arrange-Act-Assert pattern. Unit tests mock dependencies (PrismaService, FonivaService, axios). Integration tests test API endpoints with guards and permissions. E2E tests cover complete SMS flow. Minimum coverage: 70%. Test files located in `src/modules/sms/__tests__/` for unit tests and `test/sms.e2e-spec.ts` for E2E tests.
+    </standards>
+    <locations>
+      <location>src/modules/sms/__tests__/services/</location>
+      <location>src/modules/sms/__tests__/controllers/</location>
+      <location>test/sms.e2e-spec.ts</location>
+    </locations>
+    <ideas>
+      <test>
+        <acId>AC-5.1.2</acId>
+        <idea>Unit test FonivaService.sendSms(): Mock axios POST request, test successful response with providerId, test network failure handling, test invalid credentials error.</idea>
+      </test>
+      <test>
+        <acId>AC-5.1.3</acId>
+        <idea>Unit test SmsService.sendSms(): Mock PrismaService.sms.create(), mock FonivaService.sendSms(), test SMS record creation (status: PENDING), test success path (status: SENT, providerId, sentAt), test failure path (status: FAILED, errorMessage, attemptCount++).</idea>
+      </test>
+      <test>
+        <acId>AC-5.1.4</acId>
+        <idea>Unit test SmsService.retrySms(): Test attemptCount < 3 check (throw error if exceeded), test exponential backoff calculation (1min → 5min → 15min), test re-attempt FonivaService.sendSms(), test SMS record update with new attempt result.</idea>
+      </test>
+      <test>
+        <acId>AC-5.1.5</acId>
+        <idea>Integration test POST /sms/callback/delivery: Test webhook signature verification (valid signature → 200 OK, invalid signature → 401 Unauthorized), test SMS record update by providerId (status: DELIVERED/FAILED, deliveredAt), test missing providerId handling.</idea>
+      </test>
+      <test>
+        <acId>AC-5.1.6</acId>
+        <idea>Integration test GET /sms/stats: Test admin permission check (SMS.VIEW_STATS → 200 OK, no permission → 403 Forbidden), test domainID filtering (multi-tenant isolation), test date range filtering (startDate, endDate), test statistics aggregation (total sent/delivered/failed, success rate by type).</idea>
+      </test>
+      <test>
+        <acId>AC-5.1.1, AC-5.1.3</acId>
+        <idea>E2E test SMS sending flow: Send SMS via SmsService.sendSms() → Verify SMS record created (status: PENDING) → Simulate FONIVA callback → Verify SMS record updated (status: DELIVERED, deliveredAt).</idea>
+      </test>
+      <test>
+        <acId>AC-5.1.3, AC-5.1.4</acId>
+        <idea>E2E test SMS failure and retry flow: Send SMS → FONIVA failure → SMS record updated (status: FAILED) → Retry SMS → Exponential backoff → Re-attempt → Success.</idea>
+      </test>
+    </ideas>
+  </tests>
+</story-context>
+

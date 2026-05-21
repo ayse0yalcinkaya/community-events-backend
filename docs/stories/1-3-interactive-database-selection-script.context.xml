@@ -1,0 +1,243 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>3</storyId>
+    <title>Interactive Database Selection Script</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-3-interactive-database-selection-script.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>interactive bir setup script ile database seçmek</iWant>
+    <soThat>proje initialize ederken PostgreSQL veya MongoDB arasında seçim yapabileyim</soThat>
+    <tasks>
+      - Task 1: Setup script dosyası oluştur ve temel yapı kur (AC: 1, 6)
+      - Task 2: Interactive database selection prompts implement et (AC: 2)
+      - Task 3: Schema dosyası kopyalama logic implement et (AC: 3)
+      - Task 4: .env dosyası generation implement et (AC: 4)
+      - Task 5: Next steps guidance console output (AC: 5)
+      - Task 6: Integration test ve validation (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-1.3.1">
+      <description>`scripts/setup.ts` oluşturulmuş (executable with ts-node)</description>
+      <verification>File exists at scripts/setup.ts and can be executed with ts-node</verification>
+    </criterion>
+    <criterion id="AC-1.3.2">
+      <description>Script çalıştırıldığında kullanıcıya soruyor: "PostgreSQL or MongoDB?"</description>
+      <verification>Interactive prompt appears when running npm run setup</verification>
+    </criterion>
+    <criterion id="AC-1.3.3">
+      <description>Seçime göre ilgili schema dosyasını `prisma/schema.prisma`'ya kopyalıyor (fs.copyFileSync)</description>
+      <verification>After selection, prisma/schema.prisma exists with correct provider</verification>
+    </criterion>
+    <criterion id="AC-1.3.4">
+      <description>`.env` dosyasını `.env.example`'dan oluşturuyor (DATABASE_URL placeholder)</description>
+      <verification>.env file created with DATABASE_URL placeholder matching selected database</verification>
+    </criterion>
+    <criterion id="AC-1.3.5">
+      <description>Kullanıcıya next steps gösteriyor (console output: 1. Fill DATABASE_URL, 2. Run prisma generate, 3. Run prisma migrate dev, 4. Run seed)</description>
+      <verification>Console displays clear numbered next steps after setup completion</verification>
+    </criterion>
+    <criterion id="AC-1.3.6">
+      <description>`package.json`'a script eklendi: `"setup": "ts-node scripts/setup.ts"`</description>
+      <verification>package.json scripts section contains "setup" command</verification>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>AC-1.3.1 - AC-1.3.6</section>
+        <snippet>Complete acceptance criteria specifications for interactive database selection script. Includes setup script requirements, user prompts, file operations, and next steps guidance.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Workflows and Sequencing - Database Setup Flow</section>
+        <snippet>Database setup flow: 1) npm run setup, 2) Select database, 3) Copy schema, 4) Generate .env, 5) Show next steps. Detailed step-by-step process with error handling.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boilerplate - Epic Breakdown</title>
+        <section>Story 1.3: Interactive Database Selection Script</section>
+        <snippet>User story, acceptance criteria, and technical notes. Setup script uses Node.js inquirer/readline for prompts, fs.copyFileSync for schema copy, and generates .env from template.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Project Initialization - Setup Script Process</section>
+        <snippet>Setup script process: Prompts user for PostgreSQL or MongoDB, copies appropriate Prisma schema, generates .env file from template, initializes database, and runs migrations (PostgreSQL only).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Decision Summary - Database Selection</section>
+        <snippet>Interactive CLI Script approach for database selection. One-time setup, user-friendly, automatic config. Dual Schema Files strategy provides clean separation without conflicts.</snippet>
+      </doc>
+      <doc>
+        <path>stories/1-2-dual-prisma-schema-setup.md</path>
+        <title>Story 1.2: Dual Prisma Schema Setup</title>
+        <section>Completion Notes</section>
+        <snippet>Schema files ready at prisma/schema-postgres.prisma and prisma/schema-mongodb.prisma. Both validated with Prisma v6.16.0. Multi-tenancy (domainID), soft-delete (deletedAt), and timestamp patterns implemented.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>PostgreSQL Prisma Schema</symbol>
+        <lines>complete</lines>
+        <reason>Source schema file to be copied when PostgreSQL is selected. Contains all 11 core entities with relational structure.</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema-mongodb.prisma</path>
+        <kind>schema</kind>
+        <symbol>MongoDB Prisma Schema</symbol>
+        <lines>complete</lines>
+        <reason>Source schema file to be copied when MongoDB is selected. Contains all 11 core entities with document-based structure.</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>Package Configuration</symbol>
+        <lines>complete</lines>
+        <reason>Target file for adding "setup" script command. Already has ts-node as devDependency (v10.9.2) required for script execution.</reason>
+      </artifact>
+      <artifact>
+        <path>.gitignore</path>
+        <kind>config</kind>
+        <symbol>Git Ignore Rules</symbol>
+        <lines>complete</lines>
+        <reason>Already contains prisma/schema.prisma entry (from Story 1.2). Will need to ensure .env is also ignored.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="prisma" version="^6.18.0" devDependency="true" />
+        <package name="ts-node" version="^10.9.2" devDependency="true" />
+        <package name="typescript" version="^5.7.3" devDependency="true" />
+      </node>
+      <builtInModules>
+        <module name="fs" usage="File read/write operations (readFileSync, writeFileSync, copyFileSync, existsSync)" />
+        <module name="path" usage="Path manipulation (join, resolve)" />
+        <module name="readline" usage="Interactive CLI prompts (alternative to inquirer)" />
+      </builtInModules>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="typescript-strict">
+      <description>TypeScript strict mode must be enforced. Script must compile without errors.</description>
+      <source>docs/tech-spec-epic-1.md#Technical-Implementation-Notes</source>
+    </constraint>
+    <constraint id="one-time-selection">
+      <description>Database selection is ONE-TIME only. Warn user this is permanent choice. Changing requires project re-initialization.</description>
+      <source>stories/1-2-dual-prisma-schema-setup.md#Learnings-from-Previous-Story</source>
+    </constraint>
+    <constraint id="schema-file-integrity">
+      <description>Setup script should copy ENTIRE schema file without modification. Do not alter schema content.</description>
+      <source>stories/1-2-dual-prisma-schema-setup.md#Important-Implementation-Notes</source>
+    </constraint>
+    <constraint id="database-url-format">
+      <description>DATABASE_URL format must match provider: postgresql:// for PostgreSQL, mongodb:// for MongoDB.</description>
+      <source>docs/tech-spec-epic-1.md#DATABASE_URL-Formats</source>
+    </constraint>
+    <constraint id="error-handling">
+      <description>Clear error messages for edge cases: .env exists (confirm), invalid selection (retry), schema not found (error and exit), permission issues.</description>
+      <source>docs/tech-spec-epic-1.md#Edge-Cases</source>
+    </constraint>
+    <constraint id="project-structure">
+      <description>Setup script location: scripts/setup.ts. Schema files: prisma/schema-*.prisma. Generated: prisma/schema.prisma (gitignored).</description>
+      <source>docs/architecture.md#Project-Structure</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Database Selection Prompt</name>
+      <kind>CLI Interaction</kind>
+      <signature>Question: "Select your database: [1] PostgreSQL, [2] MongoDB" → User Input: 1 or 2</signature>
+      <path>scripts/setup.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>File Copy Operation</name>
+      <kind>Node.js API</kind>
+      <signature>fs.copyFileSync(source: string, target: string): void</signature>
+      <path>Node.js built-in fs module</path>
+    </interface>
+    <interface>
+      <name>File Read/Write Operation</name>
+      <kind>Node.js API</kind>
+      <signature>fs.readFileSync(path: string, encoding: string): string</signature>
+      <path>Node.js built-in fs module</path>
+    </interface>
+    <interface>
+      <name>File Existence Check</name>
+      <kind>Node.js API</kind>
+      <signature>fs.existsSync(path: string): boolean</signature>
+      <path>Node.js built-in fs module</path>
+    </interface>
+    <interface>
+      <name>package.json Scripts</name>
+      <kind>NPM Script</kind>
+      <signature>"setup": "ts-node scripts/setup.ts"</signature>
+      <path>package.json</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual testing approach for this story (setup script). Test both PostgreSQL and MongoDB selection paths. Verify file operations, console output, and edge cases. Jest testing framework available but not required for setup scripts (Epic 9 will establish automated testing standards).
+    </standards>
+    <locations>
+      - Manual testing: Run script with different inputs
+      - Integration verification: Check generated files and their content
+      - test/ folder structure exists for future automated tests
+    </locations>
+    <ideas>
+      <idea criteriaId="AC-1.3.1">
+        <description>Verify scripts/setup.ts file created and executable with ts-node</description>
+        <approach>Manual: Run `ts-node scripts/setup.ts` and verify no compilation errors</approach>
+      </idea>
+      <idea criteriaId="AC-1.3.2">
+        <description>Test interactive prompt appears correctly</description>
+        <approach>Manual: Run script, verify prompt "PostgreSQL or MongoDB?" displays</approach>
+      </idea>
+      <idea criteriaId="AC-1.3.3">
+        <description>Verify schema file copied correctly for both database options</description>
+        <approach>Manual: Test PostgreSQL selection → verify prisma/schema.prisma contains "provider = postgresql". Repeat with MongoDB.</approach>
+      </idea>
+      <idea criteriaId="AC-1.3.4">
+        <description>Verify .env file generation from template</description>
+        <approach>Manual: After script run, check .env exists and contains DATABASE_URL with correct format</approach>
+      </idea>
+      <idea criteriaId="AC-1.3.5">
+        <description>Verify next steps console output displays correctly</description>
+        <approach>Manual: Verify console shows numbered steps (1-5) and MongoDB migration warning</approach>
+      </idea>
+      <idea criteriaId="AC-1.3.6">
+        <description>Verify setup script added to package.json</description>
+        <approach>Manual: Check package.json scripts section contains "setup": "ts-node scripts/setup.ts"</approach>
+      </idea>
+      <idea criteriaId="EDGE-CASE">
+        <description>Test edge case: .env already exists</description>
+        <approach>Manual: Create .env, run script, verify confirmation prompt appears</approach>
+      </idea>
+      <idea criteriaId="EDGE-CASE">
+        <description>Test edge case: Invalid database selection</description>
+        <approach>Manual: Enter invalid input (e.g., "3" or "invalid"), verify retry prompt</approach>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,172 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>2</storyId>
+    <title>Base PDF Adapter & Template Engine</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07T15:56:56+0300</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-2-pdf-generation-service.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>base PDF adapter ve EJS template engine</iWant>
+    <soThat>PDF adapter'ları template-based oluşturabilileyim</soThat>
+    <tasks>
+      <task id="1" ac="6.2.1">IPdfAdapter Interface oluştur
+        <subtask>pdf-adapter.interface.ts dosyası oluştur</subtask>
+        <subtask>Interface tanımla: templateName, styleName?, generate(), getTemplatePath(), getStylePath()</subtask>
+        <subtask>Type definitions ekle</subtask>
+      </task>
+      <task id="2" ac="6.2.2">BasePdfAdapter Abstract Class oluştur
+        <subtask>base-pdf-adapter.abstract.ts dosyası oluştur</subtask>
+        <subtask>Abstract property templateName: string tanımla</subtask>
+        <subtask>Abstract property styleName?: string tanımla</subtask>
+        <subtask>Abstract method generate() tanımla</subtask>
+        <subtask>Implemented method getTemplatePath() oluştur</subtask>
+        <subtask>Implemented method getStylePath() oluştur</subtask>
+        <subtask>Constructor'da TemplateEngineService inject et</subtask>
+      </task>
+      <task id="3" ac="6.2.3">@RegisterPdfAdapter Decorator oluştur
+        <subtask>register-pdf-adapter.decorator.ts dosyası oluştur</subtask>
+        <subtask>Reflection metadata key tanımla: PDF_ADAPTER_TEMPLATE_KEY</subtask>
+        <subtask>Decorator factory function oluştur</subtask>
+        <subtask>Reflection metadata set et</subtask>
+        <subtask>Template name normalization: trim, lowercase</subtask>
+      </task>
+      <task id="4" ac="6.2.4">TemplateEngineService oluştur
+        <subtask>template-engine.service.ts dosyası oluştur</subtask>
+        <subtask>@Injectable() decorator ekle</subtask>
+        <subtask>OnModuleInit, OnModuleDestroy lifecycle hooks implement et</subtask>
+        <subtask>Constructor'da I18nService inject et</subtask>
+        <subtask>onModuleInit() method: Puppeteer browser instance oluştur</subtask>
+        <subtask>onModuleDestroy() method: Browser instance'ı kapat</subtask>
+        <subtask>renderTemplate() method: EJS template rendering with i18n</subtask>
+        <subtask>generatePdfFromHtml() method: HTML → PDF via Puppeteer</subtask>
+      </task>
+      <task id="5" ac="6.2.5">Template Directory Structure oluştur
+        <subtask>templates/pdf/ klasörü oluştur</subtask>
+        <subtask>templates/pdf/styles/ klasörü oluştur</subtask>
+        <subtask>(Optional) Örnek template: invoice.ejs oluştur</subtask>
+        <subtask>(Optional) Örnek style: invoice.css oluştur</subtask>
+      </task>
+      <task id="6">Dependencies ekle
+        <subtask>package.json'a ejs dependency ekle (^3.x)</subtask>
+        <subtask>package.json'a puppeteer dependency ekle (^21.x)</subtask>
+        <subtask>npm install çalıştır</subtask>
+      </task>
+      <task id="7" ac="All">Testing
+        <subtask>Unit test IPdfAdapter interface</subtask>
+        <subtask>Unit test BasePdfAdapter.getTemplatePath() method</subtask>
+        <subtask>Unit test BasePdfAdapter.getStylePath() method</subtask>
+        <subtask>Unit test @RegisterPdfAdapter decorator</subtask>
+        <subtask>Unit test TemplateEngineService.renderTemplate()</subtask>
+        <subtask>Unit test TemplateEngineService.generatePdfFromHtml()</subtask>
+        <subtask>Integration test TemplateEngineService lifecycle</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="6.2.1">IPdfAdapter Interface oluşturulmuş
+      - src/modules/document-generator/interfaces/pdf-adapter.interface.ts dosyası oluşturulmuş
+      - Interface şu property ve method'ları içeriyor:
+        * readonly templateName: string - Template'in benzersiz adı
+        * readonly styleName?: string - CSS style dosyasının adı (optional)
+        * generate(templateName: string, data: any, lang: string): Promise&lt;Buffer&gt; - Document generation method
+        * getTemplatePath(): string - Template dosyasının absolute path'ini döndürür
+        * getStylePath(): string | null - CSS style dosyasının absolute path'ini döndürür (null if styleName yok)
+    </ac>
+    <ac id="6.2.2">BasePdfAdapter Abstract Class oluşturulmuş
+      - src/modules/document-generator/base/base-pdf-adapter.abstract.ts dosyası oluşturulmuş
+      - Abstract properties: templateName: string (required), styleName?: string (optional)
+      - Abstract methods: generate(templateName, data, lang): Promise&lt;Buffer&gt; (must implement)
+      - Implemented methods:
+        * getTemplatePath(): Returns absolute path to templates/pdf/{templateName}.ejs
+        * getStylePath(): Returns absolute path to templates/pdf/styles/{styleName}.css or null
+    </ac>
+    <ac id="6.2.3">@RegisterPdfAdapter Decorator oluşturulmuş
+      - src/modules/document-generator/decorators/register-pdf-adapter.decorator.ts dosyası oluşturulmuş
+      - @RegisterPdfAdapter(templateName: string) decorator tanımlı
+      - Reflection metadata: PDF_ADAPTER_TEMPLATE_KEY kullanılıyor
+      - Auto-registration for factory discovery
+      - Template name normalization: trim, lowercase
+    </ac>
+    <ac id="6.2.4">TemplateEngineService oluşturulmuş
+      - src/modules/document-generator/services/template-engine.service.ts dosyası oluşturulmuş
+      - Methods:
+        * renderTemplate(templatePath, data, lang): Promise&lt;string&gt; - Render EJS template with i18n
+        * generatePdfFromHtml(html, cssPath?): Promise&lt;Buffer&gt; - HTML → PDF via Puppeteer
+      - EJS template rendering: Inject i18n t() function into template data
+      - Puppeteer integration: Shared browser instance, new page per PDF generation, HTML + CSS injection
+      - PDF options: A4 format, printBackground: true, margins (20px), timeout: 30 seconds
+      - Lifecycle: onModuleInit() launches browser, onModuleDestroy() closes browser
+    </ac>
+    <ac id="6.2.5">Template Directory Structure oluşturulmuş
+      - templates/pdf/ klasörü oluşturulmuş
+      - templates/pdf/styles/ klasörü oluşturulmuş
+      - Örnek template dosyası: templates/pdf/invoice.ejs (optional, sample)
+      - Örnek style dosyası: templates/pdf/styles/invoice.css (optional, sample)
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-6-document-generation-adapter-pattern-hrsync-backend.md" title="Epic 6: Document Generation" section="Story 6.2: Base PDF Adapter & Template Engine" snippet="PDF adapter foundation için gereksinimler ve acceptance criteria. EJS template rendering, Puppeteer integration, i18n support detayları." />
+      <doc path="docs/tech-spec-epic-6.md" title="Epic Technical Specification: Document Generation" section="PDF Generation (EJS + Puppeteer)" snippet="TemplateEngineService detayları, Puppeteer browser lifecycle management, EJS template rendering with i18n support, PDF generation options." />
+      <doc path="docs/tech-spec-epic-6.md" title="Epic Technical Specification: Document Generation" section="Adapter Pattern Architecture" snippet="BasePdfAdapter abstract class pattern, IPdfAdapter interface, decorator-based registration pattern." />
+      <doc path="docs/tech-spec-epic-6.md" title="Epic Technical Specification: Document Generation" section="System Architecture Alignment" snippet="Module structure: document-generator modülü src/modules/document-generator/ altında organize edilir. Base classes, interfaces, decorators, services klasör yapısı." />
+      <doc path="docs/stories/6-1-excel-generation-service.md" title="Story 6.1: Base Excel Adapter & Interface" section="Dev Notes" snippet="Önceki story'den öğrenilen pattern'ler: adapter pattern, decorator pattern, module structure, testing approach. BaseExcelAdapter ve @RegisterExcelAdapter implementasyonu referansı." />
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests" snippet="Arrange-Act-Assert pattern, minimum coverage requirements (70%), test structure ve mock factories." />
+    </docs>
+    <code>
+      <file path="src/modules/document-generator/interfaces/excel-adapter.interface.ts" kind="interface" symbol="IExcelAdapter" reason="Excel adapter interface pattern'i, PDF adapter interface için referans. readonly adapterName property ve generate() method pattern'i." />
+      <file path="src/modules/document-generator/base/base-excel-adapter.abstract.ts" kind="abstract-class" symbol="BaseExcelAdapter" reason="Abstract class pattern'i, BasePdfAdapter için referans. Abstract properties, implemented methods, constructor injection pattern'i." />
+      <file path="src/modules/document-generator/decorators/register-excel-adapter.decorator.ts" kind="decorator" symbol="RegisterExcelAdapter" reason="Decorator pattern'i, @RegisterPdfAdapter için referans. Reflection metadata kullanımı, normalization pattern'i." />
+      <file path="src/modules/mail/services/template.service.ts" kind="service" symbol="TemplateService" reason="Template rendering pattern'i, EJS kullanımı referansı. I18nService injection pattern'i." />
+      <file path="src/modules/mail/services/mail.service.ts" kind="service" symbol="MailService" reason="I18nService injection ve kullanımı referansı. Service lifecycle pattern'i." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="ejs" version="^3.x" />
+        <package name="puppeteer" version="^21.x" />
+        <package name="nestjs-i18n" version="^10.5.1" />
+        <package name="reflect-metadata" version="^0.2.2" />
+        <package name="exceljs" version="^4.4.0" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Adapter Pattern: BasePdfAdapter abstract class, PDF adapter'lar için base implementation sağlar. Concrete adapter'lar BasePdfAdapter'ı extend ederek generate() method'unu implement eder.</constraint>
+    <constraint>Decorator Pattern: @RegisterPdfAdapter decorator, adapter'ları reflection metadata ile register eder. Factory pattern ile auto-discovery sağlanır (Story 6.3'te implement edilecek).</constraint>
+    <constraint>Template Engine Pattern: EJS template rendering ile dynamic PDF generation. Puppeteer ile HTML → PDF conversion. Shared browser instance ile performance optimization.</constraint>
+    <constraint>Module Structure: Document generator modülü src/modules/document-generator/ altında organize edilir. Base classes: base/, Interfaces: interfaces/, Decorators: decorators/, Services: services/, Templates: templates/pdf/</constraint>
+    <constraint>Import Organization: 8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events</constraint>
+    <constraint>i18n Integration: nestjs-i18n service injection ile template translations. t() function template data'ya inject edilir.</constraint>
+    <constraint>Testing: Arrange-Act-Assert pattern kullanılır. Minimum coverage: 70%. Unit tests ve integration tests gerekli.</constraint>
+    <constraint>Lifecycle Management: TemplateEngineService OnModuleInit ve OnModuleDestroy hooks implement etmeli. Browser instance module init'te başlatılmalı, destroy'da kapatılmalı.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="IPdfAdapter" kind="TypeScript Interface" signature="interface IPdfAdapter { readonly templateName: string; readonly styleName?: string; generate(templateName: string, data: any, lang: string): Promise&lt;Buffer&gt;; getTemplatePath(): string; getStylePath(): string | null; }" path="src/modules/document-generator/interfaces/pdf-adapter.interface.ts" />
+    <interface name="I18nService" kind="NestJS Service" signature="I18nService from nestjs-i18n. Methods: translate(key: string, options?: { lang?: string, ...params }): Promise&lt;string&gt;" path="node_modules/nestjs-i18n" />
+    <interface name="BaseExcelAdapter" kind="Abstract Class Reference" signature="abstract class BaseExcelAdapter implements IExcelAdapter. Pattern reference for BasePdfAdapter implementation." path="src/modules/document-generator/base/base-excel-adapter.abstract.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>Arrange-Act-Assert pattern kullanılır. Minimum coverage: 70%. Unit tests için NestJS TestingModule kullanılır. I18nService mock'lanmalı. Puppeteer browser instance mock'lanmalı lifecycle testleri için.</standards>
+    <locations>src/modules/document-generator/**/__tests__/*.spec.ts, src/modules/document-generator/**/*.spec.ts</locations>
+    <ideas>
+      <test ac="6.2.1">IPdfAdapter interface type checking test. Interface'in tüm property ve method'larının doğru tanımlandığını kontrol et.</test>
+      <test ac="6.2.2">BasePdfAdapter.getTemplatePath() unit test. Template path'in doğru absolute path döndürdüğünü kontrol et.</test>
+      <test ac="6.2.2">BasePdfAdapter.getStylePath() unit test. styleName varsa path döndürdüğünü, yoksa null döndürdüğünü kontrol et.</test>
+      <test ac="6.2.3">@RegisterPdfAdapter decorator test. Reflection metadata'nın doğru set edildiğini ve template name normalization'ın çalıştığını kontrol et.</test>
+      <test ac="6.2.4">TemplateEngineService.renderTemplate() unit test. EJS template'in render edildiğini, i18n t() function'ının inject edildiğini kontrol et.</test>
+      <test ac="6.2.4">TemplateEngineService.generatePdfFromHtml() unit test. Puppeteer browser instance kullanıldığını, PDF buffer döndürüldüğünü, page cleanup yapıldığını kontrol et.</test>
+      <test ac="6.2.4">TemplateEngineService lifecycle integration test. onModuleInit() browser başlattığını, onModuleDestroy() browser kapattığını kontrol et.</test>
+    </ideas>
+  </tests>
+</story-context>
+

@@ -1,0 +1,435 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>7.2</storyId>
+    <title>Common Utilities & Decorators</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/7-2-common-utilities-decorators.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>shared utilities and decorators</iWant>
+    <soThat>I don't have to write repetitive code and can maintain consistency across the application</soThat>
+    <tasks>
+      - Task 1: Create custom decorators (AC: 7.2.1, 7.2.4, 7.2.5)
+        - Subtask 1.1: Create src/common/decorators/ directory
+        - Subtask 1.2: Implement @CurrentUser() decorator (extract user from ExecutionContext → request.user)
+        - Subtask 1.3: Implement @Public() decorator (use SetMetadata to set IS_PUBLIC_KEY = true)
+        - Subtask 1.4: Implement @ApiPaginatedResponse() decorator (composite decorator using applyDecorators())
+        - Subtask 1.5: Create index.ts barrel export for decorators
+      - Task 2: Implement hash utilities (AC: 7.2.2)
+        - Subtask 2.1: Create src/common/utils/ directory
+        - Subtask 2.2: Implement hash.util.ts (hashPassword, comparePassword using bcrypt)
+        - Subtask 2.3: Add type definitions and JSDoc comments
+      - Task 3: Implement date utilities (AC: 7.2.2)
+        - Subtask 3.1: Implement date.util.ts (formatDate, toUTC, addDays, diffInMs)
+        - Subtask 3.2: Add type definitions and JSDoc comments
+      - Task 4: Implement string utilities (AC: 7.2.2)
+        - Subtask 4.1: Implement string.util.ts (slugify, truncate, capitalize, removeSpecialChars)
+        - Subtask 4.2: Add type definitions and JSDoc comments
+      - Task 5: Implement validation utilities (AC: 7.2.2)
+        - Subtask 5.1: Implement validation.util.ts (isValidPhone, isStrongPassword, sanitizeInput)
+        - Subtask 5.2: Add type definitions and JSDoc comments
+        - Subtask 5.3: Create index.ts barrel export for utilities
+      - Task 6: Write comprehensive unit tests (AC: 7.2.3)
+        - Subtask 6.1: Create src/common/utils/__tests__/ directory
+        - Subtask 6.2: Write hash.util.spec.ts
+        - Subtask 6.3: Write date.util.spec.ts
+        - Subtask 6.4: Write string.util.spec.ts
+        - Subtask 6.5: Write validation.util.spec.ts
+        - Subtask 6.6: Write decorator tests (current-user.decorator.spec.ts, public.decorator.spec.ts)
+        - Subtask 6.7: Run coverage report and verify 100% coverage for utilities
+      - Task 7: Integration testing with existing modules (AC: 7.2.4, 7.2.5)
+        - Subtask 7.1: Test @CurrentUser() decorator in AuthController
+        - Subtask 7.2: Test @Public() decorator on login endpoint
+        - Subtask 7.3: Verify hash utilities work with existing AuthService
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-7.2.1: Decorators created in src/common/decorators/:
+      - current-user.decorator.ts → @CurrentUser() extracts user from request.user
+      - public.decorator.ts → @Public() sets IS_PUBLIC_KEY metadata
+      - api-paginated-response.decorator.ts → @ApiPaginatedResponse() creates Swagger schema
+
+    AC-7.2.2: Utility files created in src/common/utils/:
+      - hash.util.ts → hashPassword(), comparePassword() using bcrypt
+      - date.util.ts → formatDate(), toUTC(), addDays(), diffInMs()
+      - string.util.ts → slugify(), truncate(), capitalize(), removeSpecialChars()
+      - validation.util.ts → isValidPhone(), isStrongPassword(), sanitizeInput()
+
+    AC-7.2.3: All utilities have 100% unit test coverage
+      - Each utility function has comprehensive unit tests
+      - Test files located in src/common/utils/__tests__/
+      - Coverage verified with npm run test:cov
+
+    AC-7.2.4: @CurrentUser() decorator successfully extracts authenticated user in controllers
+      - Decorator extracts user from request.user (set by JwtStrategy)
+      - Works with existing JWT authentication from Epic 2
+      - Returns typed JwtPayload with userId, domainId
+
+    AC-7.2.5: @Public() decorator bypasses JwtAuthGuard when applied to routes
+      - Sets IS_PUBLIC_KEY metadata to true
+      - JwtAuthGuard checks for this metadata
+      - Public routes (login, register, health checks) work without authentication
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification: Developer Infrastructure</title>
+        <section>Story 7.2: Common Utilities & Decorators</section>
+        <snippet>AC-7.2.1 through AC-7.2.5 define decorators (@CurrentUser, @Public, @ApiPaginatedResponse) and utility functions (hash, date, string, validation). All utilities require 100% test coverage. Security: bcrypt with 10+ rounds, XSS prevention, strong password validation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification: Developer Infrastructure</title>
+        <section>Services and Modules</section>
+        <snippet>@CurrentUser() decorator extracts authenticated user from ExecutionContext. @Public() decorator marks routes as public (bypass JWT guard). Utility functions: hash (bcrypt wrapper), date (formatting, timezone), string (slugify, truncate), validation (phone, password, XSS).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification: Developer Infrastructure</title>
+        <section>APIs and Interfaces</section>
+        <snippet>Decorator interfaces: CurrentUser extracts request.user (JwtPayload). Public sets IS_PUBLIC_KEY metadata. Utility function signatures: hashPassword(password, rounds), comparePassword(password, hash), formatDate(date, format), slugify(text), isValidPhone(phone), isStrongPassword(password), sanitizeInput(input).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification: Developer Infrastructure</title>
+        <section>Security</section>
+        <snippet>Password hashing: bcrypt with minimum 10 rounds (BCRYPT_ROUNDS env). Timing-safe comparison: bcrypt.compare prevents timing attacks. XSS prevention: sanitizeInput() removes HTML tags and script content. Strong password policy: Min 8 chars, uppercase, lowercase, number, special char.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification: Developer Infrastructure</title>
+        <section>Test Strategy Summary</section>
+        <snippet>Unit Testing (Utilities): Coverage Target 100%. Test Pattern: Arrange-Act-Assert. Test Cases: hash.util (hash generation, password comparison), date.util (format, UTC, arithmetic), string.util (slugify, truncate, capitalize), validation.util (phone, password strength, XSS). No mocking required (pure functions).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics</title>
+        <section>Story 7.2: Common Utilities & Decorators</section>
+        <snippet>As a developer, I want shared utilities and decorators, so that I don't write repetitive code. Technical Notes: @CurrentUser() decorator uses ExecutionContext → request.user extract. Hash util: bcrypt.hash(), bcrypt.compare() wrapper. Pure functions, easily testable. Dependencies: Story 7.1 (i18n).</snippet>
+      </doc>
+      <doc>
+        <path>stories/7-1-internationalization-i18n-setup.md</path>
+        <title>Story 7.1: Internationalization (i18n) Setup</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Testing Infrastructure: Jest unit test structure, TestingModule pattern, Mock services using jest.fn(), Coverage reporting configured. File Structure: Common modules under src/common/, Feature modules under src/modules/, Test files in __tests__/ subdirectories, Barrel exports (index.ts) for clean imports.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/modules/auth/decorators/current-user.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>CurrentUser</symbol>
+        <lines>22-27</lines>
+        <reason>IMPORTANT: @CurrentUser decorator already exists in auth module. Story should MOVE this decorator to src/common/decorators/ for better organization. Current implementation extracts user from request.user (JwtPayload interface). Uses createParamDecorator from @nestjs/common.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public</symbol>
+        <lines>21-21</lines>
+        <reason>IMPORTANT: @Public decorator already exists in auth module. Story should MOVE this decorator to src/common/decorators/ for better organization. Current implementation: SetMetadata(IS_PUBLIC_KEY, true). IS_PUBLIC_KEY constant already defined.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/interfaces/jwt-payload.interface.ts</path>
+        <kind>interface</kind>
+        <symbol>JwtPayload</symbol>
+        <lines>5-41</lines>
+        <reason>JwtPayload interface used by @CurrentUser decorator. Fields: sub (user ID), phoneNumber, domainID, roles, iat, exp. This interface should be imported and used as return type for @CurrentUser decorator.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>16-59</lines>
+        <reason>JwtAuthGuard already uses IS_PUBLIC_KEY to check for @Public() decorator. Line 8 imports IS_PUBLIC_KEY from auth module. After moving @Public to src/common/decorators/, update import path to: import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator'.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/permission.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Permission</symbol>
+        <lines>all</lines>
+        <reason>Existing decorator in src/common/decorators/ for reference. Shows pattern for custom decorators using SetMetadata. Can be used as reference for implementing new decorators.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/permissions.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>PermissionsGuard</symbol>
+        <lines>all</lines>
+        <reason>Existing guard that works with @Permission decorator. Shows how guards interact with custom metadata decorators using Reflector. Reference for understanding decorator-guard integration pattern.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <bcrypt>^6.0.0</bcrypt>
+        <@nestjs/common>^11.0.1</@nestjs/common>
+        <@nestjs/core>^11.0.1</@nestjs/core>
+        <@nestjs/swagger>Not yet installed (Epic 8 - needed for @ApiPaginatedResponse)</@nestjs/swagger>
+        <class-validator>^0.14.2</class-validator>
+        <class-transformer>^0.5.1</class-transformer>
+        <uuid>^13.0.0</uuid>
+      </node>
+      <devDependencies>
+        <@types/bcrypt>^6.0.0</@types/bcrypt>
+        <@types/uuid>^10.0.0</@types/uuid>
+        <@types/node>^22.10.7</@types/node>
+        <jest>^30.0.0</jest>
+        <ts-jest>^29.2.5</ts-jest>
+        <@nestjs/testing>^11.0.1</@nestjs/testing>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. CRITICAL: @CurrentUser and @Public decorators already exist in src/modules/auth/decorators/. Story implementation must MOVE these decorators to src/common/decorators/ (not recreate them).
+
+    2. After moving decorators, update all import paths:
+       - src/common/guards/jwt-auth.guard.ts: Update IS_PUBLIC_KEY import from auth module to common/decorators
+       - Any controllers using @CurrentUser or @Public: Update imports to common/decorators
+       - Verify no broken imports with: npm run build
+
+    3. Pure Function Pattern: All utility functions must be pure (no side effects, stateless, no global state modification).
+
+    4. Security Requirements:
+       - bcrypt: Minimum 10 rounds (configurable via BCRYPT_ROUNDS env)
+       - XSS Prevention: sanitizeInput() must remove <script> tags, <img onerror>, and all HTML tags
+       - Password Validation: Min 8 chars, at least 1 uppercase, 1 lowercase, 1 number, 1 special char
+       - Timing Safety: Use bcrypt.compare() for password comparison (prevents timing attacks)
+
+    5. Testing Requirements:
+       - 100% unit test coverage for all utility functions (mandatory)
+       - Test files in src/common/utils/__tests__/
+       - Test pattern: Arrange-Act-Assert
+       - No mocking required for pure functions
+       - Run coverage with: npm run test:cov
+
+    6. TypeScript Requirements:
+       - All functions must have TypeScript type definitions
+       - JSDoc comments for all public functions
+       - Export all utilities via index.ts barrel exports
+
+    7. @ApiPaginatedResponse Decorator:
+       - @nestjs/swagger not yet installed (Epic 8 dependency)
+       - Decorator should be created but may need @nestjs/swagger package
+       - If package not available, create decorator as stub with TODO comment
+
+    8. Barrel Exports:
+       - Create index.ts in src/common/decorators/ exporting all decorators
+       - Create index.ts in src/common/utils/ exporting all utility functions
+       - Pattern: export * from './file-name'
+
+    9. Integration with Existing Code:
+       - Hash utilities should be compatible with existing AuthService password handling
+       - @CurrentUser decorator must work with existing JwtStrategy
+       - @Public decorator must work with existing JwtAuthGuard
+
+    10. File Naming Convention:
+        - Utilities: kebab-case.util.ts (e.g., hash.util.ts, date.util.ts)
+        - Decorators: kebab-case.decorator.ts (e.g., current-user.decorator.ts)
+        - Tests: kebab-case.spec.ts (e.g., hash.util.spec.ts)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>JwtPayload</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+        interface JwtPayload {
+          sub: string;           // User ID (UUID)
+          phoneNumber: string;   // Phone number (E.164 format: +90XXXXXXXXXX)
+          domainID: string;      // Domain ID (UUID)
+          roles: string[];       // User roles: ['admin', 'staff', 'manager']
+          iat: number;           // Issued at (Unix timestamp)
+          exp: number;           // Expiration (Unix timestamp)
+        }
+      </signature>
+      <path>src/modules/auth/interfaces/jwt-payload.interface.ts</path>
+    </interface>
+    <interface>
+      <name>hashPassword</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export async function hashPassword(
+          password: string,
+          rounds: number = parseInt(process.env.BCRYPT_ROUNDS || '10', 10)
+        ): Promise&lt;string&gt;
+      </signature>
+      <path>src/common/utils/hash.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>comparePassword</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export async function comparePassword(
+          password: string,
+          hash: string
+        ): Promise&lt;boolean&gt;
+      </signature>
+      <path>src/common/utils/hash.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>formatDate</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function formatDate(date: Date, format: string): string
+      </signature>
+      <path>src/common/utils/date.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>toUTC</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function toUTC(date: Date): Date
+      </signature>
+      <path>src/common/utils/date.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>addDays</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function addDays(date: Date, days: number): Date
+      </signature>
+      <path>src/common/utils/date.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>diffInMs</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function diffInMs(start: Date, end: Date): number
+      </signature>
+      <path>src/common/utils/date.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>slugify</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function slugify(text: string): string
+      </signature>
+      <path>src/common/utils/string.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>truncate</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function truncate(text: string, maxLength: number): string
+      </signature>
+      <path>src/common/utils/string.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>capitalize</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function capitalize(text: string): string
+      </signature>
+      <path>src/common/utils/string.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>removeSpecialChars</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function removeSpecialChars(text: string): string
+      </signature>
+      <path>src/common/utils/string.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>isValidPhone</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function isValidPhone(phone: string, countryCode: string = '+90'): boolean
+      </signature>
+      <path>src/common/utils/validation.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>isStrongPassword</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function isStrongPassword(password: string): boolean
+      </signature>
+      <path>src/common/utils/validation.util.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>sanitizeInput</name>
+      <kind>Function Signature</kind>
+      <signature>
+        export function sanitizeInput(input: string): string
+      </signature>
+      <path>src/common/utils/validation.util.ts (to be created)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest testing framework with ts-jest for TypeScript support. Test pattern: Arrange-Act-Assert. Unit tests for utilities: 100% coverage target (mandatory). Test files in src/common/utils/__tests__/ directory. Run tests: npm test. Run coverage: npm run test:cov. TestingModule pattern for NestJS testing (decorators). Mock ExecutionContext for decorator tests. No mocking required for pure function utilities. Performance: All utility tests should complete in &lt;100ms total.
+    </standards>
+    <locations>
+      - src/common/utils/__tests__/hash.util.spec.ts
+      - src/common/utils/__tests__/date.util.spec.ts
+      - src/common/utils/__tests__/string.util.spec.ts
+      - src/common/utils/__tests__/validation.util.spec.ts
+      - src/common/decorators/__tests__/current-user.decorator.spec.ts
+      - src/common/decorators/__tests__/public.decorator.spec.ts
+      - Integration tests with existing AuthController and AuthService
+    </locations>
+    <ideas>
+      AC-7.2.1 (@CurrentUser decorator):
+        - Test: Extract user from request.user using mock ExecutionContext
+        - Test: Returns JwtPayload with correct fields (sub, phoneNumber, domainID, roles)
+
+      AC-7.2.1 (@Public decorator):
+        - Test: Sets IS_PUBLIC_KEY metadata to true using SetMetadata
+        - Test: JwtAuthGuard bypasses authentication when decorator present
+
+      AC-7.2.2 (hash.util):
+        - Test: hashPassword() produces valid bcrypt hash (starts with $2b$)
+        - Test: comparePassword() returns true for matching password
+        - Test: comparePassword() returns false for wrong password
+        - Test: Different rounds produce different hashes
+        - Test: BCRYPT_ROUNDS env variable respected
+
+      AC-7.2.2 (date.util):
+        - Test: formatDate() formats ISO date correctly
+        - Test: toUTC() converts date to UTC timezone
+        - Test: addDays() adds positive days correctly
+        - Test: addDays() subtracts negative days correctly
+        - Test: diffInMs() calculates difference in milliseconds
+
+      AC-7.2.2 (string.util):
+        - Test: slugify() converts to lowercase with hyphens
+        - Test: slugify() removes special characters
+        - Test: truncate() adds ellipsis when string too long
+        - Test: truncate() returns original if under max length
+        - Test: capitalize() capitalizes first letter only
+        - Test: removeSpecialChars() removes all non-alphanumeric
+
+      AC-7.2.2 (validation.util):
+        - Test: isValidPhone() accepts +905551234567 format
+        - Test: isValidPhone() rejects invalid formats
+        - Test: isStrongPassword() accepts "Test1234!" (all requirements met)
+        - Test: isStrongPassword() rejects "weak" (too short, no special chars)
+        - Test: isStrongPassword() rejects "NoNumbers!" (no numbers)
+        - Test: sanitizeInput() removes &lt;script&gt; tags
+        - Test: sanitizeInput() removes &lt;img onerror&gt; XSS vectors
+        - Test: sanitizeInput() removes all HTML tags
+
+      AC-7.2.3 (100% coverage):
+        - Test: Coverage report shows 100% for all utility files
+        - Test: npm run test:cov passes with all utilities covered
+
+      AC-7.2.4 (@CurrentUser integration):
+        - Integration Test: @CurrentUser works in existing AuthController
+        - Integration Test: Extracts correct JwtPayload after JWT validation
+
+      AC-7.2.5 (@Public integration):
+        - Integration Test: Login endpoint accessible without JWT token
+        - Integration Test: Health check endpoints accessible without JWT
+        - E2E Test: Public endpoint returns 200 without Authorization header
+    </ideas>
+  </tests>
+</story-context>

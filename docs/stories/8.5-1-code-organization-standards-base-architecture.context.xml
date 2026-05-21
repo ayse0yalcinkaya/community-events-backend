@@ -1,0 +1,481 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8.5</epicId>
+    <storyId>1</storyId>
+    <title>Code Organization, Standards & Base Architecture</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8.5-1-code-organization-standards-base-architecture.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>organized imports and base class/DTO architecture</iWant>
+    <soThat>code is consistent, maintainable and follows DRY principles</soThat>
+    <tasks>
+- Task 1: Create Base DTO Infrastructure (AC: 8.5-1.2, 8.5-1.4, 8.5-1.5)
+  - Subtask 1.1: Create `src/common/base/dto/` directory
+  - Subtask 1.2: Implement `BaseDto.ts` with common DTO properties
+  - Subtask 1.3: Implement `BaseQueryDto.ts` with pagination/filtering
+  - Subtask 1.4: Implement `BasePaginationDto.ts` with page calculations
+  - Subtask 1.5: Implement `BaseSortDto.ts` with ordering logic
+  - Subtask 1.6: Implement `BaseFilterDto.ts` with common filters
+  - Subtask 1.7: Implement `BaseResponseDto.ts` as generic response wrapper
+  - Subtask 1.8: Implement `BaseSuccessResponse.ts` for success responses
+  - Subtask 1.9: Implement `BaseErrorResponse.ts` for error responses
+  - Subtask 1.10: Implement `BasePaginatedResponse.ts` for paginated data
+  - Subtask 1.11: Implement `BaseIdDto.ts` for ID param operations
+  - Subtask 1.12: Implement `BaseTimestampDto.ts` for timestamp fields
+  - Subtask 1.13: Add class-validator decorators to all base DTOs
+  - Subtask 1.14: Add Swagger @ApiProperty decorators to all base DTOs
+
+- Task 2: Create Base Entity Infrastructure (AC: 8.5-1.3)
+  - Subtask 2.1: Create `src/common/base/entities/` directory
+  - Subtask 2.2: Implement `BaseEntity.ts` with id, timestamps, soft delete
+  - Subtask 2.3: Implement `BaseAuditEntity.ts` extending BaseEntity with audit fields
+  - Subtask 2.4: Add Prisma field decorators to base entities
+  - Subtask 2.5: Add generic ID type support (string | number)
+  - Subtask 2.6: Add JSDoc documentation with usage examples
+
+- Task 3: Create Barrel Exports (AC: 8.5-1.9)
+  - Subtask 3.1: Create `src/common/base/index.ts` main barrel file
+  - Subtask 3.2: Create `src/common/base/dto/index.ts` DTO barrel file
+  - Subtask 3.3: Create `src/common/base/entities/index.ts` entity barrel file
+  - Subtask 3.4: Export all base classes from respective barrel files
+  - Subtask 3.5: Verify path aliases work (@/common/base)
+
+- Task 4: Refactor Existing Entities to Use Base Classes (AC: 8.5-1.6)
+  - Subtask 4.1: Update User entity to extend BaseAuditEntity
+  - Subtask 4.2: Update Role entity to extend BaseEntity
+  - Subtask 4.3: Update Permission entity to extend BaseEntity
+  - Subtask 4.4: Update File entity to extend BaseAuditEntity
+  - Subtask 4.5: Update RefreshToken entity to extend BaseEntity
+  - Subtask 4.6: Remove duplicate fields (id, createdAt, updatedAt, deletedAt)
+  - Subtask 4.7: Verify Prisma schema alignment (no actual schema change)
+
+- Task 5: Refactor DTOs to Use Base Classes (AC: 8.5-1.6)
+  - Subtask 5.1: Update PageOptionsDto to extend BaseQueryDto
+  - Subtask 5.2: Update query DTOs in all modules to extend BasePaginationDto/BaseQueryDto
+  - Subtask 5.3: Update ID param DTOs to use BaseIdDto pattern
+  - Subtask 5.4: Remove duplicate pagination/filter logic
+  - Subtask 5.5: Verify response DTOs align with BaseResponseDto structure
+
+- Task 6: Move Guards to Controller Level (AC: 8.5-1.7)
+  - Subtask 6.1: Analyze current guard usage across all controllers
+  - Subtask 6.2: Move `@UseGuards(JwtAuthGuard, PermissionsGuard)` to AuthController class level
+  - Subtask 6.3: Update public auth endpoints with `@Public()` decorator
+  - Subtask 6.4: Move guards to UsersController class level
+  - Subtask 6.5: Move guards to ProfileController class level
+  - Subtask 6.6: Move guards to PermissionsController class level
+  - Subtask 6.7: Move guards to FilesController class level
+  - Subtask 6.8: Remove redundant method-level guards
+  - Subtask 6.9: Verify guard inheritance works correctly
+
+- Task 7: Organize Imports in Controllers (AC: 8.5-1.1, 8.5-1.8)
+  - Subtask 7.1: Refactor AuthController imports (Libraries, DTOs, Services, Guards, Interfaces)
+  - Subtask 7.2: Refactor UsersController imports
+  - Subtask 7.3: Refactor ProfileController imports
+  - Subtask 7.4: Refactor PermissionsController imports
+  - Subtask 7.5: Refactor FilesController imports
+  - Subtask 7.6: Alphabetize imports within each group
+
+- Task 8: Organize Imports in Services (AC: 8.5-1.1, 8.5-1.8)
+  - Subtask 8.1: Refactor AuthService imports
+  - Subtask 8.2: Refactor UsersService imports
+  - Subtask 8.3: Refactor TokenService imports
+  - Subtask 8.4: Refactor PermissionsService imports
+  - Subtask 8.5: Refactor FilesService imports
+  - Subtask 8.6: Refactor all remaining service files
+
+- Task 9: Organize Imports in DTOs (AC: 8.5-1.1, 8.5-1.8)
+  - Subtask 9.1: Refactor Auth module DTOs
+  - Subtask 9.2: Refactor Users module DTOs
+  - Subtask 9.3: Refactor Permissions module DTOs
+  - Subtask 9.4: Refactor Files module DTOs
+  - Subtask 9.5: Verify consistent grouping pattern
+
+- Task 10: Organize Imports in Modules, Guards, Decorators (AC: 8.5-1.1, 8.5-1.8)
+  - Subtask 10.1: Refactor all module files
+  - Subtask 10.2: Refactor all guard files
+  - Subtask 10.3: Refactor all decorator files
+  - Subtask 10.4: Refactor interceptor files
+  - Subtask 10.5: Refactor middleware files
+
+- Task 11: Build Validation and Testing (AC: 8.5-1.10)
+  - Subtask 11.1: Run `npm run build` and verify success
+  - Subtask 11.2: Run `npm run type-check` and fix any errors
+  - Subtask 11.3: Verify no IDE import errors
+  - Subtask 11.4: Test application startup
+  - Subtask 11.5: Smoke test critical endpoints
+
+- Task 12: Documentation and Comments
+  - Subtask 12.1: Add JSDoc comments to all base classes
+  - Subtask 12.2: Add usage examples in base class documentation
+  - Subtask 12.3: Update architecture docs if needed
+  - Subtask 12.4: Add migration guide comments where entities changed
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-8.5-1.1:** Import Organization - All files follow grouped import structure with Libraries, DTOs, Services, Guards/Decorators, and Interfaces groups, separated by blank lines and alphabetically sorted within groups.
+
+2. **AC-8.5-1.2:** Base DTOs created in `src/common/base/dto/` including BaseDto, BaseQueryDto, BaseResponseDto, BaseIdDto, BaseTimestampDto with proper class-validator and Swagger decorators and generic type support.
+
+3. **AC-8.5-1.3:** Base Entities created in `src/common/base/entities/` including BaseEntity (id, timestamps, soft delete) and BaseAuditEntity (extends BaseEntity with audit fields) with Prisma decorators and generic ID type support.
+
+4. **AC-8.5-1.4:** Base Query/Filter Classes created including BasePaginationDto, BaseSortDto, BaseFilterDto with validation decorators and Swagger documentation.
+
+5. **AC-8.5-1.5:** Base Response Classes created including BaseSuccessResponse, BaseErrorResponse, BasePaginatedResponse with generic type support and Swagger decorators.
+
+6. **AC-8.5-1.6:** Existing entities (User, Role, Permission, File, RefreshToken) and DTOs extend appropriate base classes with duplicate fields removed, no migration required.
+
+7. **AC-8.5-1.7:** Guards moved to controller class level using `@UseGuards(JwtAuthGuard, PermissionsGuard)` pattern with `@Public()` decorator for public endpoints across all 5 controllers.
+
+8. **AC-8.5-1.8:** Import organization applied to all Controllers (6 files), Services, DTOs, Modules, Guards, Decorators with consistent grouping pattern.
+
+9. **AC-8.5-1.9:** Barrel exports created at `src/common/base/index.ts`, `src/common/base/dto/index.ts`, `src/common/base/entities/index.ts` enabling clean import paths.
+
+10. **AC-8.5-1.10:** Build validation successful with `npm run build` and `npm run type-check` passing with no TypeScript or import errors.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Epic Definition -->
+      <doc>
+        <path>docs/epics/epic-8.5-technical-refinement-code-quality.md</path>
+        <title>Epic 8.5: Technical Refinement &amp; Code Quality</title>
+        <section>Story 8.5-1</section>
+        <snippet>Code organization story focusing on import structure, base classes (DTOs/Entities), and guard refactoring. Defines 8-AC structure covering BaseDto, BaseEntity, BaseQueryDto, BaseResponseDto patterns with generic type support. Guards moved to controller-level with @Public() decorator exceptions.</snippet>
+      </doc>
+
+      <!-- Architecture Patterns -->
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>Import Organization (8-Group Order)</section>
+        <snippet>Defines mandatory 8-group import structure: Libraries, DTOs, Services, Repositories, Entities, Interfaces, Enums, Events. Each group separated by blank lines and alphabetically sorted. Story simplifies to 5 groups for general application.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>Controller Pattern</section>
+        <snippet>Controller-level guards pattern: @UseGuards(JwtAuthGuard, PermissionsGuard) applied at class level, with @Public() decorator for exceptions. Method-level guards only for specific overrides.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>DTO Transformation Pattern</section>
+        <snippet>Response DTOs use @Expose() and @Exclude() decorators. Transform using plainToInstance with excludeExtraneousValues: true. Base classes should support generic types for reusability.</snippet>
+      </doc>
+
+      <!-- API Response Standards -->
+      <doc>
+        <path>docs/architecture/api-contracts.md</path>
+        <title>API Contracts</title>
+        <section>Response Format Standards</section>
+        <snippet>Standard response format: {success, status, data, count?, message}. Controllers return DTOs directly, global interceptor wraps automatically. BaseResponseDto should align with this structure for consistency.</snippet>
+      </doc>
+
+      <!-- Previous Story Reference -->
+      <doc>
+        <path>docs/stories/8-3-controller-swagger-decorators.md</path>
+        <title>Story 8-3: Controller Swagger Decorators</title>
+        <section>Completion Notes</section>
+        <snippet>Updated 5 controllers with custom Swagger decorators. Guards currently at method level (needs refactoring in 8.5-1). Import organization inconsistent (needs cleanup). Path aliases @/* configured and working.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Controllers requiring guard refactoring and import organization -->
+      <artifact>
+        <path>src/modules/auth/auth.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>AuthController</symbol>
+        <lines>1-50</lines>
+        <reason>Guards currently method-level (@Public on individual endpoints). Import organization needs cleanup (mixed groups). Controller needs class-level @UseGuards with @Public() exceptions per AC-8.5-1.7 and AC-8.5-1.8.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/modules/users/controllers/users.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>UsersController</symbol>
+        <lines>1-50</lines>
+        <reason>Already has class-level @UseGuards(JwtAuthGuard, PermissionsGuard) at line 47 - GOOD PATTERN. Import organization needs cleanup per AC-8.5-1.1 (group Libraries, DTOs, Services, Guards/Decorators, Interfaces).</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/modules/users/controllers/profile.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>ProfileController</symbol>
+        <reason>Guard placement and import organization needs review per AC-8.5-1.7 and AC-8.5-1.8.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/modules/permissions/controllers/permissions.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>PermissionsController</symbol>
+        <reason>Guard placement and import organization needs review per AC-8.5-1.7 and AC-8.5-1.8.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/modules/files/controllers/files.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>FilesController</symbol>
+        <reason>Guard placement and import organization needs review per AC-8.5-1.7 and AC-8.5-1.8.</reason>
+      </artifact>
+
+      <!-- Guards and Decorators (existing infrastructure) -->
+      <artifact>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>16-41</lines>
+        <reason>Existing JwtAuthGuard supports @Public() decorator via reflector. Pattern to be used for class-level guard placement in AC-8.5-1.7.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/common/guards/permissions.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>PermissionsGuard</symbol>
+        <reason>Permission-based guard used with JwtAuthGuard for protected endpoints. Needs to work with class-level guard placement.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/common/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public</symbol>
+        <lines>1-22</lines>
+        <reason>Existing @Public() decorator using IS_PUBLIC_KEY metadata. To be used for public endpoints after class-level guards applied per AC-8.5-1.7.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/common/decorators/api-endpoint.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>ApiEndpoint</symbol>
+        <reason>Custom Swagger decorator from Story 8-3. Import organization needed per AC-8.5-1.8.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/common/decorators/api-crud.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>ApiCrud decorators</symbol>
+        <reason>Custom CRUD Swagger decorators from Story 8-3. Import organization needed per AC-8.5-1.8.</reason>
+      </artifact>
+
+      <!-- Prisma Schema (entity reference) -->
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>User, RefreshToken, Permission, File models</symbol>
+        <lines>20-100</lines>
+        <reason>Existing Prisma models define fields (id, createdAt, updatedAt, deletedAt, domainID). Base entities (BaseEntity, BaseAuditEntity) will abstract these common fields per AC-8.5-1.3. NO SCHEMA MIGRATION required - pure code refactoring.</reason>
+      </artifact>
+
+      <!-- Path aliases configuration -->
+      <artifact>
+        <path>tsconfig.json</path>
+        <kind>config</kind>
+        <symbol>paths</symbol>
+        <lines>22-24</lines>
+        <reason>Path alias @/* configured mapping to src/*. Base classes will use clean imports: @/common/base per AC-8.5-1.9.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.0.1">Core NestJS decorators and utilities</package>
+        <package name="@nestjs/swagger" version="^11.2.1">Swagger/OpenAPI documentation decorators (@ApiProperty, @ApiResponse)</package>
+        <package name="class-validator" version="^0.14.2">Validation decorators for DTOs (@IsString, @IsOptional, @IsNumber, etc.)</package>
+        <package name="class-transformer" version="^0.5.1">DTO transformation (@Expose, @Exclude, plainToInstance)</package>
+        <package name="@prisma/client" version="^6.18.0">Prisma ORM for database access</package>
+        <package name="nestjs-i18n" version="^10.5.1">Internationalization support (I18nService)</package>
+        <package name="winston" version="^3.18.3">Logging framework (Logger service)</package>
+        <package name="reflect-metadata" version="^0.2.2">Required for TypeScript decorators and metadata</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1" category="code-organization">
+      <title>5-Group Import Organization</title>
+      <description>All TypeScript files must organize imports into 5 groups separated by blank lines: (1) Libraries (external packages like @nestjs, class-validator), (2) DTOs (request/response), (3) Services (business logic), (4) Guards/Decorators (custom decorators, guards, interceptors), (5) Interfaces/Types (type-only imports with 'import type' syntax). Within each group, imports must be alphabetically sorted.</description>
+      <source>AC-8.5-1.1, docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</source>
+    </constraint>
+
+    <constraint id="C2" category="architecture">
+      <title>Base Class Inheritance Pattern</title>
+      <description>All entities must extend BaseEntity (for simple entities like Role, Permission) or BaseAuditEntity (for entities requiring audit trail like User, File). All query DTOs must extend BaseQueryDto. No duplicate field definitions (id, createdAt, updatedAt, deletedAt) in child classes. Generic type support required: BaseResponseDto&lt;T&gt;, BasePaginatedResponse&lt;T&gt;.</description>
+      <source>AC-8.5-1.2, AC-8.5-1.3, AC-8.5-1.6</source>
+    </constraint>
+
+    <constraint id="C3" category="architecture">
+      <title>Controller-Level Guard Placement</title>
+      <description>Guards must be applied at controller class level using @UseGuards(JwtAuthGuard, PermissionsGuard). Public endpoints must use @Public() decorator to bypass authentication. Method-level guards only for endpoint-specific overrides. This reduces boilerplate and makes authorization intent explicit at class level.</description>
+      <source>AC-8.5-1.7, docs/architecture/implementation-patterns-ai-agent-consistency-rules.md#Controller-Pattern</source>
+    </constraint>
+
+    <constraint id="C4" category="validation">
+      <title>Base Class Decorator Requirements</title>
+      <description>All base DTOs must include appropriate class-validator decorators (@IsOptional, @IsString, @IsNumber, @Min, @Max, etc.) and Swagger decorators (@ApiProperty, @ApiPropertyOptional). Base entities must have proper Prisma field decorators. All decorators defined in base classes are inherited by child classes.</description>
+      <source>AC-8.5-1.2, AC-8.5-1.4</source>
+    </constraint>
+
+    <constraint id="C5" category="refactoring">
+      <title>No Database Migration Required</title>
+      <description>Entity refactoring is PURE CODE REFACTORING ONLY. Database schema remains unchanged. All fields (id, createdAt, updatedAt, deletedAt) already exist in Prisma schema. Entity refactoring only changes TypeScript inheritance structure, not database structure. No prisma migrate required.</description>
+      <source>AC-8.5-1.6, Story Dev Notes</source>
+    </constraint>
+
+    <constraint id="C6" category="path-aliases">
+      <title>Clean Import Paths via Aliases</title>
+      <description>Use path aliases for clean imports: @/common/base for base classes, @/common/decorators for decorators, @/common/guards for guards. Alias @/* maps to src/* per tsconfig.json. Barrel exports at src/common/base/index.ts, src/common/base/dto/index.ts, src/common/base/entities/index.ts enable clean imports like: import { BaseEntity } from '@/common/base'.</description>
+      <source>AC-8.5-1.9, tsconfig.json</source>
+    </constraint>
+
+    <constraint id="C7" category="testing">
+      <title>Build Validation Required</title>
+      <description>After all refactoring, npm run build and npm run type-check must succeed with zero errors. No TypeScript errors, no import errors, no circular dependencies. IDE must show no errors. Application must start successfully.</description>
+      <source>AC-8.5-1.10</source>
+    </constraint>
+
+    <constraint id="C8" category="response-format">
+      <title>Response Format Alignment</title>
+      <description>BaseResponseDto structure must align with global interceptor response format: {success, status, data, count?, message}. Controllers return raw DTOs, interceptor wraps automatically. Base response classes provide type-safe structure for consistency.</description>
+      <source>AC-8.5-1.5, docs/architecture/api-contracts.md#Response-Format-Standards</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>JwtAuthGuard</name>
+      <kind>NestJS Guard</kind>
+      <signature>@Injectable() class JwtAuthGuard extends AuthGuard('jwt')</signature>
+      <path>src/common/guards/jwt-auth.guard.ts</path>
+      <usage>Apply at controller class level with @UseGuards(JwtAuthGuard, PermissionsGuard). Supports @Public() decorator bypass via reflector.</usage>
+    </interface>
+
+    <interface>
+      <name>PermissionsGuard</name>
+      <kind>NestJS Guard</kind>
+      <signature>@Injectable() class PermissionsGuard implements CanActivate</signature>
+      <path>src/common/guards/permissions.guard.ts</path>
+      <usage>Used with JwtAuthGuard for permission-based authorization. Checks @Permission() decorator metadata.</usage>
+    </interface>
+
+    <interface>
+      <name>Public decorator</name>
+      <kind>Custom Decorator</kind>
+      <signature>export const Public = () =&gt; SetMetadata(IS_PUBLIC_KEY, true)</signature>
+      <path>src/common/decorators/public.decorator.ts</path>
+      <usage>Mark endpoints as public (bypass JWT auth): @Public() @Post('register'). Used after applying class-level guards.</usage>
+    </interface>
+
+    <interface>
+      <name>BaseEntity pattern</name>
+      <kind>Abstract Class</kind>
+      <signature>abstract class BaseEntity { id: string; createdAt: Date; updatedAt: Date; deletedAt?: Date; }</signature>
+      <path>src/common/base/entities/base.entity.ts (to be created)</path>
+      <usage>Extend for simple entities: class Role extends BaseEntity. Provides common fields with soft-delete support.</usage>
+    </interface>
+
+    <interface>
+      <name>BaseAuditEntity pattern</name>
+      <kind>Abstract Class</kind>
+      <signature>abstract class BaseAuditEntity extends BaseEntity { createdBy?: string; updatedBy?: string; }</signature>
+      <path>src/common/base/entities/base-audit.entity.ts (to be created)</path>
+      <usage>Extend for audit-tracked entities: class User extends BaseAuditEntity. Adds audit fields to BaseEntity.</usage>
+    </interface>
+
+    <interface>
+      <name>BaseQueryDto pattern</name>
+      <kind>Base DTO Class</kind>
+      <signature>class BaseQueryDto { page?: number; limit?: number; orderBy?: string; sortDirection?: 'asc' | 'desc'; }</signature>
+      <path>src/common/base/dto/base-query.dto.ts (to be created)</path>
+      <usage>Extend for query DTOs: class GetUsersQueryDto extends BaseQueryDto. Provides pagination and sorting.</usage>
+    </interface>
+
+    <interface>
+      <name>BaseResponseDto pattern</name>
+      <kind>Generic Response Wrapper</kind>
+      <signature>class BaseResponseDto&lt;T&gt; { success: boolean; status: number; data: T; message: string; }</signature>
+      <path>src/common/base/dto/base-response.dto.ts (to be created)</path>
+      <usage>Type-safe response structure. Aligns with global interceptor format. Controllers return raw data, interceptor wraps.</usage>
+    </interface>
+
+    <interface>
+      <name>Prisma Client</name>
+      <kind>ORM Interface</kind>
+      <signature>Generated Prisma Client from schema.prisma</signature>
+      <path>node_modules/.prisma/client</path>
+      <usage>Database access layer. Entity refactoring does NOT affect Prisma models (schema unchanged). TypeScript inheritance only.</usage>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Unit Testing Framework: Jest v30.0.0 configured in package.json. Test files use .spec.ts extension. Test runner: npm run test. Coverage: npm run test:cov.
+
+Base Class Testing: Base DTOs and Entities require unit tests with 90% coverage target. Test validation decorators, generic type preservation, pagination calculations, and inheritance behavior.
+
+Integration Testing: After entity/DTO refactoring, run full test suite to ensure no behavioral changes. Database operations must work identically. Existing tests should pass without modification (only mock updates needed).
+
+Manual Testing: After guard refactoring, manually test authentication flows: public endpoints accessible without token, protected endpoints require JWT, permission checks enforced, error responses correct (401, 403).
+
+Build Validation: Final validation via npm run build (must succeed), npm run type-check (tsc --noEmit, zero errors), npm run lint (follow linting rules), IDE error check (no import/type errors).
+    </standards>
+
+    <locations>
+src/**/__test__/ - Unit test files co-located with source
+test/ - E2E test files (jest-e2e.json config)
+src/common/base/dto/__tests__/ - Base DTO tests (to be created)
+src/common/base/entities/__tests__/ - Base entity tests (to be created)
+    </locations>
+
+    <ideas>
+      <test-idea ac="AC-8.5-1.2" priority="high">
+        <description>Unit test BaseQueryDto pagination calculations</description>
+        <approach>Test skip/take calculations from page/limit. Verify default values. Test edge cases (page=0, limit=0, negative values).</approach>
+      </test-idea>
+
+      <test-idea ac="AC-8.5-1.2" priority="high">
+        <description>Unit test Base DTO validation decorators</description>
+        <approach>Use class-validator validate() function. Test @IsOptional, @IsNumber, @Min, @Max decorators work correctly. Verify inherited decorators in child classes.</approach>
+      </test-idea>
+
+      <test-idea ac="AC-8.5-1.3" priority="medium">
+        <description>Unit test BaseEntity and BaseAuditEntity structure</description>
+        <approach>Verify field types (id: string, createdAt: Date, etc.). Test generic ID type support. Ensure child classes inherit all fields.</approach>
+      </test-idea>
+
+      <test-idea ac="AC-8.5-1.5" priority="medium">
+        <description>Unit test BaseResponseDto generic type preservation</description>
+        <approach>Test BaseResponseDto&lt;T&gt; preserves type T. Test BasePaginatedResponse&lt;T&gt; with arrays. Verify type-safety at compile time.</approach>
+      </test-idea>
+
+      <test-idea ac="AC-8.5-1.6" priority="high">
+        <description>Integration test entity refactoring (no behavioral change)</description>
+        <approach>Run existing entity tests (User, Role, Permission, File CRUD). All tests must pass. Database operations identical. Prisma queries return same results.</approach>
+      </test-idea>
+
+      <test-idea ac="AC-8.5-1.7" priority="high">
+        <description>Manual test guard refactoring (authentication flow)</description>
+        <approach>Test public endpoints: POST /auth/register, POST /auth/login/admin (accessible without token). Test protected: GET /users (requires JWT). Test permission-gated: POST /users, DELETE /users/:id (requires permissions). Verify error responses: 401 (unauthorized), 403 (forbidden).</approach>
+      </test-idea>
+
+      <test-idea ac="AC-8.5-1.8" priority="low">
+        <description>Visual inspection of import organization</description>
+        <approach>Sample 10 files (controllers, services, DTOs). Verify 5-group structure. Check blank lines between groups. Ensure alphabetical order within groups.</approach>
+      </test-idea>
+
+      <test-idea ac="AC-8.5-1.10" priority="critical">
+        <description>Build and type-check validation</description>
+        <approach>Run npm run build (must succeed with zero errors). Run npm run type-check (tsc --noEmit, zero TypeScript errors). Check IDE for import/type errors. Test app startup: npm run start:dev.</approach>
+      </test-idea>
+
+      <test-idea ac="ALL" priority="high">
+        <description>Smoke test critical API endpoints after refactoring</description>
+        <approach>Test 5-10 critical endpoints: auth/register, auth/login, users (list), users/:id (get), files/upload. Ensure responses match expected format. No 500 errors.</approach>
+      </test-idea>
+    </ideas>
+  </tests>
+</story-context>

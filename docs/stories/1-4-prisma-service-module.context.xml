@@ -1,0 +1,281 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>4</storyId>
+    <title>Prisma Service & Module</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-4-prisma-service-module.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>global bir PrismaService ve PrismaModule</iWant>
+    <soThat>tüm module'ler database'e erişebilsin</soThat>
+    <tasks>
+- [ ] Task 1: PrismaService oluştur ve lifecycle hooks implement et (AC: 1, 3)
+  - [ ] Subtask 1.1: `src/database/` klasörünü oluştur
+  - [ ] Subtask 1.2: `src/database/prisma.service.ts` dosyasını oluştur
+  - [ ] Subtask 1.3: PrismaService class'ını PrismaClient'ı extend ederek tanımla
+  - [ ] Subtask 1.4: `onModuleInit()` method'unu implement et: `await this.$connect()` çağrısı
+  - [ ] Subtask 1.5: `onModuleDestroy()` method'unu implement et: `await this.$disconnect()` çağrısı
+  - [ ] Subtask 1.6: `enableShutdownHooks(app: INestApplication)` method'unu implement et
+  - [ ] Subtask 1.7: Service'i @Injectable() decorator ile işaretle
+
+- [ ] Task 2: PrismaModule oluştur ve global module olarak yapılandır (AC: 2, 5)
+  - [ ] Subtask 2.1: `src/database/prisma.module.ts` dosyasını oluştur
+  - [ ] Subtask 2.2: @Module() decorator ile module tanımla
+  - [ ] Subtask 2.3: @Global() decorator ekle (tüm module'lerden erişilebilir olması için)
+  - [ ] Subtask 2.4: PrismaService'i providers array'ine ekle
+  - [ ] Subtask 2.5: PrismaService'i exports array'ine ekle
+  - [ ] Subtask 2.6: AppModule'e (`src/app.module.ts`) import et
+  - [ ] Subtask 2.7: AppModule'de PrismaModule'ü imports array'ine ekle
+
+- [ ] Task 3: Connection pooling yapılandırması kontrol et (AC: 4)
+  - [ ] Subtask 3.1: Prisma schema dosyasında (`schema.prisma`) datasource block'unu kontrol et
+  - [ ] Subtask 3.2: Connection pooling için Prisma default değerlerini doğrula (10 connection)
+  - [ ] Subtask 3.3: Environment variable üzerinden connection_limit ayarlanabilirliğini not et (opsiyonel)
+  - [ ] Subtask 3.4: Connection pool min/max değerlerini dokümante et (5 min, 20 max)
+
+- [ ] Task 4: Main.ts'te shutdown hooks'u etkinleştir (AC: 3)
+  - [ ] Subtask 4.1: `src/main.ts` dosyasını aç
+  - [ ] Subtask 4.2: Bootstrap function içinde PrismaService'i app'ten inject et
+  - [ ] Subtask 4.3: `prismaService.enableShutdownHooks(app)` çağrısını ekle
+  - [ ] Subtask 4.4: Graceful shutdown test et (SIGTERM signal ile)
+
+- [ ] Task 5: Service injection test et (AC: 6)
+  - [ ] Subtask 5.1: Herhangi bir module'de (örn. AppModule veya test module) PrismaService'i constructor'a inject et
+  - [ ] Subtask 5.2: Injection'ın başarılı olduğunu doğrula (undefined değil)
+  - [ ] Subtask 5.3: `prismaService.$connect()` çağrısının çalıştığını test et
+  - [ ] Subtask 5.4: Database connection'ın başarılı olduğunu doğrula (simple query: `SELECT 1`)
+
+- [ ] Task 6: Integration test ve validation (AC: All)
+  - [ ] Subtask 6.1: `npm run start:dev` ile uygulamayı başlat
+  - [ ] Subtask 6.2: Application bootstrap sırasında PrismaService connection log'unu gör
+  - [ ] Subtask 6.3: Health endpoint test et (veya basit bir query ile connection test)
+  - [ ] Subtask 6.4: Application'ı kapat (Ctrl+C) ve disconnect log'unu kontrol et
+  - [ ] Subtask 6.5: TypeScript compilation başarılı (no errors)
+  - [ ] Subtask 6.6: Tüm acceptance criteria'yı verify et
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-1.4.1:** `src/database/prisma.service.ts` oluşturulmuş (PrismaClient extend eden class)
+2. **AC-1.4.2:** `src/database/prisma.module.ts` oluşturulmuş (Global module with @Global() decorator)
+3. **AC-1.4.3:** PrismaService, `onModuleInit` ve `enableShutdownHooks` implement ediyor
+4. **AC-1.4.4:** Connection pooling configured (`datasource db` içinde connection_limit veya prisma default 10 connection)
+5. **AC-1.4.5:** PrismaModule, AppModule'e import edilmiş (`app.module.ts` imports array'inde)
+6. **AC-1.4.6:** Service başarıyla inject edilebiliyor (test: constructor injection çalışıyor)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Database Infrastructure & Project Setup</title>
+        <section>Services and Modules</section>
+        <snippet>PrismaService: PrismaClient wrapper, connection management, lifecycle hooks. PrismaModule: Global module providing PrismaService to all feature modules.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Database Infrastructure & Project Setup</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Complete Prisma schema with core entities: User, Permission, Role, RefreshToken, OTPVerification, File, Notification. All entities include domainID for multi-tenancy and deletedAt for soft-delete pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Project Structure - Database</section>
+        <snippet>Database infrastructure location: src/database/ containing prisma.service.ts (PrismaClient wrapper) and prisma.module.ts (Global module).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Epic to Architecture Mapping - Epic 1</section>
+        <snippet>Database Infrastructure components integrate with all modules via PrismaService injection. Global module pattern ensures service availability without explicit imports.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Performance Considerations - Database Optimization</section>
+        <snippet>Connection pooling configured with Prisma defaults (10 connections). Recommended production settings: min 5, max 20 connections.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/1-3-interactive-database-selection-script.md</path>
+        <title>Story 1.3: Interactive Database Selection Script</title>
+        <section>Completion Notes</section>
+        <snippet>Schema.prisma file generated and ready. Prisma v6.16.0 installed. DATABASE_URL configured in .env file. This story (1.4) is the FIRST to use Prisma Client - must run `npx prisma generate` before coding.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/app.module.ts</path>
+        <kind>module</kind>
+        <symbol>AppModule</symbol>
+        <lines>1-10</lines>
+        <reason>Root module where PrismaModule must be imported. Currently has empty imports array that needs PrismaModule added.</reason>
+      </artifact>
+      <artifact>
+        <path>src/main.ts</path>
+        <kind>bootstrap</kind>
+        <symbol>bootstrap</symbol>
+        <lines>1-8</lines>
+        <reason>Application entry point where PrismaService shutdown hooks must be enabled. Needs to inject PrismaService and call enableShutdownHooks(app).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="prisma" version="^6.18.0" dev="true" />
+        <package name="typescript" version="^5.7.3" dev="true" />
+      </nodejs>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Architecture Pattern</type>
+      <description>PrismaService MUST extend PrismaClient - do not create a wrapper with composition pattern. Use inheritance for proper TypeScript typing and method access.</description>
+      <source>docs/tech-spec-epic-1.md - Services and Modules section</source>
+    </constraint>
+    <constraint>
+      <type>Global Module Pattern</type>
+      <description>PrismaModule MUST use @Global() decorator to make PrismaService available to all modules without explicit imports. This is the NestJS recommended pattern for database services.</description>
+      <source>docs/architecture.md - Implementation Patterns</source>
+    </constraint>
+    <constraint>
+      <type>Lifecycle Management</type>
+      <description>PrismaService MUST implement OnModuleInit (for $connect) and OnModuleDestroy (for $disconnect). Also MUST implement enableShutdownHooks method for graceful shutdown.</description>
+      <source>docs/tech-spec-epic-1.md - AC-1.4.3</source>
+    </constraint>
+    <constraint>
+      <type>File Naming Convention</type>
+      <description>File names MUST use kebab-case: prisma.service.ts, prisma.module.ts. Directory names also kebab-case: src/database/</description>
+      <source>docs/architecture.md - Implementation Patterns (ADR-008)</source>
+    </constraint>
+    <constraint>
+      <type>TypeScript Strict Mode</type>
+      <description>All code MUST pass TypeScript strict mode compilation. Enable noImplicitAny, strictNullChecks, strictFunctionTypes.</description>
+      <source>docs/architecture.md - Core Technologies</source>
+    </constraint>
+    <constraint>
+      <type>Import Organization</type>
+      <description>Imports MUST follow 8-group order: 1) Libraries (NestJS, Prisma), 2) DTOs, 3) Services, 4) Repositories, 5) Entities, 6) Interfaces, 7) Enums, 8) Events</description>
+      <source>docs/architecture.md - Implementation Patterns</source>
+    </constraint>
+    <constraint>
+      <type>Connection Pooling</type>
+      <description>Use Prisma default connection pooling (10 connections). Document that production can configure via DATABASE_URL parameter: ?connection_limit=20</description>
+      <source>docs/architecture.md - Performance Considerations, AC-1.4.4</source>
+    </constraint>
+    <constraint>
+      <type>Prisma Client Generation</type>
+      <description>CRITICAL: Before implementing PrismaService, MUST run `npx prisma generate` to generate Prisma Client from schema.prisma. This is the first story to use Prisma Client.</description>
+      <source>docs/stories/1-3-interactive-database-selection-script.md - Learnings</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PrismaService</name>
+      <kind>class</kind>
+      <signature>
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  async onModuleInit(): Promise&lt;void&gt;
+  async onModuleDestroy(): Promise&lt;void&gt;
+  enableShutdownHooks(app: INestApplication): void
+}
+      </signature>
+      <path>src/database/prisma.service.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>PrismaModule</name>
+      <kind>module</kind>
+      <signature>
+@Global()
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService],
+})
+export class PrismaModule {}
+      </signature>
+      <path>src/database/prisma.module.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>AppModule Integration</name>
+      <kind>module import</kind>
+      <signature>
+@Module({
+  imports: [PrismaModule], // Add this import
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
+      </signature>
+      <path>src/app.module.ts (to be modified)</path>
+    </interface>
+    <interface>
+      <name>Main.ts Integration</name>
+      <kind>bootstrap</kind>
+      <signature>
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Enable graceful shutdown
+  const prismaService = app.get(PrismaService);
+  await prismaService.enableShutdownHooks(app);
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+      </signature>
+      <path>src/main.ts (to be modified)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing should follow NestJS testing patterns using Jest v30.x. Unit tests for services should use TestingModule to create isolated test instances with mocked dependencies. Integration tests should use a test database. Coverage threshold: 70% minimum. PrismaService tests should mock the Prisma Client methods ($connect, $disconnect, $on) rather than connecting to a real database in unit tests.
+    </standards>
+    <locations>
+      <location>src/**/*.spec.ts (unit tests)</location>
+      <location>test/**/*.e2e-spec.ts (integration tests)</location>
+    </locations>
+    <ideas>
+      <test ac="AC-1.4.1">
+        <description>Unit test: PrismaService class exists and extends PrismaClient</description>
+        <approach>Use instanceof check and verify PrismaClient methods are accessible</approach>
+      </test>
+      <test ac="AC-1.4.3">
+        <description>Unit test: onModuleInit calls $connect successfully</description>
+        <approach>Mock $connect method, call onModuleInit, verify $connect was called once</approach>
+      </test>
+      <test ac="AC-1.4.3">
+        <description>Unit test: onModuleDestroy calls $disconnect successfully</description>
+        <approach>Mock $disconnect method, call onModuleDestroy, verify $disconnect was called once</approach>
+      </test>
+      <test ac="AC-1.4.3">
+        <description>Unit test: enableShutdownHooks registers beforeExit handler</description>
+        <approach>Mock $on method and app.close(), call enableShutdownHooks, verify $on('beforeExit') was registered</approach>
+      </test>
+      <test ac="AC-1.4.2, AC-1.4.5">
+        <description>Integration test: PrismaModule is global and exports PrismaService</description>
+        <approach>Create TestingModule with PrismaModule, verify PrismaService can be injected without explicit import</approach>
+      </test>
+      <test ac="AC-1.4.6">
+        <description>Integration test: PrismaService can be injected into another service</description>
+        <approach>Create test service that injects PrismaService, verify injection is successful and not undefined</approach>
+      </test>
+      <test ac="AC-1.4.4">
+        <description>Manual test: Connection pooling uses Prisma defaults</description>
+        <approach>Start application and monitor database connections, verify ~10 connections in pool</approach>
+      </test>
+      <test ac="All">
+        <description>E2E test: Application starts, connects to database, and shuts down gracefully</description>
+        <approach>Bootstrap full application, verify connection logs, send SIGTERM, verify disconnect logs</approach>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

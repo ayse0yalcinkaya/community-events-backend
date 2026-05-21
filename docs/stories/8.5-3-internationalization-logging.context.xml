@@ -1,0 +1,204 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8.5</epicId>
+    <storyId>3</storyId>
+    <title>Internationalization & Logging</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8.5-3-internationalization-logging.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>i18n ve logger kullanımı tüm servis ve controller'larda tam olarak entegre edilmiş olsun</iWant>
+    <soThat>multi-language support tam olsun ve console.log kullanılmasın, profesyonel logging standardı uygulanmış olsun</soThat>
+    <tasks>
+      - Task 1: Audit Codebase for console.* Usage
+      - Task 2: Audit Codebase for Hardcoded Strings
+      - Task 3: Design Translation Key Structure
+      - Task 4: Create Translation Files
+      - Task 5: Verify i18n Module Configuration
+      - Task 6-10: Refactor Services (Auth, Token, Users, Permissions, Files)
+      - Task 11-15: Refactor Controllers (Auth, Users, Profile, Permissions, Files)
+      - Task 16: Refactor Guards for Logger
+      - Task 17: Refactor Interceptors for Logger
+      - Task 18: Refactor Exception Filters
+      - Task 19: Apply Logging Standards
+      - Task 20: Test i18n Integration
+      - Task 21: Verify No Console Usage
+      - Task 22: Build Validation and Final Testing
+      - Task 23: Update Unit Tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - AC-8.5-3.1: Tüm Services i18n kullanıyor (AuthService, UsersService, PermissionsService, FilesService, TokenService)
+    - AC-8.5-3.2: Tüm Controllers i18n kullanıyor (AuthController, UsersController, ProfileController, PermissionsController, FilesController)
+    - AC-8.5-3.3: i18n translation dosyaları güncellendi (tr/en: errors.json, success.json, validation.json)
+    - AC-8.5-3.4: Console.log'lar Logger service'e dönüştürüldü (main.ts bootstrap hariç)
+    - AC-8.5-3.5: Logger Service tüm dosyalarda kullanılıyor (Services, Controllers, Guards, Interceptors, Filters)
+    - AC-8.5-3.6: Logger context eklendi (her service/controller doğru context ismi kullanıyor)
+    - AC-8.5-3.7: Translation key organization standardı uygulandı (errors.*, success.*, validation.*)
+    - AC-8.5-3.8: AcceptLanguage header'dan dil algılanıyor (tr/en fallback)
+    - AC-8.5-3.9: Logging standardı uygulandı (info, debug, error, warn levels)
+    - AC-8.5-3.10: Build ve testler başarılı
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Epic 8.5: Technical Refinement & Code Quality -->
+      <doc path="docs/epics/epic-8.5-technical-refinement-code-quality.md" title="Epic 8.5: Technical Refinement & Code Quality" section="Story 8.5-3">
+        Acceptance Criteria for i18n and logging integration: Services use I18nService for error/success messages, Controllers use i18n, translation files (tr/en: errors.json, success.json, validation.json), console.log replaced with Logger, Logger context in all components, AcceptLanguage header detection, logging standards (info, debug, error, warn levels)
+      </doc>
+
+      <!-- Epic 7: Developer Infrastructure (i18n & Logger Setup) -->
+      <doc path="docs/epics/epic-7-developer-infrastructure.md" title="Epic 7: Developer Infrastructure" section="Story 7.1, 7.3">
+        i18n setup: nestjs-i18n module, Accept-Language header detection, default EN fallback. Logger setup: Winston structured logging (JSON format), log levels (debug, info, warn, error), console/file transports, sensitive data exclusion
+      </doc>
+
+      <!-- Tech Spec Epic 7 -->
+      <doc path="docs/tech-spec-epic-7.md" title="Epic 7 Technical Specification" section="I18n & Winston Configuration">
+        Detailed I18nService interface (t() method, variable replacement), Winston Logger interface (debug, info, warn, error methods), log entry structure (timestamp, level, message, context), translation file structure (common.json, auth.json, users.json), environment variables (LOG_LEVEL, SENTRY_DSN)
+      </doc>
+
+      <!-- Implementation Patterns -->
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Error Handling, Service Pattern">
+        Service error handling pattern with i18n: throw new NotFoundException(this.i18n.t('module.NOT_FOUND')). Logger pattern: private readonly logger = new Logger(ServiceName.name). Import organization: Libraries, DTOs, Services, Repositories, Entities, Interfaces, Enums
+      </doc>
+
+      <!-- Story 8.5-2: Response Standardization (Already completed, provides context) -->
+      <doc path="docs/stories/8.5-2-api-documentation-response-standardization.md" title="Story 8.5-2: API Documentation & Response Standardization" section="Dev Notes, Completion Notes">
+        TransformResponseInterceptor already has i18n integration (success.json files created). No duplication needed. Services return raw data, interceptor wraps automatically. i18n success message keys: success.OPERATION_SUCCESSFUL, success.CREATED, success.UPDATED, success.DELETED
+      </doc>
+    </docs>
+
+    <code>
+      <!-- i18n Module -->
+      <artifact path="src/modules/i18n/__test__/i18n.service.spec.ts" kind="test" symbol="I18nService" reason="Reference for how i18n service is tested and used" />
+
+      <!-- Logger Service -->
+      <artifact path="src/common/logger/logger.service.ts" kind="service" symbol="LoggerService" reason="Winston logger implementation to be used instead of console.log" />
+      <artifact path="src/common/logger/logger.module.ts" kind="module" symbol="LoggerModule" reason="Logger module configuration and exports" />
+
+      <!-- Services requiring refactoring -->
+      <artifact path="src/modules/auth/auth.service.ts" kind="service" symbol="AuthService" reason="Needs I18nService injection and Logger integration (AC-8.5-3.1)" />
+      <artifact path="src/modules/users/services/users.service.ts" kind="service" symbol="UsersService" reason="Needs I18nService injection and Logger integration (AC-8.5-3.1)" />
+      <artifact path="src/modules/permissions/services/permissions.service.ts" kind="service" symbol="PermissionsService" reason="Needs I18nService injection and Logger integration (AC-8.5-3.1)" />
+      <artifact path="src/modules/files/services/files.service.ts" kind="service" symbol="FilesService" reason="Needs I18nService injection and Logger integration (AC-8.5-3.1)" />
+
+      <!-- Controllers requiring refactoring -->
+      <artifact path="src/modules/auth/auth.controller.ts" kind="controller" symbol="AuthController" lines="1-50" reason="Has console.log usage, needs i18n and Logger integration (AC-8.5-3.2, 8.5-3.4)" />
+      <artifact path="src/modules/users/controllers/users.controller.ts" kind="controller" symbol="UsersController" reason="Needs i18n and Logger integration (AC-8.5-3.2)" />
+      <artifact path="src/modules/users/controllers/profile.controller.ts" kind="controller" symbol="ProfileController" reason="Needs i18n and Logger integration (AC-8.5-3.2)" />
+      <artifact path="src/modules/permissions/controllers/permissions.controller.ts" kind="controller" symbol="PermissionsController" reason="Needs i18n and Logger integration (AC-8.5-3.2)" />
+      <artifact path="src/modules/files/controllers/files.controller.ts" kind="controller" symbol="FilesController" reason="Needs i18n and Logger integration (AC-8.5-3.2)" />
+
+      <!-- Interceptors/Filters -->
+      <artifact path="src/common/interceptors/transform-response.interceptor.ts" kind="interceptor" symbol="TransformResponseInterceptor" reason="Already has i18n integration (Story 8.5-2), reference for i18n usage pattern" />
+      <artifact path="src/common/filters/sentry-exception.filter.ts" kind="filter" symbol="SentryExceptionFilter" reason="Needs i18n and Logger integration (AC-8.5-3.5)" />
+
+      <!-- Translation Files (Already exist from Story 8.5-2) -->
+      <artifact path="src/modules/i18n/translations/tr/success.json" kind="config" reason="Success message translations (Turkish) - already exists" />
+      <artifact path="src/modules/i18n/translations/en/success.json" kind="config" reason="Success message translations (English) - already exists" />
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="nestjs-i18n" version="^10.5.1" purpose="Multi-language support, already installed" />
+        <package name="winston" version="^3.18.3" purpose="Structured logging, already installed" />
+        <package name="winston-daily-rotate-file" version="^4.7.1" purpose="Log file rotation, already installed" />
+        <package name="@nestjs/common" version="^11.0.1" purpose="Logger class from NestJS" />
+        <package name="class-transformer" version="^0.5.1" purpose="DTO transformation" />
+        <package name="class-validator" version="^0.14.2" purpose="Validation" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Development Constraints -->
+    <constraint type="pattern">I18nService MUST be injected in constructor: private readonly i18n: I18nService</constraint>
+    <constraint type="pattern">Logger MUST be initialized as instance variable: private readonly logger = new Logger(ContextName.name)</constraint>
+    <constraint type="pattern">Translation keys MUST follow format: category.SPECIFIC_KEY (e.g., errors.USER_NOT_FOUND, success.CREATED)</constraint>
+    <constraint type="pattern">Error messages MUST use i18n: throw new NotFoundException(this.i18n.t('errors.USER_NOT_FOUND'))</constraint>
+    <constraint type="prohibition">NO console.log, console.error, console.warn, console.debug usage (except main.ts bootstrap)</constraint>
+    <constraint type="prohibition">NO hardcoded error/success messages - MUST use i18n keys</constraint>
+    <constraint type="pattern">Import organization: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums</constraint>
+    <constraint type="pattern">Logger context naming: Use class name (e.g., AuthService.name, UsersController.name)</constraint>
+    <constraint type="pattern">Log levels: log() for info, debug() for debugging, error() for exceptions, warn() for warnings</constraint>
+    <constraint type="testing">All service/controller tests MUST mock I18nService: { t: jest.fn((key) => key) }</constraint>
+    <constraint type="testing">All service/controller tests MUST mock Logger: { log: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() }</constraint>
+    <constraint type="build">Build MUST succeed: npm run build && npm run type-check</constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- I18nService Interface -->
+    <interface name="I18nService" kind="service" signature="t(key: string, options?: I18nTranslateOptions): string" path="node_modules/nestjs-i18n">
+      Multi-language translation service. Usage: this.i18n.t('errors.USER_NOT_FOUND') or this.i18n.t('auth.OTP_SENT', { args: { phone: '+905551234567' } })
+    </interface>
+
+    <!-- Logger Interface -->
+    <interface name="Logger" kind="class" signature="new Logger(context: string)" path="@nestjs/common">
+      NestJS Logger class. Methods: log(message: string), debug(message: string), error(message: string, trace?: string), warn(message: string). Usage: private readonly logger = new Logger(ServiceName.name); this.logger.log('User created successfully')
+    </interface>
+
+    <!-- Translation File Structure -->
+    <interface name="Translation Files" kind="config" path="src/modules/i18n/translations/{lang}/*.json">
+      errors.json: Error message keys (USER_NOT_FOUND, INVALID_CREDENTIALS, PERMISSION_DENIED, etc.)
+      success.json: Success message keys (OPERATION_SUCCESSFUL, CREATED, UPDATED, DELETED, UPLOADED, etc.)
+      validation.json: Validation message keys (EMAIL_INVALID, PASSWORD_TOO_SHORT, REQUIRED_FIELD, etc.)
+    </interface>
+
+    <!-- Service Pattern -->
+    <interface name="Service i18n Integration" kind="pattern" signature="constructor(private readonly i18n: I18nService, private readonly logger: Logger = new Logger(ServiceName.name))">
+      Services inject I18nService and initialize Logger. Use i18n.t() for all error/success messages. Use logger methods instead of console.log. Example: throw new BadRequestException(this.i18n.t('errors.USER_NOT_FOUND'))
+    </interface>
+
+    <!-- Controller Pattern -->
+    <interface name="Controller i18n Integration" kind="pattern" signature="constructor(private readonly service: Service, private readonly i18n: I18nService)">
+      Controllers inject I18nService and Logger. Response messages use i18n.t(). Logger logs request entry/exit. Example: this.logger.log(`Login request received for: ${email}`)
+    </interface>
+
+    <!-- Exception Filter Pattern -->
+    <interface name="Exception Filter i18n Integration" kind="pattern" signature="constructor(private readonly i18n: I18nService)">
+      Exception filters inject I18nService and Logger. Translate error messages before sending to client. Log errors with context and stack trace. Example: this.logger.error('Exception caught', exception.stack)
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Unit Testing Framework: Jest (already configured)
+      Coverage Target: 90% for refactored services and controllers
+      Mock Strategy: Mock I18nService with { t: jest.fn((key) => key) }, Mock Logger with { log: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() }
+      Test Pattern: Arrange-Act-Assert, clear test names describing behavior
+      Integration Testing: Test i18n with different Accept-Language headers (tr/en)
+      E2E Testing: Verify translation keys work end-to-end, verify logger output in console
+      Build Validation: npm run build, npm run type-check, grep verification for console.* usage
+    </standards>
+
+    <locations>
+      src/modules/auth/__tests__/auth.service.spec.ts
+      src/modules/users/__tests__/users.service.spec.ts
+      src/modules/permissions/__tests__/permissions.service.spec.ts
+      src/modules/files/__tests__/files.service.spec.ts
+      src/modules/auth/__tests__/auth.controller.spec.ts
+      src/modules/users/__tests__/users.controller.spec.ts
+      src/common/filters/__tests__/sentry-exception.filter.spec.ts
+    </locations>
+
+    <ideas>
+      - AC-8.5-3.1: Test AuthService.login() throws NotFoundException with i18n key 'errors.USER_NOT_FOUND'
+      - AC-8.5-3.1: Test UsersService.create() calls logger.log() with appropriate message
+      - AC-8.5-3.2: Test UsersController.findAll() returns response with i18n translated message
+      - AC-8.5-3.3: Test translation files exist (tr/en) and have required keys (errors.*, success.*, validation.*)
+      - AC-8.5-3.4: Run grep for console.log in src/ (exclude main.ts), verify no matches
+      - AC-8.5-3.5: Test SentryExceptionFilter has Logger injected and logs errors
+      - AC-8.5-3.6: Test Logger context naming: verify AuthService logger context is 'AuthService'
+      - AC-8.5-3.7: Test translation key organization: verify errors.USER_NOT_FOUND exists in errors.json
+      - AC-8.5-3.8: Integration test: POST /auth/login with Accept-Language: tr returns Turkish error
+      - AC-8.5-3.8: Integration test: POST /auth/login with Accept-Language: en returns English error
+      - AC-8.5-3.9: Test logger.error() includes stack trace for exceptions
+      - AC-8.5-3.10: Run npm run build, verify success
+      - AC-8.5-3.10: Run npm run type-check, verify no TypeScript errors
+    </ideas>
+  </tests>
+</story-context>

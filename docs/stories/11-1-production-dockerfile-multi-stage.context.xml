@@ -1,0 +1,140 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>11</epicId>
+    <storyId>1</storyId>
+    <title>Production Dockerfile (Multi-Stage)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/11-1-production-dockerfile-multi-stage.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>production-optimized Dockerfile</iWant>
+    <soThat>minimal image size ile deploy edebilleyim</soThat>
+    <tasks>Task 1: Create multi-stage Dockerfile (AC: #1, #2, #3, #4)
+  - Subtask 1.1: Stage 1 - Dependencies stage (npm ci --only=production)
+  - Subtask 1.2: Stage 2 - Build stage (npm run build, npx prisma generate)
+  - Subtask 1.3: Stage 3 - Production stage (node:20-alpine base, copy artifacts, non-root user)
+  - Subtask 1.4: Configure EXPOSE 3000 and CMD ["node", "dist/main"]
+
+Task 2: Optimize image size (AC: #5)
+  - Subtask 2.1: Verify Alpine Linux base image
+  - Subtask 2.2: Exclude dev dependencies from production stage
+  - Subtask 2.3: Test build and measure image size (<200MB target)
+  - Subtask 2.4: Optimize layers if needed (order, caching)
+
+Task 3: Add health check (AC: #6)
+  - Subtask 3.1: Add HEALTHCHECK instruction to Dockerfile
+  - Subtask 3.2: Configure health check: curl -f http://localhost:3000/health
+  - Subtask 3.3: Set interval: 30s, timeout: 10s, retries: 3
+  - Subtask 3.4: Test health check in running container
+
+Task 4: Create .dockerignore (AC: #7)
+  - Subtask 4.1: Create .dockerignore file
+  - Subtask 4.2: Add exclusions: node_modules, dist, coverage, .git
+  - Subtask 4.3: Add additional exclusions: .env, tests, docker-compose*.yml
+  - Subtask 4.4: Verify .dockerignore working (smaller build context)
+
+Task 5: Test production build (AC: #5, #6)
+  - Subtask 5.1: Build production image: `docker build -f docker/Dockerfile -t boilerplate:prod .`
+  - Subtask 5.2: Verify image size: `docker images boilerplate:prod` (<200MB)
+  - Subtask 5.3: Test container startup: `docker run -p 3000:3000 boilerplate:prod`
+  - Subtask 5.4: Test health check: `docker exec <container> curl -f localhost:3000/health`
+
+Task 6: Integration testing (AC: #4, #6)
+  - Subtask 6.1: Test with production database connection
+  - Subtask 6.2: Verify non-root user execution
+  - Subtask 6.3: Test environment variable loading from .env
+  - Subtask 6.4: Verify /health endpoint returns 200 OK</tasks>
+  </story>
+
+  <acceptanceCriteria>1. `docker/Dockerfile` oluşturulmuş (multi-stage)
+2. Stage 1: Dependencies (npm ci --only=production)
+3. Stage 2: Build (npm run build, prisma generate)
+4. Stage 3: Production
+   - Base: node:20-alpine
+   - Copy: node_modules, dist, prisma
+   - User: node (non-root)
+   - Expose: 3000
+   - CMD: node dist/main
+5. Image size: < 200MB
+6. Health check: Dockerfile HEALTHCHECK instruction
+7. .dockerignore: node_modules, dist, coverage, .git</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-11.md" title="Epic 11 Technical Specification" section="Story 11.1: Production Dockerfile (Multi-Stage)" snippet="Story 11.1 focuses on creating a production-optimized Docker image using multi-stage build strategy to achieve minimal image size while maintaining security and performance. Acceptance criteria include multi-stage Dockerfile, Alpine base, non-root user, and image size &lt;200MB." />
+      <doc path="docs/architecture/deployment-architecture.md" title="Deployment Architecture" section="Docker Configuration" snippet="Multi-stage Dockerfile pattern with Stage 1 (deps), Stage 2 (build), Stage 3 (production). Base: node:20-alpine, USER node, EXPOSE 3000, CMD [node, dist/main]." />
+      <doc path="docs/architecture/deployment-architecture.md" title="Deployment Architecture" section="Environment Configuration" snippet="Required environment variables including NODE_ENV, DATABASE_URL, JWT_SECRET, AWS credentials, and configuration validation using Joi schema." />
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Test Coverage Requirements" snippet="Minimum Coverage: 70% (enforced by CI/CD). Unit tests use Arrange-Act-Assert pattern. Integration tests use separate test database with cleanup between tests." />
+      <doc path="docs/architecture/security-architecture.md" title="Security Architecture" section="Container Security" snippet="Container security best practices including non-root user execution, minimal base images (Alpine), security scanning, and secrets management through environment variables." />
+      <doc path="docs/stories/10-5-hot-reload-configuration.md" title="Story 10-5: Hot Reload Configuration" section="Dev Agent Record" snippet="Docker Compose with PostgreSQL, MongoDB, Redis services operational. Volume mount strategy: source code `.:/app`, node_modules excluded. Environment variables centralized in .env at project root." />
+      <doc path="docs/stories/10-4-database-seed-scripts.md" title="Story 10-4: Database Seed Scripts" section="Dev Agent Record" snippet="Complete seed data setup with 10 users, 3 roles, 11 permissions. Idempotency pattern using upsert. Docker Compose integration working: `docker-compose exec app npm run prisma:seed`." />
+      <doc path="docs/stories/10-3-environment-variable-management.md" title="Story 10-3: Environment Variable Management" section="Dev Agent Record" snippet="All environment variables documented in .env.example. Config validation integrated in src/main.ts using Joi schema. .gitignore properly configured for security." />
+    </docs>
+    <code>
+      <file path="docker/Dockerfile.dev" kind="dockerfile" symbol="Dockerfile.dev" lines="1-49" reason="Development Dockerfile pattern with node:20-alpine base, non-root user, and watch mode configuration - reference for production Dockerfile structure" />
+      <file path="docker/docker-compose.yml" kind="docker-compose" symbol="docker-compose.yml" lines="1-50" reason="Docker Compose configuration with multi-service orchestration (PostgreSQL, MongoDB, Redis) and volume mount strategy for development environment" />
+      <file path="package.json" kind="config" symbol="build scripts" lines="9,12-14,22-26" reason="Build scripts: npm run build, npm run start:dev, prisma:generate, prisma:migrate:deploy - required for multi-stage build process" />
+      <file path="src/main.ts" kind="application" symbol="main.ts" reason="Application entry point (dist/main.js) - final production container command. Health check endpoint /health available for container monitoring" />
+      <file path="prisma/schema.prisma" kind="schema" symbol="schema.prisma" reason="Database schema - prisma generate required in build stage, prisma migrate deploy used in production" />
+    </code>
+    <dependencies>
+      <ecosystem name="Node.js">
+        <package name="nestjs" version="^11.0.0" />
+        <package name="@nestjs/core" version="^11.0.0" />
+        <package name="@nestjs/platform-express" version="^11.0.0" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="joi" version="^18.0.0" />
+        <package name="winston" version="^3.18.0" />
+        <package name="@aws-sdk/client-s3" version="^3.925.0" />
+        <package name="typescript" version="^5.7.0" dev="true" />
+        <package name="jest" version="^30.0.0" dev="true" />
+        <package name="@nestjs/cli" version="^11.0.0" dev="true" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>Multi-Stage Build Strategy: Separate dependency installation, build process, and runtime for optimal image size. Stage 1 (deps): npm ci --only=production. Stage 2 (build): npm run build + npx prisma generate. Stage 3 (production): Minimal runtime with Alpine base, non-root user, health check.
+
+Image Optimization: Alpine Linux base (~5MB) reduces size. Layer caching maximizes Docker cache hits. Dev dependencies excluded from production image. Only dist/, Prisma artifacts, and production node_modules in final image.
+
+Security Constraints: Non-root user execution (node user, UID 1000+). Minimal attack surface with Alpine base + production deps only. No build tools in runtime. Health check built-in for monitoring. No secrets hardcoded - use environment variables.
+
+Build Process: TypeScript compilation to dist/ via npm run build. Prisma client generation required. Environment validation via Joi schema. Database migration: npx prisma migrate deploy. Health endpoint: /health available (Epic 7).
+
+Development Environment: Docker Compose with PostgreSQL, MongoDB, Redis services. Volume mount: source code .:/app, node_modules excluded. Centralized .env at project root with validation. All services healthy and independent.</constraints>
+  <interfaces>
+    <interface name="Docker Multi-Stage Build" kind="Dockerfile pattern" signature="FROM node:20-alpine AS deps → FROM node:20-alpine AS build → FROM node:20-alpine AS production" path="docs/architecture/deployment-architecture.md#Docker-Configuration" />
+    <interface name="Health Check Endpoint" kind="REST endpoint" signature="GET /health - Returns { status: &quot;ok&quot;, timestamp, version }" path="Epic 7 - Health Check Endpoints" />
+    <interface name="Build Scripts" kind="npm scripts" signature="npm run build (nest build), npm run start:prod (node dist/main), npx prisma generate, npx prisma migrate deploy" path="package.json" />
+    <interface name="Environment Configuration" kind="Config schema" signature="NODE_ENV, DATABASE_URL, JWT_SECRET, AWS credentials validated via Joi" path="docs/architecture/deployment-architecture.md#Environment-Configuration" />
+  </interfaces>
+  <tests>
+    <standards>Testing follows Arrange-Act-Assert pattern for unit tests. Minimum 70% coverage enforced by CI/CD. Integration tests use separate test database with cleanup. E2E tests validate complete workflows. Docker container testing includes health check validation, non-root user verification, and database connectivity. All tests must pass before merge (CI gate).</standards>
+    <locations>
+      <pattern>test/**/*.test.ts</pattern>
+      <pattern>test/**/*.spec.ts</pattern>
+      <pattern>test/integration/**/*.test.ts</pattern>
+      <pattern>test/e2e/**/*.test.ts</pattern>
+      <pattern>tests/**/*.test.ts</pattern>
+      <pattern>tests/**/*.spec.ts</pattern>
+    </locations>
+    <ideas>
+      <test idea="Multi-stage build execution" acId="1" description="Verify docker build creates 3 stages (deps, build, production) successfully without errors" />
+      <test idea="Production dependencies isolation" acId="2" description="Verify Stage 1 installs only production dependencies (--only=production) and excludes dev dependencies" />
+      <test idea="Build stage compilation" acId="3" description="Verify Stage 2 runs npm run build (TypeScript compilation) and npx prisma generate successfully" />
+      <test idea="Production image size" acId="5" description="Measure image size after build: docker images boilerplate:prod - should be &lt;200MB" />
+      <test idea="Health check configuration" acId="6" description="Verify Dockerfile contains HEALTHCHECK instruction with curl -f http://localhost:3000/health, interval 30s, timeout 10s" />
+      <test idea="Health check execution" acId="6" description="Run container: docker run -d boilerplate:prod, wait 30s, verify health check passes: docker inspect --format='{{.State.Health.Status}}'" />
+      <test idea="Non-root user execution" acId="4" description="Run container and verify user: docker exec container whoami - should return 'node' not 'root'" />
+      <test idea="Port exposure" acId="4" description="Verify port 3000 exposed: docker port container - should show 3000/tcp → 0.0.0.0:3000" />
+      <test idea="Production startup" acId="4" description="Test container starts and responds: docker run -d -p 3000:3000 boilerplate:prod, then curl localhost:3000/health" />
+      <test idea="Docker ignore file" acId="7" description="Verify .dockerignore excludes node_modules, dist, coverage, .git by checking build context size smaller when .dockerignore present" />
+      <test idea="Database connectivity" acId="4" description="Run with .env file: docker run --env-file .env, verify /health/db returns connected status" />
+      <test idea="Environment variables" acId="4" description="Verify environment variables from .env loaded correctly in container: docker exec env | grep NODE_ENV" />
+    </ideas>
+  </tests>
+</story-context>

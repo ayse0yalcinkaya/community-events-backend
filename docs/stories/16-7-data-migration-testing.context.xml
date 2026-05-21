@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>16</epicId>
+    <storyId>7</storyId>
+    <title>Data Migration &amp; Testing</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/16-7-data-migration-testing.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>data migration script and comprehensive tests</iWant>
+    <soThat>existing users transition cleanly to new design</soThat>
+    <tasks>
+      1. Migration script for existing users
+      2. Migrate User.role → UserRole junction
+      3. Backfill default roles for users without roles
+      4. Data validation after migration
+      5. Unit tests for all new/changed functionality
+      6. Integration tests for registration flow
+      7. E2E tests for permission checking
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Migration script for existing users</ac>
+    <ac id="2">Migrate User.role → UserRole junction</ac>
+    <ac id="3">Backfill default roles for users without roles</ac>
+    <ac id="4">Data validation after migration</ac>
+    <ac id="5">Unit tests for all new/changed functionality</ac>
+    <ac id="6">Integration tests for registration flow</ac>
+    <ac id="7">E2E tests for permission checking</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-16-clean-relational-role-design.md">
+        <title>Epic 16: Clean Relational Role Design</title>
+        <section>Story 16.7: Data Migration &amp; Testing</section>
+        <snippet>Data migration and comprehensive test coverage for clean relational design</snippet>
+      </doc>
+      <doc path="prisma/schema/user.prisma">
+        <title>User Prisma Model</title>
+        <section>Clean Relational Design</section>
+        <snippet>User model with userRoles relation, NO role field (already migrated)</snippet>
+      </doc>
+      <doc path="prisma/migrations/">
+        <title>Database Migrations</title>
+        <section>Migration Scripts</section>
+        <snippet>Directory for migration scripts</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file path="prisma/migrations/20251113000000_clean_relational_role_design.sql">
+        <kind>migration</kind>
+        <symbol>Migration Script</symbol>
+        <reason>SQL migration to remove role field from User table</reason>
+      </file>
+      <file path="src/modules/users/__tests__/integration/registration.integration.spec.ts">
+        <kind>test</kind>
+        <symbol>Registration Integration Tests</symbol>
+        <reason>Integration tests for registration flow with UserRole</reason>
+      </file>
+      <file path="src/modules/permissions/__tests__/e2e/permission.e2e.spec.ts">
+        <kind>test</kind>
+        <symbol>Permission E2E Tests</symbol>
+        <reason>End-to-end tests for permission checking</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/testing" version="^10.0.0">Testing utilities</package>
+        <package name="supertest" version="^6.0.0">HTTP testing</package>
+        <package name="prisma" version="^5.0.0">Database ORM</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Migration must be idempotent (can run multiple times safely)</constraint>
+    <constraint>All existing users must have at least one role after migration</constraint>
+    <constraint>Test database must be separate from production</constraint>
+    <constraint>Rollback plan must be documented</constraint>
+    <constraint>100% test coverage on modified code</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Migration Script">
+      <kind>SQL Migration</kind>
+      <signature>
+        -- Step 1: Backfill UserRole records from User.role
+        -- Step 2: Validate all users have roles
+        -- Step 3: Alter table drop column role
+        -- Step 4: Validate clean state
+      </signature>
+      <path>prisma/migrations/20251113000000_clean_relational_role_design.sql</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Jest unit tests, Supertest integration tests, E2E test suite</standards>
+    <locations>
+      test/modules/users/integration/
+      test/modules/permissions/e2e/
+      test/e2e/authorization/
+    </locations>
+    <ideas>
+      <test idea="User registration creates user with default role via UserRole">ac:6</test>
+      <test idea="Permission calculation includes roles and direct permissions">ac:7</test>
+      <test idea="Domain isolation works correctly">ac:7</test>
+      <test idea="Authorization guard checks UserRole junction">ac:5</test>
+      <test idea="Login works with UserRole-based admin check">ac:5</test>
+      <test idea="Migration script is idempotent">ac:1</test>
+      <test idea="All users have roles after migration">ac:3</test>
+    </ideas>
+  </tests>
+</story-context>

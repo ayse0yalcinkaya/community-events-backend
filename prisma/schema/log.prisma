@@ -1,0 +1,34 @@
+// ============================================================================
+// AUDIT LOGS
+// ============================================================================
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  module     String
+  action     String
+  message    String
+  level      LogLevel @default(INFO)
+  userId     String?  @db.Uuid
+  resourceId String?
+  context    Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([module])
+  @@index([action])
+  @@index([userId])
+  @@index([level])
+  @@index([resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

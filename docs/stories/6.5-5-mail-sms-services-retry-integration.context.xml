@@ -1,0 +1,353 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6.5</epicId>
+    <storyId>6.5.5</storyId>
+    <title>Mail & SMS Services Retry Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6.5-5-mail-sms-services-retry-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>MailService ve SMSService'te retry mekanizmasını Common RetryService ile entegre etmek</iWant>
+    <soThat>email ve SMS gönderimlerinde geçici network hataları otomatik retry edilsin ve kritik iletişimlerin güvenilirliği artsın</soThat>
+    <tasks>
+- Task 1: MailService Dependencies Update (AC: 6.5.5.1)
+  - Subtask 1.1: Constructor'a RetryService inject et
+  - Subtask 1.2: Import statement ekle
+  - Subtask 1.3: Private readonly property
+  - Subtask 1.4: ConfigService'den config değerlerini al
+- Task 2: Environment Configuration (AC: 6.5.5.9)
+- Task 3: MailService Send Retry Integration (AC: 6.5.5.2)
+- Task 4: Template Email Retry Integration (AC: 6.5.5.3)
+- Task 5: SMSService Dependencies Update (AC: 6.5.5.4)
+- Task 6: SMSService Send Retry Integration (AC: 6.5.5.5)
+- Task 7: SMS Retry Method Refactoring (AC: 6.5.5.6) - REFACTOR existing retrySms()
+- Task 8: Error Classification and Handling - MailService (AC: 6.5.5.7)
+- Task 9: Error Classification and Handling - SMSService (AC: 6.5.5.8)
+- Task 10: Logging Integration - MailService (AC: 6.5.5.10)
+- Task 11: Logging Integration - SMSService (AC: 6.5.5.11)
+- Task 12: Unit Tests - MailService (AC: 6.5.5.12)
+- Task 13: Unit Tests - SMSService (AC: 6.5.5.13)
+- Task 14: Integration Tests (Optional) (AC: 6.5.5.14)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC-6.5.5.1: MailService Dependencies Update
+  - src/modules/mail/services/mail.service.ts güncellendi
+  - Constructor'da RetryService inject edilmiş
+  - RetryService import edilmiş: src/common/services/retry.service.ts
+
+AC-6.5.5.2: MailService Send Retry Integration
+  - sendEmail() method RetryService ile wrap edilmiş
+  - emailProvider.send() çağrısı retry ile sarmalanmış
+  - Max attempts: 5 (configurable)
+  - Base delay: 2000ms (configurable)
+  - Context string: "Email Send: ${to} - ${subject}"
+
+AC-6.5.5.3: Template Email Retry Integration
+  - sendTemplateEmail() method RetryService ile wrap edilmiş
+  - Template rendering + email send birlikte retry edilir
+  - Max attempts: 5, base delay: 2000ms
+  - Context: "Template Email: ${templateName} to ${to}"
+
+AC-6.5.5.4: SMSService Dependencies Update
+  - src/modules/sms/services/sms.service.ts güncellendi
+  - Constructor'da RetryService inject edilmiş
+  - ConfigService inject edilmiş (yeni dependency)
+
+AC-6.5.5.5: SMSService Send Retry Integration
+  - sendSms() method RetryService ile wrap edilmiş
+  - fonivaService.sendSms() çağrısı retry ile sarmalanmış
+  - Max attempts: 5, base delay: 2000ms
+  - Context: "SMS Send: ${phoneNumber} - ${message.substring(0, 50)}..."
+
+AC-6.5.5.6: SMS Retry Method Refactoring
+  - EXISTING retrySms() method REFACTORED to use RetryService
+  - Remove manual exponential backoff logic (backoffDelays array)
+  - Remove manual setTimeout() delay logic
+  - Preserve existing attemptCount tracking
+  - Keep existing database update logic (status, providerId, errorMessage)
+
+AC-6.5.5.7: Error Handling - MailService
+  - Network timeout errors: Retry (RetryService handles)
+  - SendGrid rate limit (429): Retry
+  - Invalid email (400): Don't retry, throw BadRequestException immediately
+  - Retry exhausted: Wrap with i18n-based BadRequestException
+  - Preserve existing i18n error messages: errors.EMAIL_SEND_FAILED
+
+AC-6.5.5.8: Error Handling - SMSService
+  - Network timeout errors: Retry
+  - Foniva API errors (5xx): Retry
+  - Invalid phone number (400): Don't retry, update status to FAILED immediately
+  - Retry exhausted: Update status to FAILED
+  - Preserve existing i18n error messages
+
+AC-6.5.5.9: Environment Configuration
+  - .env.example updated with MAIL_RETRY_MAX_ATTEMPTS=5, MAIL_RETRY_BASE_DELAY=2000
+  - .env.example updated with SMS_RETRY_MAX_ATTEMPTS=5, SMS_RETRY_BASE_DELAY=2000
+
+AC-6.5.5.10-11: Logging
+  - Preserve existing debug and error logs in both services
+  - RetryService provides automatic retry logging with context strings
+
+AC-6.5.5.12-13: Unit Tests
+  - MailService tests: 6 test scenarios with RetryService mocks
+  - SMSService tests: 6 test scenarios with RetryService, FonivaService, PrismaService mocks
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-6.5.md</path>
+        <title>Epic Technical Specification: Common Cache & Retry Services</title>
+        <section>Story 6.5-5: Mail & SMS Services Retry Integration</section>
+        <snippet>Integrate RetryService into MailService and SMSService for automatic retry on transient failures. Max attempts: 5 (critical communication), base delay: 2000ms. Error classification: 4xx errors skip retry, 5xx and network errors retry.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-6.5-document-generator-cache-retry.md</path>
+        <title>Epic 6.5: Common Cache & Retry Services</title>
+        <section>Story 6.5-5: Mail & SMS Services Retry Integration</section>
+        <snippet>Wrap SendGrid send and Foniva send operations with retry. Template email retry includes rendering + send. SMS retrySms() method refactored to use RetryService instead of manual backoff.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/6.5-4-s3-service-retry-integration.md</path>
+        <title>Previous Story: S3 Service Retry Integration</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>RetryService usage pattern: executeWithRetry() with maxAttempts, baseDelay, context. Exponential backoff formula: 2^(attempt-1) * baseDelay. Error classification: 4xx errors skip retry. Configuration via environment variables with ConfigService defaults.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/common/services/retry.service.ts</path>
+        <kind>service</kind>
+        <symbol>RetryService</symbol>
+        <lines>1-229</lines>
+        <reason>Core retry service - provides executeWithRetry() method with exponential backoff. Already implemented in Story 6.5-2. Inject via constructor and wrap email/SMS operations.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/mail/services/mail.service.ts</path>
+        <kind>service</kind>
+        <symbol>MailService</symbol>
+        <lines>1-173</lines>
+        <reason>Target service for retry integration. Contains sendEmail() and sendTemplateEmail() methods that need RetryService wrapping. Already has I18nService integration.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/sms/services/sms.service.ts</path>
+        <kind>service</kind>
+        <symbol>SmsService</symbol>
+        <lines>1-316</lines>
+        <reason>Target service for retry integration. Contains sendSms() method and EXISTING retrySms() method (lines 154-231) with manual backoff that needs REFACTORING to use RetryService.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/mail/interfaces/mail-provider.interface.ts</path>
+        <kind>interface</kind>
+        <symbol>IEmailProvider</symbol>
+        <lines>24-40</lines>
+        <reason>Email provider interface - send() method is what MailService wraps with retry. Returns EmailResult with messageId and success status.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/sms/services/foniva.service.ts</path>
+        <kind>service</kind>
+        <symbol>FonivaService</symbol>
+        <lines>all</lines>
+        <reason>SMS provider service - sendSms() method is what SMSService wraps with retry. External HTTP API call to Foniva.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/mail/services/template.service.ts</path>
+        <kind>service</kind>
+        <symbol>TemplateService</symbol>
+        <lines>all</lines>
+        <reason>Template rendering service - render() method used in sendTemplateEmail(). Template rendering + email send wrapped together in retry.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency name="@nestjs/common" version="^11.0.1">Core NestJS decorators and exceptions</dependency>
+        <dependency name="@nestjs/config" version="^4.0.2">ConfigService for environment variables</dependency>
+        <dependency name="@sendgrid/mail" version="^8.1.6">SendGrid email provider (via IEmailProvider interface)</dependency>
+        <dependency name="nestjs-i18n" version="^10.5.1">I18nService for internationalized error messages</dependency>
+        <dependency name="axios" version="^1.13.2">Used by Foniva service for HTTP calls</dependency>
+        <dependency name="@prisma/client" version="^6.18.0">Database access for SMS tracking</dependency>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+**Critical Integration Requirements:**
+1. RetryService MUST be injected via constructor dependency injection
+2. ConfigService MUST be used for retry configuration (maxAttempts, baseDelay)
+3. PRESERVE existing I18nService integration and error messages
+4. PRESERVE existing database tracking logic in SMSService (status, attemptCount, errorMessage)
+
+**Error Classification (MANDATORY):**
+1. 4xx client errors (invalid email, invalid phone): NO RETRY - throw/update status immediately
+2. 5xx server errors: RETRY via RetryService
+3. Network timeout errors: RETRY via RetryService
+4. Rate limit errors (429): RETRY via RetryService
+
+**Code Refactoring Requirements:**
+1. SMSService.retrySms() method: REMOVE manual exponential backoff logic
+   - Remove: backoffDelays array [60, 300, 900]
+   - Remove: manual setTimeout() delay logic (lines 184 in current code)
+   - Replace: with RetryService.executeWithRetry()
+   - Preserve: attemptCount tracking and database updates
+
+**Logging Requirements:**
+1. PRESERVE all existing debug and error logs
+2. RetryService provides automatic logging with context strings
+3. Context strings MUST be descriptive: "Email Send: ${to} - ${subject}"
+
+**Import Organization (8-group pattern):**
+Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events
+  </constraints>
+
+  <interfaces>
+**RetryService Interface:**
+```typescript
+class RetryService {
+  async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    options?: {
+      maxAttempts?: number;    // Default: 3
+      baseDelay?: number;      // Default: 1000ms
+      context?: string;        // For logging
+      onRetry?: (attempt: number, error: Error) => void;
+    }
+  ): Promise<T>
+}
+```
+
+**IEmailProvider Interface:**
+```typescript
+interface IEmailProvider {
+  send(to: string, subject: string, html: string, text?: string): Promise<EmailResult>;
+}
+
+interface EmailResult {
+  messageId: string;
+  success: boolean;
+}
+```
+
+**FonivaService Interface:**
+```typescript
+class FonivaService {
+  sendSms(phoneNumber: string, message: string, type: SmsType, customId: string): Promise<{
+    providerId: string;
+  }>;
+}
+```
+
+**ConfigService Usage:**
+```typescript
+// In constructor
+this.mailRetryMaxAttempts = this.configService.get<number>('MAIL_RETRY_MAX_ATTEMPTS', 5);
+this.mailRetryBaseDelay = this.configService.get<number>('MAIL_RETRY_BASE_DELAY', 2000);
+this.smsRetryMaxAttempts = this.configService.get<number>('SMS_RETRY_MAX_ATTEMPTS', 5);
+this.smsRetryBaseDelay = this.configService.get<number>('SMS_RETRY_BASE_DELAY', 2000);
+```
+
+**Retry Usage Pattern:**
+```typescript
+// MailService.sendEmail()
+const result = await this.retryService.executeWithRetry(
+  async () => await this.emailProvider.send(to, subject, html, text),
+  {
+    maxAttempts: this.mailRetryMaxAttempts,
+    baseDelay: this.mailRetryBaseDelay,
+    context: `Email Send: ${to} - ${subject}`
+  }
+);
+
+// SMSService.sendSms()
+const fonivaResult = await this.retryService.executeWithRetry(
+  async () => await this.fonivaService.sendSms(phoneNumber, message, type, smsRecord.id),
+  {
+    maxAttempts: this.smsRetryMaxAttempts,
+    baseDelay: this.smsRetryBaseDelay,
+    context: `SMS Send: ${phoneNumber} - ${message.substring(0, 50)}...`
+  }
+);
+
+// SMSService.retrySms() - REFACTORED
+const fonivaResult = await this.retryService.executeWithRetry(
+  async () => await this.fonivaService.sendSms(
+    smsRecord.phoneNumber,
+    smsRecord.message,
+    smsRecord.type as SmsType,
+    smsRecord.id
+  ),
+  {
+    maxAttempts: 3 - smsRecord.attemptCount, // Remaining attempts
+    baseDelay: this.smsRetryBaseDelay,
+    context: `SMS Retry: ${smsRecord.id} (attempt ${smsRecord.attemptCount + 1}/3)`
+  }
+);
+```
+  </interfaces>
+
+  <tests>
+    <standards>
+Testing Framework: Jest (v30.0.0)
+Pattern: Arrange-Act-Assert
+Coverage Target: >80%
+
+Unit Testing Standards:
+- Mock all external dependencies (RetryService, emailProvider, fonivaService, PrismaService, I18nService)
+- Test success scenarios (first attempt, retry success)
+- Test failure scenarios (network errors, retry exhaustion)
+- Test error classification (4xx no retry, 5xx retry)
+- Verify retry calls with correct parameters
+- Verify logging calls
+
+Integration Testing Standards (Optional):
+- End-to-end flows with real RetryService
+- Transient failure simulation
+- Retry integration verification
+    </standards>
+    <locations>
+Unit Tests:
+- src/modules/mail/services/__tests__/mail.service.spec.ts (create or update)
+- src/modules/sms/services/__tests__/sms.service.spec.ts (create or update)
+
+Integration Tests (Optional):
+- test/mail-sms.integration-spec.ts (create if needed)
+
+Test File Pattern: *.spec.ts for unit tests, *.integration-spec.ts for integration tests
+    </locations>
+    <ideas>
+**MailService Unit Tests:**
+1. AC-6.5.5.2: sendEmail successful on first attempt
+2. AC-6.5.5.2: sendEmail retry on network error (TimeoutError)
+3. AC-6.5.5.7: sendEmail no retry for invalid email (400 error)
+4. AC-6.5.5.7: sendEmail retry exhaustion - throw BadRequestException
+5. AC-6.5.5.3: sendTemplateEmail retry on rendering + send
+6. AC-6.5.5.3: sendTemplateEmail retry exhaustion
+
+**SMSService Unit Tests:**
+1. AC-6.5.5.5: sendSms successful on first attempt
+2. AC-6.5.5.5: sendSms retry on network error
+3. AC-6.5.5.8: sendSms no retry for invalid phone number (400 error)
+4. AC-6.5.5.8: sendSms retry exhaustion - status: FAILED
+5. AC-6.5.5.6: retrySms() successful retry with RetryService
+6. AC-6.5.5.6: retrySms() retry exhaustion
+
+**Integration Tests (Optional):**
+1. AC-6.5.5.14: Email send with retry on transient failure (end-to-end)
+2. AC-6.5.5.14: SMS send with retry on transient failure (end-to-end)
+3. AC-6.5.5.14: Template email send with retry (end-to-end)
+4. AC-6.5.5.14: Retry integration with real RetryService
+
+**Mock Strategies:**
+- RetryService mock: executeWithRetry() with success, retry, exhaustion scenarios
+- emailProvider mock: send() with EmailResult, network errors, 400 errors
+- fonivaService mock: sendSms() with providerId, network errors, 400 errors
+- PrismaService mock: SMS.create(), SMS.update(), SMS.findUnique()
+- I18nService mock: t() method for i18n error messages
+    </ideas>
+  </tests>
+</story-context>

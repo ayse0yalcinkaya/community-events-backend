@@ -1,0 +1,359 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.4</storyId>
+    <title>Role &amp; Permission Assignment Entities</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-4-role-permission-assignment-entities.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>role ve permission assignment entity'leri</iWant>
+    <soThat>user-permission mapping yapabileyim</soThat>
+    <tasks>
+      - Task 1: Prisma schema'ya Role entity ekle (AC: 3.4.1)
+      - Task 2: Prisma schema'ya UserRole junction entity ekle (AC: 3.4.2)
+      - Task 3: Prisma schema'ya RolePermission junction entity ekle (AC: 3.4.3)
+      - Task 4: Prisma schema'ya UserPermission entity ekle (AC: 3.4.4)
+      - Task 5: User entity'yi güncelle (Story 3.3'ten devam) (AC: 3.4.1, 3.4.2, 3.4.4)
+      - Task 6: Permission entity'yi güncelle (Story 3.3'ten devam) (AC: 3.4.3, 3.4.4)
+      - Task 7: Migration oluştur ve uygula (AC: 3.4.5)
+      - Task 8: Integration testleri çalıştır (AC: 3.4.1-3.4.5)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **AC-3.4.1:** Role entity Prisma schema'ya eklenmiş
+    - Fields: id (UUID), domainID (String), name (String), createdAt (DateTime), updatedAt (DateTime)
+    - Unique constraint on [domainID, name]
+    - Index on [domainID]
+    - Relations: userRoles UserRole[], rolePermissions RolePermission[]
+
+    **AC-3.4.2:** UserRole entity oluşturulmuş (junction table)
+    - Fields: id (UUID), userID (String), roleID (String), domainID (String), createdAt (DateTime)
+    - Unique constraint on [userID, roleID, domainID]
+    - Indexes on [userID], [roleID], [domainID]
+    - Relations: user User, role Role
+    - Cascade delete on user/role deletion (onDelete: Cascade)
+
+    **AC-3.4.3:** RolePermission entity oluşturulmuş (junction table)
+    - Fields: id (UUID), roleID (String), permissionID (String), createdAt (DateTime)
+    - Unique constraint on [roleID, permissionID]
+    - Indexes on [roleID], [permissionID]
+    - Relations: role Role, permission Permission
+    - Cascade delete on role/permission deletion (onDelete: Cascade)
+
+    **AC-3.4.4:** UserPermission entity oluşturulmuş (direct assignment)
+    - Fields: id (UUID), userID (String), permissionID (String), domainID (String), createdAt (DateTime)
+    - Unique constraint on [userID, permissionID, domainID]
+    - Indexes on [userID], [permissionID], [domainID]
+    - Relations: user User, permission Permission
+    - Cascade delete on user/permission deletion (onDelete: Cascade)
+
+    **AC-3.4.5:** Prisma migration oluşturulmuş ve uygulanmış
+    - Migration dosyası PostgreSQL için generate edilmiş
+    - Migration başarıyla apply edilmiş (test database'de)
+    - Tüm unique constraint'ler ve index'ler migration'a dahil
+    - Foreign key cascade delete constraint'leri eklenmiş
+    - Prisma Client regenerate edilmiş
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Technical Specification -->
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification: User Management &amp; RBAC Permissions</title>
+        <section>Story 3.4: Role &amp; Permission Assignment Entities</section>
+        <snippet>Complete specifications for Role, UserRole, RolePermission, and UserPermission entities with detailed field definitions, unique constraints, indexes, cascade delete rules, and multi-tenancy support via domainID.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic Technical Specification</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Prisma schema models for hybrid permission assignment: Role entity with domainID, UserRole junction (many-to-many), RolePermission junction, UserPermission for direct assignment. All entities include proper indexes and cascade delete constraints.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 3: User Management &amp; RBAC Permissions</title>
+        <section>Story 3.4</section>
+        <snippet>User story: As a developer, I want role ve permission assignment entity'leri, so that user-permission mapping yapabileyim. Includes hybrid approach for role-based and direct permission assignment with multi-tenancy support.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>System Architecture</title>
+        <section>Authorization Model (RBAC) &amp; Permission System (Hybrid Enum + DB)</section>
+        <snippet>Architecture decision to use hybrid RBAC model: Permission, Role, UserRole, RolePermission, UserPermission entities. Supports both role-based permissions and direct permission assignments for flexibility.</snippet>
+      </doc>
+
+      <!-- Previous Story Reference -->
+      <doc>
+        <path>docs/stories/3-3-permission-entity-constants.md</path>
+        <title>Story 3.3: Permission Entity &amp; Constants</title>
+        <section>Dev Agent Record - Completion Notes</section>
+        <snippet>Permission entity already exists in schema with placeholder relations for rolePermissions[] and userPermissions[]. User entity has placeholder relations userRoles[] and userPermissions[]. Story 3.4 connects these placeholders to actual entities.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- IMPORTANT: All entities already exist in schema (added in init migration) -->
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>Permission</symbol>
+        <lines>95-109</lines>
+        <reason>Permission entity already exists with relations to UserPermission and RolePermission. Story 3.4 validates these relations are properly connected.</reason>
+      </artifact>
+
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>Role</symbol>
+        <lines>111-124</lines>
+        <reason>Role entity ALREADY EXISTS in schema (added in init migration). Includes domainID, name, unique constraint [domainID, name], index on domainID, and relations to UserRole and RolePermission.</reason>
+      </artifact>
+
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>UserPermission</symbol>
+        <lines>126-142</lines>
+        <reason>UserPermission entity ALREADY EXISTS in schema. Junction table for direct permission assignment with domainID, unique constraint [userID, permissionID, domainID], indexes, and cascade delete.</reason>
+      </artifact>
+
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>UserRole</symbol>
+        <lines>144-160</lines>
+        <reason>UserRole entity ALREADY EXISTS in schema. Junction table for user-role assignment with domainID, unique constraint [userID, roleID, domainID], indexes, and cascade delete.</reason>
+      </artifact>
+
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>RolePermission</symbol>
+        <lines>162-176</lines>
+        <reason>RolePermission entity ALREADY EXISTS in schema. Junction table for role-permission assignment with unique constraint [roleID, permissionID], indexes, and cascade delete.</reason>
+      </artifact>
+
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>User</symbol>
+        <lines>20-47</lines>
+        <reason>User entity with existing relations to userPermissions and userRoles (lines 37-38). These relations already connect to UserPermission and UserRole entities.</reason>
+      </artifact>
+
+      <!-- Constants from Story 3.3 -->
+      <artifact>
+        <path>src/modules/permissions/constants/permissions.constant.ts</path>
+        <kind>constant</kind>
+        <symbol>PERMISSIONS</symbol>
+        <lines>all</lines>
+        <reason>Permission constants created in Story 3.3. Includes USERS, PERMISSIONS, FILES modules with actions (CREATE, VIEW, UPDATE, DELETE, ASSIGN, REVOKE). Ready for use in Story 3.5+.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/common/enums/action.enum.ts</path>
+        <kind>enum</kind>
+        <symbol>ActionEnum</symbol>
+        <lines>all</lines>
+        <reason>ActionEnum created in Story 3.3 with values: CREATE, VIEW, UPDATE, DELETE, ASSIGN, REVOKE. Used in @Permission decorator.</reason>
+      </artifact>
+
+      <!-- Test Files -->
+      <artifact>
+        <path>test/users-admin.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>Admin User CRUD E2E Tests</symbol>
+        <lines>all</lines>
+        <reason>E2E tests for admin user management (Story 3.2). Should continue passing after Story 3.4 schema changes (regression check).</reason>
+      </artifact>
+
+      <artifact>
+        <path>test/users-profile.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>User Profile E2E Tests</symbol>
+        <lines>all</lines>
+        <reason>E2E tests for user profile endpoints (Story 3.1). Should continue passing after Story 3.4 schema changes (regression check).</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="@prisma/client" version="^6.18.0">ORM client for database access</package>
+        <package name="prisma" version="^6.18.0" dev="true">Prisma CLI for migrations and schema management</package>
+        <package name="@nestjs/common" version="^11.0.1">NestJS core framework</package>
+        <package name="@nestjs/core" version="^11.0.1">NestJS core module</package>
+        <package name="@nestjs/config" version="^4.0.2">Configuration management</package>
+        <package name="class-validator" version="^0.14.2">DTO validation decorators</package>
+        <package name="class-transformer" version="^0.5.1">DTO transformation utilities</package>
+        <package name="uuid" version="^13.0.0">UUID generation for entity IDs</package>
+        <package name="jest" version="^30.0.0" dev="true">Testing framework</package>
+        <package name="ts-jest" version="^29.2.5" dev="true">TypeScript support for Jest</package>
+        <package name="supertest" version="^7.0.0" dev="true">HTTP testing library for E2E tests</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    **Database Schema Constraints:**
+    - ALL entities ALREADY EXIST in prisma/schema-postgres.prisma (added in init migration)
+    - Story 3.4 task is to VALIDATE existing entities match AC specifications
+    - Do NOT recreate entities - they are already in the schema
+    - Multi-tenancy: All assignment tables include domainID for tenant isolation
+    - Unique constraints prevent duplicate assignments (e.g., same user-role-domain combination)
+    - Cascade delete: When parent entity deleted, dependent assignment records auto-delete
+    - Indexes: Required on domainID, userID, roleID, permissionID for query performance
+
+    **Hybrid Permission Model Pattern:**
+    - Role-based: User → UserRole → Role → RolePermission → Permission
+    - Direct: User → UserPermission → Permission
+    - Effective permissions: UNION of role-based and direct permissions
+    - No permission caching in MVP (direct DB queries acceptable for &lt;100 users)
+
+    **Migration Pattern (from Story 3.3):**
+    - Command: npx prisma migrate dev --name add-role-assignment-entities
+    - Validate migration SQL before apply
+    - Test on development database first
+    - Regenerate Prisma Client after migration: npx prisma generate
+    - NOTE: Since entities already exist, migration might be no-op or minimal
+
+    **Testing Requirements:**
+    - Unit tests: Not applicable (no business logic, pure schema)
+    - Integration tests: Validate unique constraints, cascade delete, indexes
+    - E2E tests: Regression check - Stories 3.1, 3.2, 3.3 tests must still pass
+    - No new E2E tests required for Story 3.4 (schema-only story)
+  </constraints>
+
+  <interfaces>
+    <!-- No application interfaces for this story - pure database schema story -->
+    <!-- Interfaces will be created in Story 3.5 (AuthorizationService) and Story 3.8 (Permission Management Endpoints) -->
+
+    <interface>
+      <name>Prisma Client - Role Model</name>
+      <kind>ORM Model</kind>
+      <signature>
+        prisma.role.create({ data: { domainID, name } })
+        prisma.role.findUnique({ where: { domainID_name: { domainID, name } } })
+        prisma.role.findMany({ where: { domainID }, include: { rolePermissions: true } })
+      </signature>
+      <path>node_modules/.prisma/client</path>
+      <description>Auto-generated Prisma Client methods for Role entity. Available after running 'npx prisma generate'.</description>
+    </interface>
+
+    <interface>
+      <name>Prisma Client - UserRole Model</name>
+      <kind>ORM Model</kind>
+      <signature>
+        prisma.userRole.create({ data: { userID, roleID, domainID } })
+        prisma.userRole.findMany({ where: { userID, domainID } })
+        prisma.userRole.delete({ where: { userID_roleID_domainID: { userID, roleID, domainID } } })
+      </signature>
+      <path>node_modules/.prisma/client</path>
+      <description>Auto-generated Prisma Client methods for UserRole junction table. Supports user-role assignment operations.</description>
+    </interface>
+
+    <interface>
+      <name>Prisma Client - RolePermission Model</name>
+      <kind>ORM Model</kind>
+      <signature>
+        prisma.rolePermission.createMany({ data: [{ roleID, permissionID }, ...] })
+        prisma.rolePermission.findMany({ where: { roleID } })
+        prisma.rolePermission.deleteMany({ where: { roleID, permissionID: { in: permissionIDs } } })
+      </signature>
+      <path>node_modules/.prisma/client</path>
+      <description>Auto-generated Prisma Client methods for RolePermission junction table. Supports role-permission assignment operations.</description>
+    </interface>
+
+    <interface>
+      <name>Prisma Client - UserPermission Model</name>
+      <kind>ORM Model</kind>
+      <signature>
+        prisma.userPermission.createMany({ data: [{ userID, permissionID, domainID }, ...] })
+        prisma.userPermission.findMany({ where: { userID, domainID } })
+        prisma.userPermission.deleteMany({ where: { userID, permissionID: { in: permissionIDs }, domainID } })
+      </signature>
+      <path>node_modules/.prisma/client</path>
+      <description>Auto-generated Prisma Client methods for UserPermission entity. Supports direct permission assignment operations.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      **Testing Framework:** Jest (v30.0.0) with ts-jest for TypeScript support. E2E tests use Supertest for HTTP requests.
+
+      **Test Structure:**
+      - Unit tests: src/**/*.spec.ts (pattern: .*\.spec\.ts$)
+      - E2E tests: test/**/*.e2e-spec.ts
+      - Test database: Separate PostgreSQL instance for E2E tests
+
+      **Story 3.4 Testing Strategy:**
+      - No unit tests required (pure schema story, no business logic)
+      - Integration tests: Validate schema constraints (unique, cascade delete, indexes)
+      - E2E tests: Regression check - existing tests (Stories 3.1-3.3) must pass
+      - Migration validation: Manual inspection of generated migration SQL
+
+      **Coverage Requirements:**
+      - Unit test coverage: N/A (no application code)
+      - Integration test coverage: 100% of schema constraints validated
+      - E2E regression: 100% of existing tests passing
+
+      **Test Execution Commands:**
+      - Unit tests: npm test
+      - E2E tests: npm run test:e2e
+      - Coverage: npm run test:cov
+      - Build validation: npm run build
+    </standards>
+
+    <locations>
+      - test/users-admin.e2e-spec.ts (Story 3.2 regression)
+      - test/users-profile.e2e-spec.ts (Story 3.1 regression)
+      - test/auth-*.e2e-spec.ts (Epic 2 regression)
+      - src/**/*.spec.ts (unit tests, if any future service logic added)
+    </locations>
+
+    <ideas>
+      **AC-3.4.1 - Role Entity:**
+      - Test: Create role with duplicate [domainID, name] → PrismaClientKnownRequestError (unique constraint violation)
+      - Test: Query roles by domainID → Returns only roles for that domain
+      - Test: Role with userRoles and rolePermissions relations loads correctly
+
+      **AC-3.4.2 - UserRole Entity:**
+      - Test: Create UserRole with duplicate [userID, roleID, domainID] → Unique constraint error
+      - Test: Delete User → UserRole records cascade deleted (onDelete: Cascade)
+      - Test: Delete Role → UserRole records cascade deleted
+
+      **AC-3.4.3 - RolePermission Entity:**
+      - Test: Create RolePermission with duplicate [roleID, permissionID] → Unique constraint error
+      - Test: Delete Role → RolePermission records cascade deleted
+      - Test: Delete Permission → RolePermission records cascade deleted
+
+      **AC-3.4.4 - UserPermission Entity:**
+      - Test: Create UserPermission with duplicate [userID, permissionID, domainID] → Unique constraint error
+      - Test: Delete User → UserPermission records cascade deleted
+      - Test: Delete Permission → UserPermission records cascade deleted
+      - Test: Query by domainID → Returns only permissions for that domain
+
+      **AC-3.4.5 - Migration:**
+      - Test: Run 'npm run build' → TypeScript compilation succeeds
+      - Test: Run 'npm test' → All unit tests pass
+      - Test: Run 'npm run test:e2e' → All E2E tests pass (regression check)
+      - Manual: Inspect migration SQL for correct table names, indexes, constraints
+      - Manual: Database introspection confirms all indexes and constraints exist
+
+      **Regression Tests (Critical):**
+      - Test: Story 3.1 E2E tests pass (user profile endpoints)
+      - Test: Story 3.2 E2E tests pass (admin user CRUD)
+      - Test: Story 3.3 validation - Permission entity relations work correctly
+      - Test: Epic 2 auth tests continue working (no breaking changes)
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,71 @@
+// ============================================================================
+// AUTHORIZATION
+// ============================================================================
+
+model Module {
+  id             String   @id @default(uuid()) @db.Uuid
+  nameKey        String   @unique // i18n key for module name
+  descriptionKey String // i18n key for module description
+  isVisible      Boolean  @default(true) // Should this module be visible in UI/API?
+
+  // Default permissions by user type
+  defaultAdminActions String[] @default([]) // Actions granted to ADMIN users by default (e.g., ['CREATE', 'VIEW', 'UPDATE', 'DELETE'])
+  defaultUserActions  String[] @default([]) // Actions granted to USER users by default (e.g., ['VIEW'])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  permissions Permission[]
+
+  @@map("modules")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  moduleID    String   @db.Uuid
+  action      String
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  module          Module           @relation(fields: [moduleID], references: [id], onDelete: Cascade)
+  rolePermissions RolePermission[]
+
+  @@unique([moduleID, action])
+  @@index([moduleID])
+  @@map("permissions")
+}
+
+model Role {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  description String? // Optional role description
+  parentType  UserType? // Links role to user type hierarchy (ADMIN roles, USER roles)
+  isDefault   Boolean   @default(false) // Default role flag for user type (only one per parentType allowed)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@index([parentType])
+  @@map("roles")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid()) @db.Uuid
+  roleID       String   @db.Uuid
+  permissionID String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  // Relations
+  role       Role       @relation(fields: [roleID], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionID], references: [id], onDelete: Cascade)
+
+  @@unique([roleID, permissionID])
+  @@index([roleID])
+  @@index([permissionID])
+  @@map("role_permissions")
+}

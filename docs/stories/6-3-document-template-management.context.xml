@@ -1,0 +1,108 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>3</storyId>
+    <title>Adapter Factories (Auto-Discovery)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6-3-document-template-management.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>adapter factory'ler ile auto-discovery</iWant>
+    <soThat>adapter'ları otomatik register edilsin ve kolayca access edebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="6.3.1">PdfAdapterFactory oluştur</task>
+      <task id="2" ac="6.3.2">ExcelAdapterFactory oluştur</task>
+      <task id="3" ac="6.3.3">Custom Exceptions oluştur</task>
+      <task id="4" ac="6.3.4">Example Adapter Implementation (Sample)</task>
+      <task id="5" ac="All">Testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="6.3.1">PdfAdapterFactory oluşturulmuş - OnModuleInit lifecycle hook, adapterRegistry Map, onModuleInit() scan method, getAdapter() cached instance, getRegisteredTemplates() list method</ac>
+    <ac id="6.3.2">ExcelAdapterFactory oluşturulmuş - Same pattern as PdfAdapterFactory, onModuleInit() scan, getAdapter() cached, getRegisteredAdapters() list</ac>
+    <ac id="6.3.3">Custom Exceptions oluşturulmuş - AdapterNotFoundException, TemplateNotFoundException, GenerationFailedException</ac>
+    <ac id="6.3.4">Example Adapter Implementation (Sample) - InvoicePdfAdapter, SalesReportExcelAdapter</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-6-document-generation-adapter-pattern-hrsync-backend.md" title="Epic 6: Document Generation" section="Story 6.3: Adapter Factories (Auto-Discovery)" snippet="Factory pattern for adapter auto-discovery using reflection metadata. PdfAdapterFactory and ExcelAdapterFactory scan providers, find decorated classes, build registry, and provide cached adapter instances." />
+      <doc path="docs/tech-spec-epic-6.md" title="Epic Technical Specification: Document Generation" section="Story 6.3: Adapter Factories (Auto-Discovery)" snippet="PdfAdapterFactory with OnModuleInit lifecycle hook that scans providers, finds @RegisterPdfAdapter decorated classes, builds adapter registry. getAdapter() returns cached adapter instance via NestJS DI. ExcelAdapterFactory follows same pattern." />
+      <doc path="docs/tech-spec-epic-6.md" title="Epic Technical Specification: Document Generation" section="Custom Exceptions" snippet="AdapterNotFoundException(templateName, type), TemplateNotFoundException(templatePath), GenerationFailedException(message, context) for error handling in document generation flow." />
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests" snippet="Arrange-Act-Assert pattern for unit tests. Factory discovery and caching tests required. Test coverage target: 70%+ global, 80%+ for services." />
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Import Organization" snippet="8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events" />
+      <doc path="docs/stories/6-2-pdf-generation-service.md" title="Story 6.2: Base PDF Adapter & Template Engine" section="Learnings" snippet="BasePdfAdapter pattern established. @RegisterPdfAdapter decorator uses reflection metadata. TemplateEngineService injection pattern ready. Module structure organized under src/modules/document-generator/." />
+    </docs>
+    <code>
+      <file path="src/modules/document-generator/interfaces/pdf-adapter.interface.ts" kind="interface" symbol="IPdfAdapter" lines="10-56" reason="Interface that PDF adapters must implement. Defines templateName, styleName, generate(), getTemplatePath(), getStylePath() methods." />
+      <file path="src/modules/document-generator/base/base-pdf-adapter.abstract.ts" kind="abstract-class" symbol="BasePdfAdapter" lines="25-108" reason="Abstract base class for PDF adapters. Provides template path resolution and TemplateEngineService injection. Concrete adapters extend this class." />
+      <file path="src/modules/document-generator/decorators/register-pdf-adapter.decorator.ts" kind="decorator" symbol="RegisterPdfAdapter" lines="32-40" reason="Decorator factory that registers PDF adapters with reflection metadata PDF_ADAPTER_TEMPLATE_KEY. Used by PdfAdapterFactory for auto-discovery." />
+      <file path="src/modules/document-generator/services/template-engine.service.ts" kind="service" symbol="TemplateEngineService" lines="25-192" reason="Service for EJS template rendering and Puppeteer PDF generation. Injected into BasePdfAdapter. Provides renderTemplate() and generatePdfFromHtml() methods." />
+      <file path="src/modules/document-generator/interfaces/excel-adapter.interface.ts" kind="interface" symbol="IExcelAdapter" reason="Interface for Excel adapters. Similar pattern to IPdfAdapter but for Excel generation." />
+      <file path="src/modules/document-generator/base/base-excel-adapter.abstract.ts" kind="abstract-class" symbol="BaseExcelAdapter" reason="Abstract base class for Excel adapters. Provides workbook building helpers and generate() method implementation." />
+      <file path="src/modules/document-generator/decorators/register-excel-adapter.decorator.ts" kind="decorator" symbol="RegisterExcelAdapter" reason="Decorator factory for Excel adapters. Uses EXCEL_ADAPTER_NAME_KEY reflection metadata." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/core" version="^11.0.1" reason="ModuleRef for provider scanning and DI" />
+        <package name="@nestjs/common" version="^11.0.1" reason="OnModuleInit lifecycle hook, Injectable decorator" />
+        <package name="reflect-metadata" version="^0.2.2" reason="Reflection metadata for decorator-based adapter registration" />
+        <package name="ejs" version="^3.1.10" reason="EJS template rendering (used by TemplateEngineService)" />
+        <package name="puppeteer" version="^24.29.1" reason="HTML to PDF conversion (used by TemplateEngineService)" />
+        <package name="exceljs" version="^4.4.0" reason="Excel workbook generation (used by Excel adapters)" />
+        <package name="nestjs-i18n" version="^10.5.1" reason="Internationalization support for templates" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Factory Pattern: Use NestJS ModuleRef to scan providers and discover adapters via reflection metadata</constraint>
+    <constraint>Reflection Metadata: Use PDF_ADAPTER_TEMPLATE_KEY and EXCEL_ADAPTER_NAME_KEY for adapter discovery</constraint>
+    <constraint>Instance Caching: First call creates adapter instance via NestJS DI, subsequent calls return cached instance</constraint>
+    <constraint>Lazy Initialization: Adapters instantiated on-demand via ModuleRef.get() for performance</constraint>
+    <constraint>Exception Handling: Custom exceptions extend HttpException for NestJS exception filter compatibility</constraint>
+    <constraint>Module Structure: Factories in factories/, exceptions in exceptions/, adapters in adapters/pdf/ and adapters/excel/</constraint>
+    <constraint>Import Organization: 8-group import order (Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events)</constraint>
+    <constraint>Testing: Arrange-Act-Assert pattern, 70%+ coverage target, unit tests for factory discovery and caching</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="IPdfAdapter" kind="TypeScript interface" signature="interface IPdfAdapter { readonly templateName: string; readonly styleName?: string; generate(templateName: string, data: any, lang: string): Promise&lt;Buffer&gt;; getTemplatePath(): string; getStylePath(): string | null; }" path="src/modules/document-generator/interfaces/pdf-adapter.interface.ts" />
+    <interface name="IExcelAdapter" kind="TypeScript interface" signature="interface IExcelAdapter { readonly adapterName: string; generate(data: any, lang: string): Promise&lt;Buffer&gt;; buildWorkbook(workbook: ExcelJS.Workbook, data: any, lang: string): Promise&lt;void&gt;; }" path="src/modules/document-generator/interfaces/excel-adapter.interface.ts" />
+    <interface name="PdfAdapterFactory" kind="NestJS service" signature="class PdfAdapterFactory implements OnModuleInit { onModuleInit(): void; getAdapter(templateName: string): IPdfAdapter; getRegisteredTemplates(): string[]; }" path="src/modules/document-generator/factories/pdf-adapter.factory.ts" />
+    <interface name="ExcelAdapterFactory" kind="NestJS service" signature="class ExcelAdapterFactory implements OnModuleInit { onModuleInit(): void; getAdapter(adapterName: string): IExcelAdapter; getRegisteredAdapters(): string[]; }" path="src/modules/document-generator/factories/excel-adapter.factory.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>Unit tests use Arrange-Act-Assert pattern. Test factory discovery via reflection metadata, adapter instance caching, exception handling. Coverage target: 70%+ global, 80%+ for services. Use Jest v29.x with @nestjs/testing for NestJS module setup. Mock ModuleRef and providers for isolation.</standards>
+    <locations>
+      <location>src/modules/document-generator/factories/__tests__/pdf-adapter.factory.spec.ts</location>
+      <location>src/modules/document-generator/factories/__tests__/excel-adapter.factory.spec.ts</location>
+      <location>src/modules/document-generator/exceptions/__tests__/adapter-not-found.exception.spec.ts</location>
+      <location>src/modules/document-generator/exceptions/__tests__/template-not-found.exception.spec.ts</location>
+      <location>src/modules/document-generator/exceptions/__tests__/generation-failed.exception.spec.ts</location>
+      <location>src/modules/document-generator/adapters/__tests__/</location>
+    </locations>
+    <ideas>
+      <test ac="6.3.1">Test PdfAdapterFactory.onModuleInit() discovers @RegisterPdfAdapter decorated classes via reflection metadata</test>
+      <test ac="6.3.1">Test PdfAdapterFactory.getAdapter() returns cached instance on subsequent calls</test>
+      <test ac="6.3.1">Test PdfAdapterFactory.getRegisteredTemplates() lists all discovered template names</test>
+      <test ac="6.3.1">Test PdfAdapterFactory.getAdapter() throws AdapterNotFoundException when template not found</test>
+      <test ac="6.3.2">Test ExcelAdapterFactory.onModuleInit() discovers @RegisterExcelAdapter decorated classes</test>
+      <test ac="6.3.2">Test ExcelAdapterFactory.getAdapter() returns cached instance</test>
+      <test ac="6.3.2">Test ExcelAdapterFactory.getRegisteredAdapters() lists all adapter names</test>
+      <test ac="6.3.3">Test AdapterNotFoundException has correct status code (404) and message</test>
+      <test ac="6.3.3">Test TemplateNotFoundException has correct status code (404) and message</test>
+      <test ac="6.3.3">Test GenerationFailedException has correct status code (500) and context</test>
+      <test ac="6.3.4">Integration test: InvoicePdfAdapter discovered by PdfAdapterFactory</test>
+      <test ac="6.3.4">Integration test: SalesReportExcelAdapter discovered by ExcelAdapterFactory</test>
+      <test ac="6.3.4">Integration test: Example adapters generate documents correctly</test>
+    </ideas>
+  </tests>
+</story-context>
+

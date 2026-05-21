@@ -1,0 +1,202 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>3</storyId>
+    <title>File Download (Pre-Signed URL)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/4-3-file-download-pre-signed-url.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>file download edebilmek</iWant>
+    <soThat>yüklediğim dosyalara güvenli şekilde erişebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="4.3.1,4.3.2">Add GET /files/:id endpoint to FilesController</task>
+      <task id="2" ac="4.3.2">Implement getFileMetadata() in FilesService</task>
+      <task id="3" ac="4.3.3">Add GET /files/:id/download endpoint to FilesController</task>
+      <task id="4" ac="4.3.4,4.3.5">Implement generateDownloadUrl() in FilesService</task>
+      <task id="5" ac="4.3.5">Create DownloadUrlResDto response DTO</task>
+      <task id="6" ac="4.3.7">Add logging for download operations</task>
+      <task id="7" ac="4.3.2,4.3.4">Error handling</task>
+      <task id="8" ac="All">Testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="4.3.1">
+      GET /files/:id endpoint created with JwtAuthGuard, PermissionsGuard, FILES.VIEW permission, UUID validation, returns FileResDto
+    </criterion>
+    <criterion id="4.3.2">
+      File metadata endpoint validates access: file exists, domainID match, not soft-deleted, owner or has FILES.VIEW permission. Returns 403 if unauthorized, 404 if not found/wrong domain
+    </criterion>
+    <criterion id="4.3.3">
+      GET /files/:id/download endpoint created with guards and permissions, generates pre-signed S3 URL (15 min expiry), returns DownloadUrlResDto
+    </criterion>
+    <criterion id="4.3.4">
+      Pre-signed URL generation uses @aws-sdk/s3-request-presigner, 900 seconds expiry, validates access first, returns URL, expiresAt (ISO 8601), expiresIn (seconds)
+    </criterion>
+    <criterion id="4.3.5">
+      Download endpoint response: { success: true, data: { downloadUrl, expiresAt, expiresIn } } with valid S3 pre-signed URL
+    </criterion>
+    <criterion id="4.3.6">
+      Client can download file from pre-signed URL via GET (no auth headers), returns file binary with Content-Type, works in browser/curl, expires after 15 min
+    </criterion>
+    <criterion id="4.3.7">
+      Download access logged (info level) with fileID, userID, domainID, timestamp. Does NOT log pre-signed URL
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-4.md" title="Epic 4 Technical Specification" section="Story 4.3">
+        Complete AC specifications (AC-4.3.1 through AC-4.3.7) for file download via pre-signed URLs. Details access control, security patterns, and error handling.
+      </doc>
+      <doc path="docs/tech-spec-epic-4.md" title="Epic 4 Technical Specification" section="Services and Modules">
+        FilesService design with IFilesService interface. Defines getFileMetadata() and generateDownloadUrl() method signatures.
+      </doc>
+      <doc path="docs/tech-spec-epic-4.md" title="Epic 4 Technical Specification" section="Workflows and Sequencing">
+        File download flow diagram showing FilesController → FilesService → S3Service → Pre-signed URL generation.
+      </doc>
+      <doc path="docs/tech-spec-epic-4.md" title="Epic 4 Technical Specification" section="Data Models and Contracts">
+        DownloadUrlResDto structure with downloadUrl, expiresAt, expiresIn fields.
+      </doc>
+      <doc path="docs/tech-spec-epic-4.md" title="Epic 4 Technical Specification" section="APIs and Interfaces">
+        Pre-signed URL API specifications: 15 minute expiry, security considerations, no URL logging.
+      </doc>
+      <doc path="docs/tech-spec-epic-4.md" title="Epic 4 Technical Specification" section="Security">
+        Access control patterns: owner check, FILES.VIEW permission, domain isolation, soft-delete filtering, 404 for wrong domain.
+      </doc>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 4.3">
+        Epic-level story breakdown: file download via pre-signed URLs with permission checks and domain isolation.
+      </doc>
+      <doc path="docs/stories/4-2-file-upload-endpoint-single-multiple.md" title="Story 4.2" section="Learnings from Previous Story">
+        FilesService structure, File entity schema, FileResDto, testing patterns. S3Service.getPresignedUrl() already implemented.
+      </doc>
+      <doc path="docs/stories/4-2-file-upload-endpoint-single-multiple.md" title="Story 4.2" section="Dev Notes">
+        File entity in prisma/schema.prisma (lines 187-209) with s3Key field for pre-signed URLs. FILES.VIEW permission already defined.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/files/services/s3.service.ts" kind="service" symbol="S3Service" lines="1-200" reason="Contains getPresignedUrl() method (lines 26-31 interface, implementation exists) - REUSE for pre-signed URL generation" />
+      <file path="src/modules/files/services/files.service.ts" kind="service" symbol="FilesService" lines="1-100" reason="Need to ADD getFileMetadata() and generateDownloadUrl() methods to this existing service" />
+      <file path="src/modules/files/controllers/files.controller.ts" kind="controller" symbol="FilesController" lines="1-100" reason="Need to ADD GET /files/:id and GET /files/:id/download endpoints to existing controller" />
+      <file path="src/modules/files/dto/response/file-res.dto.ts" kind="dto" symbol="FileResDto" lines="1-43" reason="REUSE for GET /files/:id response (already has correct structure)" />
+      <file path="prisma/schema.prisma" kind="schema" symbol="File" lines="187-209" reason="File entity with s3Key field needed for pre-signed URLs, domainID/userID for access control" />
+      <file path="src/modules/permissions/constants/permissions.constant.ts" kind="constant" symbol="FILES" lines="24-29" reason="FILES.VIEW permission constant (already defined in Story 4.2)" />
+      <file path="test/files-upload.e2e-spec.ts" kind="test" symbol="files upload e2e" lines="1-100" reason="Existing E2E test suite - ADD download tests here" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="@aws-sdk/client-s3" version="^3.925.0" />
+        <package name="@aws-sdk/s3-request-presigner" version="^3.925.0" />
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/passport" version="^11.0.5" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="class-transformer" version="^0.5.1" />
+        <package name="class-validator" version="^0.14.2" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      Controller-Service pattern: FilesController → FilesService → S3Service → AWS S3
+    </constraint>
+    <constraint type="access-control">
+      Domain isolation mandatory: file.domainID === currentUserDomainID on all queries
+    </constraint>
+    <constraint type="access-control">
+      Owner access: file.userID === currentUserID OR hasPermission(FILES.VIEW)
+    </constraint>
+    <constraint type="access-control">
+      Soft-delete filtering: file.deletedAt === null (always exclude deleted files)
+    </constraint>
+    <constraint type="security">
+      Return 404 (not 403) for wrong domain to prevent information leakage
+    </constraint>
+    <constraint type="security">
+      Never log pre-signed URLs - they contain AWS credentials (X-Amz-Signature)
+    </constraint>
+    <constraint type="security">
+      Pre-signed URL expiry: 900 seconds (15 minutes) - security vs UX balance
+    </constraint>
+    <constraint type="error-handling">
+      File not found / wrong domain / soft-deleted → 404 Not Found
+    </constraint>
+    <constraint type="error-handling">
+      Not authorized (not owner, no permission) → 403 Forbidden
+    </constraint>
+    <constraint type="error-handling">
+      S3 service error → 503 Service Unavailable
+    </constraint>
+    <constraint type="multi-tenancy">
+      Extract domainID from JWT via @CurrentUser decorator
+    </constraint>
+    <constraint type="pattern">
+      Reuse existing components: S3Service.getPresignedUrl(), FileResDto, File entity - DO NOT recreate
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="S3Service.getPresignedUrl" kind="service method" signature="getPresignedUrl(key: string, expiresIn?: number): Promise&lt;string&gt;" path="src/modules/files/services/s3.service.ts">
+      Generate pre-signed S3 download URL. Default expiry: 900 seconds (15 minutes). REUSE from Story 4.1 - already implemented.
+    </interface>
+    <interface name="IFilesService.getFileMetadata" kind="service method" signature="getFileMetadata(fileId: string, domainID: string, userID: string, hasViewPermission: boolean): Promise&lt;File&gt;" path="src/modules/files/services/files.service.ts">
+      NEW METHOD to add. Retrieve file metadata with access control validation (domain, ownership, soft-delete, permission checks).
+    </interface>
+    <interface name="IFilesService.generateDownloadUrl" kind="service method" signature="generateDownloadUrl(fileId: string, domainID: string, userID: string, hasViewPermission: boolean): Promise&lt;DownloadUrlResDto&gt;" path="src/modules/files/services/files.service.ts">
+      NEW METHOD to add. Validate access via getFileMetadata(), call S3Service.getPresignedUrl(), return DownloadUrlResDto with URL and expiry info.
+    </interface>
+    <interface name="GET /files/:id" kind="REST endpoint" signature="GET /api/files/:id → FileResDto" path="src/modules/files/controllers/files.controller.ts">
+      NEW ENDPOINT. Guards: JwtAuthGuard, PermissionsGuard. Permission: FILES.VIEW. Returns file metadata.
+    </interface>
+    <interface name="GET /files/:id/download" kind="REST endpoint" signature="GET /api/files/:id/download → DownloadUrlResDto" path="src/modules/files/controllers/files.controller.ts">
+      NEW ENDPOINT. Guards: JwtAuthGuard, PermissionsGuard. Permission: FILES.VIEW. Returns pre-signed S3 URL.
+    </interface>
+    <interface name="FileResDto" kind="DTO" signature="{ id, filename, originalName, mimeType, size, sizeFormatted, createdAt }" path="src/modules/files/dto/response/file-res.dto.ts">
+      EXISTING DTO from Story 4.2. REUSE for GET /files/:id response. Excludes sensitive fields: s3Key, s3Bucket, domainID, userID, deletedAt.
+    </interface>
+    <interface name="DownloadUrlResDto" kind="DTO" signature="{ downloadUrl: string, expiresAt: string, expiresIn: number }" path="src/modules/files/dto/response/download-url-res.dto.ts">
+      NEW DTO to create. downloadUrl: S3 pre-signed URL. expiresAt: ISO 8601 timestamp. expiresIn: 900 seconds.
+    </interface>
+    <interface name="File Entity" kind="Prisma model" signature="File { id, domainID, userID, filename, originalName, mimeType, size, s3Key, s3Bucket, createdAt, deletedAt }" path="prisma/schema.prisma">
+      EXISTING entity from Story 4.2. Use s3Key for pre-signed URL generation. Access control on domainID, userID, deletedAt.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Jest. Unit tests for services with mocked dependencies (PrismaService, S3Service). Integration tests using Supertest for endpoint testing with test database. E2E tests with MinIO (local S3) for full flow validation. Test coverage target: 90%+ for services, 80%+ for controllers.
+    </standards>
+    <locations>
+      <location>src/modules/files/services/files.service.spec.ts</location>
+      <location>src/modules/files/controllers/files.controller.spec.ts</location>
+      <location>test/files-upload.e2e-spec.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="4.3.1,4.3.2">Unit: FilesService.getFileMetadata() → file exists, owner → Returns File entity</idea>
+      <idea ac="4.3.2">Unit: FilesService.getFileMetadata() → file exists, user has FILES.VIEW → Returns File entity</idea>
+      <idea ac="4.3.2">Unit: FilesService.getFileMetadata() → file not found → Throws NotFoundException</idea>
+      <idea ac="4.3.2">Unit: FilesService.getFileMetadata() → wrong domain → Throws NotFoundException (not 403)</idea>
+      <idea ac="4.3.2">Unit: FilesService.getFileMetadata() → soft-deleted → Throws NotFoundException</idea>
+      <idea ac="4.3.2">Unit: FilesService.getFileMetadata() → not owner, no FILES.VIEW → Throws ForbiddenException</idea>
+      <idea ac="4.3.4">Unit: FilesService.generateDownloadUrl() → mock S3Service.getPresignedUrl() → Returns DownloadUrlResDto</idea>
+      <idea ac="4.3.4">Unit: FilesService.generateDownloadUrl() → S3 error → Throws ServiceUnavailableException</idea>
+      <idea ac="4.3.5">Unit: DownloadUrlResDto → correct structure (downloadUrl, expiresAt, expiresIn)</idea>
+      <idea ac="4.3.1">Integration: GET /files/:id (owner) → 200 OK with FileResDto</idea>
+      <idea ac="4.3.2">Integration: GET /files/:id (user with FILES.VIEW) → 200 OK with FileResDto</idea>
+      <idea ac="4.3.2">Integration: GET /files/:id (user without FILES.VIEW) → 403 Forbidden</idea>
+      <idea ac="4.3.2">Integration: GET /files/:id (wrong domain) → 404 Not Found</idea>
+      <idea ac="4.3.2">Integration: GET /files/:id (soft-deleted) → 404 Not Found</idea>
+      <idea ac="4.3.3">Integration: GET /files/:id/download (owner) → 200 OK with DownloadUrlResDto</idea>
+      <idea ac="4.3.3">Integration: GET /files/:id/download (user with FILES.VIEW) → 200 OK with DownloadUrlResDto</idea>
+      <idea ac="4.3.2">Integration: GET /files/:id/download (no permission) → 403 Forbidden</idea>
+      <idea ac="4.3.6">E2E: Upload file → GET /files/:id/download → Download from pre-signed URL → Verify file content</idea>
+      <idea ac="4.3.6">E2E: Upload file → Soft delete → GET /files/:id/download → 404 Not Found</idea>
+      <idea ac="4.3.6">E2E: Upload file as userA → Login as userB (different domain) → GET /files/:id → 404 Not Found</idea>
+    </ideas>
+  </tests>
+</story-context>

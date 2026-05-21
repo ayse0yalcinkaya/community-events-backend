@@ -1,0 +1,136 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5</storyId>
+    <title>Integrate OTP Sending (SMS via FONIVA)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-5-integrate-otp-sending.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Epic 2'deki tüm OTP gönderimlerini SMS ile implement etmek (FONIVA)</iWant>
+    <soThat>kullanıcılar tüm authentication flow'larında SMS OTP alabilsin ve stub implementation'lar kaldırılsın</soThat>
+    <tasks>
+      <task id="1" ac="5.5.2, 5.5.3">Login flow'unda OTP SMS gönder</task>
+      <task id="2" ac="5.5.3">OTP message template'lerini standardize et</task>
+      <task id="3" ac="5.5.4">SMS tracking doğrulama</task>
+      <task id="4" ac="5.5.5">Error handling iyileştirmeleri</task>
+      <task id="5" ac="All">Testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="5.5.1">Auth module, SmsService inject ediyor (Story 5.1'den) - zaten Story 5.4'te yapıldı</ac>
+    <ac id="5.5.2">OTP gönderimi Epic 2 story'lerinde implement edilmiş - Login OTP bu story'de implement edilecek</ac>
+    <ac id="5.5.3">All OTP sending via SmsService.sendSms() - Message templates by purpose</ac>
+    <ac id="5.5.4">SMS tracking implemented - All OTP SMS tracked in SMS entity</ac>
+    <ac id="5.5.5">Error handling implemented - SMS send failure → Log error, return 503 Service Unavailable</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Story-5.5">
+        Story 5.5 acceptance criteria ve OTP SMS entegrasyonu detayları. SmsService.sendSms() kullanımı, OTP message template'leri, SMS tracking ve error handling pattern'leri.
+      </doc>
+      <doc path="docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md" title="Epic 5: Communication Infrastructure" section="Story-5.5">
+        Epic-level story breakdown. OTP gönderimi Epic 2 story'lerinde implement edilmesi gereken flow'lar: Registration, Login, Forgot Password, Resend OTP.
+      </doc>
+      <doc path="docs/stories/5-4-integrate-email-verification-password-reset.md" title="Story 5.4: Integrate SMS Phone Verification" section="Learnings-from-Previous-Story">
+        Story 5.4'ten öğrenilenler: SmsService entegrasyonu, async fire-and-forget pattern, SMS message template'leri, error handling pattern, testing pattern.
+      </doc>
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Epic-2-Integration">
+        Auth module integration pattern. SmsService dependency injection, async SMS sending pattern, error handling.
+      </doc>
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Story-5.1">
+        SMS module structure ve SmsService implementation. sendSms() method signature, database tracking, retry mechanism.
+      </doc>
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Error-Handling-Pattern">
+        Error handling pattern: SMS send failures logged to Sentry, don't block auth flows, silent fail pattern.
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Flow-3-Staff-Login">
+        Staff login flow (Phone + OTP) - 2-step process. OTP request ve verify adımları, OtpService.generateOtp() kullanımı.
+      </doc>
+      <doc path="docs/PRD/functional-requirements.md" title="Functional Requirements" section="FR-2.2-Staff-Login">
+        Staff login requirement: Phone + OTP authentication, OTP SMS ile gönderilmeli, 5 dakika geçerlilik, 3 deneme hakkı.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/modules/auth/auth.service.ts" kind="service" symbol="AuthService" lines="160-219" reason="Login flow implementation - loginAdmin() method mevcut, staff login OTP flow'u eklenmeli">
+        AuthService login metodları. loginAdmin() mevcut, staff login için OTP request/verify metodları eklenmeli veya mevcut login metoduna OTP SMS gönderimi entegre edilmeli.
+      </artifact>
+      <artifact path="src/modules/auth/services/otp.service.ts" kind="service" symbol="OtpService" lines="29-73" reason="OTP generation service - generateOtp() method login purpose ile kullanılabilir">
+        OtpService.generateOtp() method'u login purpose ile OTP generate ediyor. Story 5.5'te bu OTP'nin SMS ile gönderilmesi gerekiyor.
+      </artifact>
+      <artifact path="src/modules/sms/services/sms.service.ts" kind="service" symbol="SmsService" lines="83-149" reason="SMS sending service - sendSms() method OTP SMS gönderimi için kullanılacak">
+        SmsService.sendSms() method'u domainID, phoneNumber, message, type parametreleri ile SMS gönderiyor ve database'e track ediyor. Story 5.4'te register, forgotPassword, resendVerificationOtp için kullanıldı.
+      </artifact>
+      <artifact path="src/modules/sms/enums/sms-type.enum.ts" kind="enum" symbol="SmsType" reason="SMS type enum - OTP type kullanılacak">
+        SmsType enum'u OTP, NOTIFICATION, MARKETING, ALERT değerlerini içeriyor. Story 5.5'te OTP type kullanılacak.
+      </artifact>
+      <artifact path="src/modules/auth/auth.service.ts" kind="service" symbol="AuthService" lines="120-145" reason="Register flow SMS integration - Story 5.4 pattern'i login flow'una uygulanacak">
+        Register flow'unda SMS gönderimi pattern'i: async fire-and-forget, try-catch error handling, SmsService.sendSms() çağrısı. Aynı pattern login flow'una uygulanacak.
+      </artifact>
+      <artifact path="src/modules/auth/auth.service.ts" kind="service" symbol="AuthService" lines="285-310" reason="Forgot password flow SMS integration - Pattern reference">
+        Forgot password flow'unda SMS gönderimi pattern'i: async fire-and-forget, error handling. Login flow'unda da aynı pattern kullanılacak.
+      </artifact>
+      <artifact path="src/modules/auth/auth.module.ts" kind="module" symbol="AuthModule" reason="Module configuration - SmsModule zaten import edilmiş">
+        AuthModule'de SmsModule zaten import edilmiş (Story 5.4). SmsService AuthService'e inject edilebilir.
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/common" version="^11.0.1"/>
+        <package name="@nestjs/core" version="^11.0.1"/>
+        <package name="@prisma/client" version="^6.18.0"/>
+        <package name="axios" version="^1.13.2"/>
+        <package name="winston" version="^3.18.3"/>
+        <package name="@sentry/node" version="^7.120.4"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>NestJS dependency injection pattern kullanılmalı - SmsService constructor injection</constraint>
+    <constraint>Async fire-and-forget pattern - SMS gönderimi auth flow'ları bloklamamalı</constraint>
+    <constraint>Error handling: SMS send failures logged to Sentry, don't throw exceptions</constraint>
+    <constraint>OTP message template standardization - Phone verification, login, password reset template'leri helper method'larda organize edilmeli</constraint>
+    <constraint>SMS tracking: All OTP SMS tracked in SMS entity (status: PENDING → SENT → DELIVERED)</constraint>
+    <constraint>Multi-tenant isolation: domainID parametresi tüm SMS gönderimlerinde kullanılmalı</constraint>
+    <constraint>Testing: Unit test'ler SmsService.sendSms() mock edecek, integration test'ler SMS gönderimini mock edecek, E2E test'ler gerçek SmsService kullanacak</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="SmsService.sendSms()" kind="method" signature="sendSms(domainID: string, phoneNumber: string, message: string, type: SmsType): Promise&lt;SMS&gt;" path="src/modules/sms/services/sms.service.ts">
+      SMS gönderimi ve database tracking. Story 5.4'te register, forgotPassword, resendVerificationOtp için kullanıldı. Story 5.5'te login flow'unda kullanılacak.
+    </interface>
+    <interface name="OtpService.generateOtp()" kind="method" signature="generateOtp(userID: string, purpose: OtpPurpose): Promise&lt;string&gt;" path="src/modules/auth/services/otp.service.ts">
+      OTP generation service. Login purpose ile OTP generate ediyor. Story 5.5'te bu OTP'nin SMS ile gönderilmesi gerekiyor.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest test framework kullanılıyor. Unit test'ler Arrange-Act-Assert pattern'i ile yazılmalı. Integration test'ler Supertest ile API endpoint'leri test ediyor. E2E test'ler gerçek servisleri kullanıyor (test environment). Test coverage: Unit test'ler %80+, integration test'ler tüm endpoint'leri kapsamalı, E2E test'ler critical user flow'ları kapsamalı.
+    </standards>
+    <locations>
+      Unit test'ler: src/**/*.spec.ts
+      Integration test'ler: test/**/*.e2e-spec.ts
+      E2E test'ler: test/**/*.e2e-spec.ts
+    </locations>
+    <ideas>
+      <test ac="5.5.1">Unit test: AuthService.login() → Calls SmsService.sendSms() with login OTP (mock SmsService)</test>
+      <test ac="5.5.2">Unit test: AuthService.login() → SMS send error logged, doesn't block login</test>
+      <test ac="5.5.3">Unit test: OTP message template'leri doğru format'ta (login template)</test>
+      <test ac="5.5.3">Integration test: Login flow → SmsService.sendSms() called with correct parameters (domainID, phoneNumber, message, type: 'OTP')</test>
+      <test ac="5.5.4">Integration test: SMS tracking → SMS entity'de kayıt oluştuğunu doğrula</test>
+      <test ac="5.5.5">Integration test: SMS send failure → Error logged, login flow continues successfully</test>
+      <test ac="5.5.5">E2E test: Login → OTP SMS sent via FONIVA with correct message</test>
+      <test ac="5.5.5">E2E test: SMS send failure → Login still succeeds (non-blocking)</test>
+      <test ac="5.5.4">E2E test: SMS tracking → SMS entity'de kayıt oluştuğunu doğrula</test>
+    </ideas>
+  </tests>
+</story-context>
+

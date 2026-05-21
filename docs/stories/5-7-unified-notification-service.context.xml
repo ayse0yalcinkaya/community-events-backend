@@ -1,0 +1,171 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.7</storyId>
+    <title>Unified Notification Service</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-7-unified-notification-service.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>unified notification service</iWant>
+    <soThat>notification gönderirken channel logic'i abstract edilsin</soThat>
+    <tasks>
+      <task id="1" ac="5.7.1">Notification entity ve enum'ları hazırla
+        <subtask>Notification entity Prisma schema'da mevcut olduğunu doğrula</subtask>
+        <subtask>NotificationChannel enum kullanılabilir olduğunu kontrol et (Story 5.6'da oluşturulmuş)</subtask>
+        <subtask>NotificationType enum oluştur (verification, password-reset, otp, general, etc.)</subtask>
+      </task>
+      <task id="2" ac="5.7.2,5.7.3,5.7.4">NotificationService oluştur
+        <subtask>src/modules/notifications/services/notification.service.ts oluştur</subtask>
+        <subtask>send(userID, domainID, type, title, message, data?): Promise&lt;void&gt; method</subtask>
+        <subtask>sendToEmailChannel() private method</subtask>
+        <subtask>sendToSmsChannel() private method</subtask>
+        <subtask>sendToPushChannel() private method (stub)</subtask>
+        <subtask>Error handling: Her channel için try-catch, partial success handling</subtask>
+        <subtask>Async sending: Fire-and-forget pattern</subtask>
+      </task>
+      <task id="3" ac="5.7.2">DTOs oluştur
+        <subtask>src/modules/notifications/dto/send-notification.dto.ts oluştur</subtask>
+        <subtask>src/modules/notifications/dto/notification-res.dto.ts oluştur</subtask>
+      </task>
+      <task id="4" ac="5.7.2">NotificationController oluştur
+        <subtask>src/modules/notifications/controllers/notification.controller.ts oluştur</subtask>
+        <subtask>POST /notifications/send endpoint</subtask>
+        <subtask>GET /users/me/notifications endpoint (optional, history)</subtask>
+        <subtask>Swagger decorators ekle</subtask>
+      </task>
+      <task id="5" ac="All">NotificationsModule yapılandırması
+        <subtask>notifications.module.ts güncelle</subtask>
+        <subtask>NotificationService provider olarak ekle</subtask>
+        <subtask>NotificationController controller olarak ekle</subtask>
+        <subtask>Dependencies import et</subtask>
+      </task>
+      <task id="6" ac="All">Testing
+        <subtask>Unit test NotificationService.send() (multi-channel sending)</subtask>
+        <subtask>Unit test NotificationService.send() (preferences filtering)</subtask>
+        <subtask>Unit test NotificationService.send() (partial success handling)</subtask>
+        <subtask>Unit test NotificationService.send() (async fire-and-forget)</subtask>
+        <subtask>Integration test POST /notifications/send</subtask>
+        <subtask>Integration test GET /users/me/notifications</subtask>
+        <subtask>E2E test notification sending flow</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="5.7.1">Notification entity oluşturulmuş - Fields: id, domainID, userID, type, channel, title, message, data (JSON), sent (boolean), sentAt, createdAt - Indexes: [domainID, userID], [type], [createdAt] - Entity zaten Prisma schema'da mevcut</ac>
+    <ac id="5.7.2">NotificationService oluşturulmuş - src/modules/notifications/services/notification.service.ts - send(userID, domainID, type, title, message, data?): Promise&lt;void&gt; method - User notification preferences fetch - Enabled channels'a gönder - Notification history database'e kaydet</ac>
+    <ac id="5.7.3">Multi-channel sending implemented - EMAIL enabled → MailService.sendEmail() veya MailService.sendTemplateEmail() - SMS enabled → SmsService.sendSms() - PUSH enabled → FirebaseService.sendPush() (stub) - Her channel için ayrı Notification record</ac>
+    <ac id="5.7.4">Failure handling implemented - Partial success OK - Her channel attempt'i Notification entity'ye kaydedilir - Failure durumunda error log edilir - Async sending: non-blocking</ac>
+    <ac id="5.7.5">Notification history tracking - Her notification attempt Notification entity'ye kaydedilir - Fields: domainID, userID, type, channel, title, message, data, sent, sentAt</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md" title="Epic 5: Communication Infrastructure" section="Story 5.7">
+        Unified Notification Service story breakdown ve acceptance criteria. Multi-channel sending (EMAIL, SMS, PUSH) based on user preferences.
+      </doc>
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Story 5.7">
+        Complete AC specifications (AC-5.7.1 through AC-5.7.5). Unified notification flow diagram ve multi-channel orchestration pattern.
+      </doc>
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Controller-Service-Pattern">
+        Controller-Service pattern: NotificationController → NotificationService → Multi-channel orchestration. Controller HTTP layer, Service business logic.
+      </doc>
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Multi-Tenancy-Pattern">
+        Multi-tenancy pattern: @DomainID decorator + domainID filtering in all queries. Notification entity includes domainID field.
+      </doc>
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Unified-Notification-Flow">
+        Unified notification flow: User preferences fetch → Enabled channels filter → Multi-channel sending → History tracking. Partial success handling.
+      </doc>
+      <doc path="docs/stories/5-6-notification-preferences-entity.md" title="Story 5.6" section="NotificationPreferencesService">
+        NotificationPreferencesService.getPreferences() method mevcut. Default preferences: All channels enabled. Lazy initialization pattern.
+      </doc>
+      <doc path="docs/stories/5-5-integrate-otp-sending.md" title="Story 5.5" section="Async-Fire-and-Forget-Pattern">
+        Async fire-and-forget pattern: Communication operations diğer flow'ları bloklamıyor. Error handling: Log errors, don't throw exceptions.
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests">
+        Arrange-Act-Assert pattern. Unit test coverage: 80%+ for services. Mock dependencies (NotificationPreferencesService, MailService, SmsService).
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Integration Tests">
+        Integration test setup: Test database, PrismaService injection. API integration tests with Supertest.
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="E2E Tests">
+        E2E test critical user journeys: Full flow (authenticate → send notification → verify history). Multi-channel notification testing.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/notifications/services/notification-preferences.service.ts" kind="service" symbol="NotificationPreferencesService.getPreferences()" lines="33-61" reason="User notification preferences fetch için kullanılacak. Method signature: getPreferences(userID: string, domainID: string): Promise&lt;NotificationPreference[]&gt;. Default preferences oluşturma desteği var." />
+      <file path="src/modules/notifications/enums/notification-channel.enum.ts" kind="enum" symbol="NotificationChannel" lines="6-13" reason="Notification channel enum (EMAIL, SMS, PUSH). Story 5.6'da oluşturulmuş, NotificationService'de kullanılacak." />
+      <file path="src/modules/mail/services/mail.service.ts" kind="service" symbol="MailService.sendEmail()" lines="47-111" reason="EMAIL channel için kullanılacak. Method signature: sendEmail(to: string, subject: string, html: string, text?: string): Promise&lt;void&gt;. Provider-agnostic email sending." />
+      <file path="src/modules/mail/services/mail.service.ts" kind="service" symbol="MailService.sendTemplateEmail()" lines="122-171" reason="EMAIL channel için template-based email gönderimi. Method signature: sendTemplateEmail(to: string, subject: string, templateName: string, data: object): Promise&lt;void&gt;." />
+      <file path="src/modules/sms/services/sms.service.ts" kind="service" symbol="SmsService.sendSms()" lines="83-149" reason="SMS channel için kullanılacak. Method signature: sendSms(domainID: string, phoneNumber: string, message: string, type: SmsType): Promise&lt;SMS&gt;. Database tracking ile SMS gönderimi." />
+      <file path="src/modules/notifications/notifications.module.ts" kind="module" symbol="NotificationsModule" lines="21-29" reason="NotificationsModule mevcut. NotificationService ve NotificationController eklenecek. MailModule ve SmsModule import edilmeli." />
+      <file path="prisma/schema-postgres.prisma" kind="schema" symbol="Notification" lines="215-236" reason="Notification entity Prisma schema'da mevcut. Fields: id, domainID, userID, type, channel, title, message, data (JSON), sent (boolean), sentAt, createdAt. Indexes: [domainID], [userID], [domainID, userID]." />
+      <file path="prisma/schema-postgres.prisma" kind="schema" symbol="NotificationPreference" lines="238-254" reason="NotificationPreference entity Prisma schema'da mevcut. Unique constraint: [domainID, userID, channel]. NotificationPreferencesService bu entity'yi kullanıyor." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="nestjs-i18n" version="^10.5.1" />
+        <package name="class-validator" version="^0.14.2" />
+        <package name="class-transformer" version="^0.5.1" />
+        <package name="@nestjs/swagger" version="^11.2.1" />
+        <package name="@nestjs/jwt" version="^11.0.1" />
+        <package name="@nestjs/passport" version="^11.0.5" />
+        <package name="winston" version="^3.18.3" />
+        <package name="@sentry/node" version="^7.120.4" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Controller-Service Pattern: NotificationController → NotificationService → Multi-channel orchestration. Controller HTTP layer, Service business logic.</constraint>
+    <constraint>Multi-Tenancy Pattern: @DomainID decorator + domainID filtering in all queries. Notification entity includes domainID field. All queries filtered by domainID from JWT token.</constraint>
+    <constraint>Async Fire-and-Forget Pattern: Notification gönderimi async fire-and-forget pattern ile implement edilir (await yok, catch ile error handling). Communication operations diğer flow'ları bloklamıyor.</constraint>
+    <constraint>Partial Success Handling: Bir channel başarısız olsa bile diğerleri gönderilmeye devam eder. Her channel attempt'i Notification entity'ye kaydedilir (sent: true/false).</constraint>
+    <constraint>Error Handling: Failure durumunda error log edilir (Sentry'ye gönderilir). Notification record'da sent: false olarak işaretlenir. Exception throw edilmez.</constraint>
+    <constraint>File Naming: kebab-case (notification.service.ts, notification.controller.ts). Classes: PascalCase (NotificationService, NotificationController).</constraint>
+    <constraint>Module Structure: src/modules/notifications/services/, src/modules/notifications/controllers/, src/modules/notifications/dto/, src/modules/notifications/enums/</constraint>
+    <constraint>DTO Transformation: Response DTOs use @Expose() decorator. plainToInstance with excludeExtraneousValues: true.</constraint>
+    <constraint>Testing: Unit tests 80%+ coverage. Arrange-Act-Assert pattern. Mock dependencies (NotificationPreferencesService, MailService, SmsService).</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="NotificationPreferencesService.getPreferences()" kind="function signature" signature="getPreferences(userID: string, domainID: string): Promise&lt;NotificationPreference[]&gt;" path="src/modules/notifications/services/notification-preferences.service.ts" />
+    <interface name="MailService.sendEmail()" kind="function signature" signature="sendEmail(to: string, subject: string, html: string, text?: string): Promise&lt;void&gt;" path="src/modules/mail/services/mail.service.ts" />
+    <interface name="MailService.sendTemplateEmail()" kind="function signature" signature="sendTemplateEmail(to: string, subject: string, templateName: string, data: object): Promise&lt;void&gt;" path="src/modules/mail/services/mail.service.ts" />
+    <interface name="SmsService.sendSms()" kind="function signature" signature="sendSms(domainID: string, phoneNumber: string, message: string, type: SmsType): Promise&lt;SMS&gt;" path="src/modules/sms/services/sms.service.ts" />
+    <interface name="POST /notifications/send" kind="REST endpoint" signature="POST /notifications/send - Request: SendNotificationDto, Response: 202 Accepted" path="src/modules/notifications/controllers/notification.controller.ts" />
+    <interface name="GET /users/me/notifications" kind="REST endpoint" signature="GET /users/me/notifications - Query: page, limit, Response: NotificationResDto[]" path="src/modules/notifications/controllers/notification.controller.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests: Arrange-Act-Assert pattern. 80%+ coverage for services. Mock dependencies (NotificationPreferencesService, MailService, SmsService, PrismaService). Use Jest testing framework. Integration tests: Test database setup, PrismaService injection, API integration tests with Supertest. E2E tests: Full flow testing (authenticate → send notification → verify history). Multi-channel notification testing, preferences filtering, partial success handling.
+    </standards>
+    <locations>
+      Unit tests: src/modules/notifications/services/notification.service.spec.ts
+      Integration tests: test/notifications.integration.spec.ts (to be created)
+      E2E tests: test/notifications.e2e-spec.ts (to be created)
+    </locations>
+    <ideas>
+      <test ac="5.7.2">Unit test: NotificationService.send() → Multi-channel sending (EMAIL, SMS enabled). Mock NotificationPreferencesService.getPreferences(), MailService.sendEmail(), SmsService.sendSms(). Verify all enabled channels called.</test>
+      <test ac="5.7.2">Unit test: NotificationService.send() → Preferences filtering (only EMAIL enabled). Mock preferences with only EMAIL enabled. Verify SMS and PUSH not called.</test>
+      <test ac="5.7.4">Unit test: NotificationService.send() → Partial success handling (EMAIL succeeds, SMS fails). Mock MailService.sendEmail() success, SmsService.sendSms() failure. Verify Notification records created with correct sent status.</test>
+      <test ac="5.7.4">Unit test: NotificationService.send() → Async fire-and-forget pattern (non-blocking). Verify method returns immediately without awaiting channel sends.</test>
+      <test ac="5.7.5">Unit test: NotificationService.send() → Notification history tracking. Verify Notification records created for each channel attempt with correct fields.</test>
+      <test ac="5.7.2">Integration test: POST /notifications/send → Sends notification to enabled channels (authenticated). Create test user, authenticate, call endpoint, verify notifications sent.</test>
+      <test ac="5.7.2">Integration test: GET /users/me/notifications → Returns user notification history (pagination). Create notifications, call endpoint with pagination, verify response.</test>
+      <test ac="5.7.3">E2E test: Multi-channel notification → EMAIL, SMS, PUSH channels all enabled. Full flow: authenticate → send notification → verify all channels called → verify history.</test>
+      <test ac="5.7.3">E2E test: Preferences filtering → Only EMAIL enabled, SMS and PUSH skipped. Update preferences, send notification, verify only EMAIL sent.</test>
+      <test ac="5.7.4">E2E test: Partial success → EMAIL succeeds, SMS fails, notification history recorded. Mock SMS failure, verify EMAIL sent, verify Notification records with correct sent status.</test>
+    </ideas>
+  </tests>
+</story-context>
+

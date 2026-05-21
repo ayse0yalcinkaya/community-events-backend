@@ -1,0 +1,350 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>7</storyId>
+    <title>Environment Configuration Validation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-7-environment-configuration-validation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>environment-based configuration ve validation</iWant>
+    <soThat>missing/invalid config ile proje start etmesin</soThat>
+    <tasks>
+      - Task 1: Create config folder structure (AC: 1)
+        - Subtask 1.1: `src/config/` klasörünü oluştur
+        - Subtask 1.2: Folder structure verify et
+
+      - Task 2: Create app.config.ts configuration module (AC: 2)
+        - Subtask 2.1: `src/config/app.config.ts` dosyasını oluştur
+        - Subtask 2.2: ConfigService kullanarak PORT export et (default: 3000)
+        - Subtask 2.3: NODE_ENV export et (development/staging/production)
+        - Subtask 2.4: API_PREFIX export et (default: 'api')
+        - Subtask 2.5: Registered factory pattern ile config export et
+
+      - Task 3: Create database.config.ts configuration module (AC: 2)
+        - Subtask 3.1: `src/config/database.config.ts` dosyasını oluştur
+        - Subtask 3.2: DATABASE_URL validation ve export (required, non-empty)
+        - Subtask 3.3: Database provider detection (postgresql vs mongodb from URL)
+        - Subtask 3.4: Connection pooling config export (optional, defaults)
+
+      - Task 4: Create jwt.config.ts configuration module (AC: 2)
+        - Subtask 4.1: `src/config/jwt.config.ts` dosyasını oluştur
+        - Subtask 4.2: JWT_SECRET export et (required, min 32 chars)
+        - Subtask 4.3: JWT_ACCESS_EXPIRATION export et (default: '15m')
+        - Subtask 4.4: JWT_REFRESH_EXPIRATION export et (default: '7d')
+        - Subtask 4.5: Validation: JWT_SECRET length check (min 32 characters)
+
+      - Task 5: Create comprehensive .env.example file (AC: 3)
+        - Subtask 5.1: `.env.example` dosyasını oluştur (root directory)
+        - Subtask 5.2: Application variables ekle (NODE_ENV, PORT, API_PREFIX)
+        - Subtask 5.3: Database variables ekle (DATABASE_URL with examples)
+        - Subtask 5.4: JWT variables ekle (JWT_SECRET, expirations)
+        - Subtask 5.5: Future variables ekle (commented out for Epics 4-7)
+        - Subtask 5.6: Comments ekle: Her variable için açıklama ve örnek değer
+
+      - Task 6: Create Joi validation schema (AC: 4)
+        - Subtask 6.1: `src/config/env-validation.schema.ts` dosyasını oluştur
+        - Subtask 6.2: Joi import et ve schema tanımla
+        - Subtask 6.3-6.9: Validation rules for all config variables
+        - Subtask 6.10: Schema export: Joi.object().unknown()
+
+      - Task 7: Configure ConfigModule in AppModule (AC: 5)
+        - Subtask 7.1-7.4: ConfigModule.forRoot() configuration
+        - Subtask 7.5: Add ConfigModule to AppModule imports (before PrismaModule)
+        - Subtask 7.6: Test: npm run start:dev ile app başlatma
+
+      - Task 8: Implement validation error handling (AC: 6)
+        - Subtask 8.1-8.7: Test invalid config scenarios (missing DATABASE_URL, short JWT_SECRET, invalid NODE_ENV, multiple errors)
+
+      - Task 9: Documentation ve integration testing (AC: All)
+        - Subtask 9.1: README.md update et (environment setup section)
+        - Subtask 9.2-9.4: Integration tests (fresh setup, ConfigService access, PrismaService integration)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-1.7.1: `src/config/` klasörü oluşturulmuş
+
+    AC-1.7.2: Config dosyaları oluşturulmuş:
+    - `app.config.ts` (PORT, NODE_ENV, API_PREFIX export ediyor)
+    - `database.config.ts` (DATABASE_URL validation export ediyor)
+    - `jwt.config.ts` (JWT_SECRET, JWT_ACCESS_EXPIRATION, JWT_REFRESH_EXPIRATION export ediyor)
+
+    AC-1.7.3: `.env.example` oluşturulmuş (tüm required variables placeholder ile)
+
+    AC-1.7.4: Config validation Joi schema ile (ConfigModule.forRoot içinde validationSchema)
+
+    AC-1.7.5: AppModule'de ConfigModule.forRoot() configured (isGlobal: true, validationSchema: envSchema)
+
+    AC-1.7.6: Invalid config ile start attempt descriptive error veriyor (Joi validation error message console'da, process exit)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Database Infrastructure & Project Setup</title>
+        <section>Story 1.7: Environment Configuration & Validation</section>
+        <snippet>AC-1.7.1 through AC-1.7.6 define complete configuration system setup with Joi validation schema. ConfigModule.forRoot() must be configured with isGlobal:true, validationSchema, and multi-env file support (.env.development, .env). Fail-fast approach: application won't start with invalid config.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boilerplate - Epic Breakdown</title>
+        <section>Epic 1, Story 1.7: Environment Configuration & Validation</section>
+        <snippet>Developer wants environment-based configuration and validation so that project won't start with missing/invalid config. Config files: app.config.ts (PORT, NODE_ENV, API_PREFIX), database.config.ts (DATABASE_URL), jwt.config.ts (JWT secrets and expirations). Joi validation with fail-fast approach.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Environment Configuration</section>
+        <snippet>Required environment variables: NODE_ENV, PORT, API_PREFIX, DATABASE_URL, JWT_SECRET (min 32 chars), JWT_ACCESS_EXPIRATION (default: 15m), JWT_REFRESH_EXPIRATION (default: 7d). ConfigModule.forRoot() with Joi validation schema. Environment file priority: .env.development > .env. Fail-fast validation on application startup.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Configuration Validation Pattern</section>
+        <snippet>Joi validation schema pattern: string().min(32).required() for JWT_SECRET, valid('development','staging','production').required() for NODE_ENV, number().default(3000) for PORT. validationOptions: { abortEarly: false, allowUnknown: true } to show all errors and allow future epic variables.</snippet>
+      </doc>
+
+      <doc>
+        <path>docs/stories/1-6-seed-data-script.md</path>
+        <title>Story 1.6: Seed Data Script - Dev Notes</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>DATABASE_URL already in use from Story 1.3 setup and Story 1.4 PrismaService. Story 1.7 will ADD validation layer on top of existing DATABASE_URL usage. PrismaService connects using process.env.DATABASE_URL. This story formalizes config management and adds fail-fast validation. Epic 1 final story - completes infrastructure foundation.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/app.module.ts</path>
+        <kind>module</kind>
+        <symbol>AppModule</symbol>
+        <lines>1-11</lines>
+        <reason>Current AppModule imports PrismaModule only. Will be updated to import ConfigModule.forRoot() BEFORE PrismaModule to ensure config is validated before database connection.</reason>
+      </artifact>
+
+      <artifact>
+        <path>.env.example</path>
+        <kind>config template</kind>
+        <symbol>N/A</symbol>
+        <lines>1-30</lines>
+        <reason>Existing .env.example has basic structure. Will be updated/replaced with comprehensive template including all required variables, proper comments, and placeholders for future epics (AWS S3, Twilio, SendGrid, Sentry).</reason>
+      </artifact>
+
+      <artifact>
+        <path>.env</path>
+        <kind>runtime config</kind>
+        <symbol>N/A</symbol>
+        <lines>3,6-7</lines>
+        <reason>Current runtime env has DATABASE_URL, NODE_ENV, PORT. Missing JWT_SECRET and API_PREFIX. After story completion, these will be required by Joi validation schema.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>N/A</lines>
+        <reason>PrismaService currently uses process.env.DATABASE_URL directly. After story completion, PrismaService should inject ConfigService to access validated DATABASE_URL from ConfigService.get('DATABASE_URL').</reason>
+      </artifact>
+
+      <artifact>
+        <path>package.json</path>
+        <kind>manifest</kind>
+        <symbol>dependencies</symbol>
+        <lines>28-37</lines>
+        <reason>Current dependencies include @nestjs/common, @nestjs/core, @nestjs/platform-express. Missing: @nestjs/config (for ConfigModule) and joi (for validation schema). These need to be added as dependencies.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <npm>
+        <package name="@nestjs/config" version="^11.0.0" reason="Official NestJS configuration module for environment variable management and validation"/>
+        <package name="joi" version="^17.11.0" reason="Schema validation library for environment variable validation (supports min/max, type checking, required fields, custom rules)"/>
+        <package name="@types/joi" version="^17.2.3" reason="TypeScript type definitions for Joi (devDependency)" dev="true"/>
+      </npm>
+
+      <existing>
+        <package name="@nestjs/common" version="^11.0.1" usage="Injectable decorator, Module decorator"/>
+        <package name="@nestjs/core" version="^11.0.1" usage="NestFactory for app bootstrap"/>
+        <package name="@nestjs/platform-express" version="^11.0.1" usage="Express platform adapter"/>
+        <package name="@prisma/client" version="^6.18.0" usage="Prisma client for database access (uses validated DATABASE_URL)"/>
+      </existing>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. **Architecture Constraint**: ConfigModule MUST be imported BEFORE PrismaModule in AppModule to ensure configuration is validated before database connection attempts. [Source: docs/architecture.md#Project-Initialization]
+
+    2. **Security Constraint**: JWT_SECRET MUST be minimum 32 characters. Joi validation schema must enforce this with `.min(32)`. [Source: docs/tech-spec-epic-1.md#NFR-Security]
+
+    3. **Validation Constraint**: Joi validation options MUST include `abortEarly: false` to show ALL validation errors at once, not just the first error. This improves developer experience. [Source: docs/architecture.md#Configuration-Validation]
+
+    4. **Flexibility Constraint**: Joi schema MUST include `.unknown()` to allow extra environment variables not explicitly defined. This supports future epic variables (AWS S3, Twilio, SendGrid, Sentry) without breaking validation. [Source: docs/tech-spec-epic-1.md#AC-1.7.4]
+
+    5. **File Structure Constraint**: Config files MUST use kebab-case naming (app.config.ts, database.config.ts, jwt.config.ts) and be placed in `src/config/` directory. [Source: docs/architecture.md#Project-Structure, ADR-008]
+
+    6. **Environment File Priority**: ConfigModule.forRoot() MUST specify envFilePath as array: ['.env.development', '.env'] to support environment-specific config files with fallback. [Source: docs/architecture.md#Environment-Configuration]
+
+    7. **Fail-Fast Approach**: Application MUST exit with descriptive error message if any required config variable is missing or invalid. Joi validation handles this automatically when validationSchema is provided. [Source: docs/architecture.md#Configuration-Validation]
+
+    8. **Integration Constraint**: PrismaService should be updated to use ConfigService for DATABASE_URL instead of direct process.env access. This ensures config validation happened before database connection. However, direct process.env fallback is acceptable for Epic 1 MVP. [Source: Story 1.4 integration notes]
+
+    9. **Testing Constraint**: Task 8 requires testing multiple invalid config scenarios: missing DATABASE_URL, short JWT_SECRET (< 32 chars), invalid NODE_ENV value, and multiple simultaneous errors to verify abortEarly:false works correctly.
+
+    10. **Documentation Constraint**: README.md MUST be updated with environment setup instructions including .env.example → .env copy process and required variables list. [Source: docs/tech-spec-epic-1.md#AC-1.7.3]
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>ConfigModule.forRoot()</name>
+      <kind>NestJS Module Configuration</kind>
+      <signature>
+ConfigModule.forRoot({
+  isGlobal: true,
+  envFilePath: ['.env.development', '.env'],
+  validationSchema: envSchema,
+  validationOptions: {
+    abortEarly: false,
+    allowUnknown: true
+  }
+})
+      </signature>
+      <path>src/app.module.ts (to be added)</path>
+    </interface>
+
+    <interface>
+      <name>ConfigService.get&lt;T&gt;()</name>
+      <kind>Service Method</kind>
+      <signature>
+get&lt;T = string&gt;(key: string, defaultValue?: T): T | undefined
+// Examples:
+configService.get&lt;number&gt;('PORT')
+configService.get&lt;string&gt;('DATABASE_URL')
+configService.get&lt;string&gt;('JWT_SECRET')
+      </signature>
+      <path>@nestjs/config package</path>
+    </interface>
+
+    <interface>
+      <name>Joi Validation Schema</name>
+      <kind>Validation Schema</kind>
+      <signature>
+import * as Joi from 'joi';
+
+export const envSchema = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'staging', 'production').required(),
+  PORT: Joi.number().default(3000),
+  API_PREFIX: Joi.string().default('api'),
+  DATABASE_URL: Joi.string().required(),
+  JWT_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_EXPIRATION: Joi.string().default('15m'),
+  JWT_REFRESH_EXPIRATION: Joi.string().default('7d'),
+}).unknown();
+      </signature>
+      <path>src/config/env-validation.schema.ts (to be created)</path>
+    </interface>
+
+    <interface>
+      <name>Environment Variables</name>
+      <kind>Configuration Contract</kind>
+      <signature>
+// Required Variables (must be in .env or validation fails)
+NODE_ENV: 'development' | 'staging' | 'production'
+DATABASE_URL: string (PostgreSQL or MongoDB connection string)
+JWT_SECRET: string (minimum 32 characters)
+
+// Optional Variables (have defaults)
+PORT: number (default: 3000)
+API_PREFIX: string (default: 'api')
+JWT_ACCESS_EXPIRATION: string (default: '15m')
+JWT_REFRESH_EXPIRATION: string (default: '7d')
+
+// Future Epic Variables (optional, commented out in .env.example)
+AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET (Epic 4)
+TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER (Epic 5)
+SENDGRID_API_KEY, FROM_EMAIL (Epic 5)
+SENTRY_DSN (Epic 7)
+      </signature>
+      <path>.env.example (to be updated)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      NestJS projects use Jest as testing framework (configured in package.json).
+
+      For configuration modules, focus on integration tests that verify:
+      1. Application boots successfully with valid config
+      2. Application fails to boot with missing required variables (DATABASE_URL, JWT_SECRET)
+      3. Application fails to boot with invalid values (JWT_SECRET &lt; 32 chars, NODE_ENV not in valid list)
+      4. Joi validation shows all errors when multiple config issues present (abortEarly: false)
+      5. Default values are applied correctly (PORT=3000, API_PREFIX='api')
+      6. ConfigService.get() returns correct values from environment
+
+      Unit tests are not typically needed for config modules since they primarily declare configuration. Focus on integration testing the ConfigModule setup in AppModule and validation behavior.
+    </standards>
+
+    <locations>
+      Integration tests (recommended for config validation):
+      - test/app.e2e-spec.ts (E2E test for application bootstrap with various config scenarios)
+
+      Unit tests (optional, low priority):
+      - src/config/__tests__/env-validation.schema.spec.ts (if complex custom validators added)
+
+      Config validation is best tested by attempting to start the application with different .env configurations and verifying startup success/failure.
+    </locations>
+
+    <ideas>
+      Test Idea 1 (AC-1.7.6): Test invalid DATABASE_URL missing
+      - Create temporary .env with DATABASE_URL commented out
+      - Attempt to start application (npm run start:dev or NestFactory.create)
+      - Verify application exits with error message: "DATABASE_URL" is required
+      - Verify process exit code is non-zero
+
+      Test Idea 2 (AC-1.7.6): Test invalid JWT_SECRET (too short)
+      - Create temporary .env with JWT_SECRET="short" (less than 32 chars)
+      - Attempt to start application
+      - Verify error message: "JWT_SECRET" length must be at least 32 characters long
+      - Verify application does not start
+
+      Test Idea 3 (AC-1.7.6): Test invalid NODE_ENV value
+      - Create temporary .env with NODE_ENV="invalid_environment"
+      - Attempt to start application
+      - Verify error message: "NODE_ENV" must be one of [development, staging, production]
+      - Verify application does not start
+
+      Test Idea 4 (AC-1.7.6): Test multiple validation errors (abortEarly: false)
+      - Create temporary .env with DATABASE_URL missing AND JWT_SECRET="short"
+      - Attempt to start application
+      - Verify BOTH error messages are displayed (not just the first one)
+      - This verifies abortEarly: false is working correctly
+
+      Test Idea 5 (AC-1.7.5): Test successful startup with valid config
+      - Create .env with all required variables and valid values
+      - Start application successfully
+      - Verify ConfigService.get('PORT') returns 3000 (or custom value)
+      - Verify ConfigService.get('DATABASE_URL') returns correct connection string
+      - Verify ConfigService.get('JWT_SECRET') returns secret (min 32 chars)
+
+      Test Idea 6 (AC-1.7.4): Test default values applied
+      - Create .env with only required variables (DATABASE_URL, JWT_SECRET, NODE_ENV)
+      - Omit PORT and API_PREFIX
+      - Start application
+      - Verify ConfigService.get('PORT') returns 3000 (default)
+      - Verify ConfigService.get('API_PREFIX') returns 'api' (default)
+
+      Test Idea 7 (Integration): Test PrismaService uses validated config
+      - After Story 1.7 completion, verify PrismaService connects to database
+      - Database connection should only be attempted AFTER config validation passes
+      - If DATABASE_URL is invalid, validation should fail before Prisma connection attempt
+      - This verifies ConfigModule is imported BEFORE PrismaModule in AppModule
+    </ideas>
+  </tests>
+</story-context>

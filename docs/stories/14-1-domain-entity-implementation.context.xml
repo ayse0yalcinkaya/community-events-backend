@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context id="docs/stories/14-1-domain-entity-implementation" v="1.0">
+  <metadata>
+    <epicId>14</epicId>
+    <storyId>1</storyId>
+    <title>Domain Entity Implementation with Relational Database Design</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-domain-entity-implementation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>backend developer</asA>
+    <iWant>create a proper Domain entity with full relational database design and link it to all existing entities</iWant>
+    <soThat>we establish data integrity, eliminate redundancy, enable proper foreign key relationships, and create a single source of truth for domain information</soThat>
+    <tasks>Phase 1: Prisma Schema Updates - Add Domain model to prisma/schema.prisma with all fields (id, company, name, logo, info, industry, note, contact, status, timestamps); Phase 2: Create Domain Module - Create directory structure, entity with TypeORM decorators, interfaces, DTOs, service with CRUD operations, controller with REST endpoints, register module in AppModule; Phase 3: Update User Module - Add ManyToOne relationship, update DTOs, update service for domain validation, update controller for domain filtering; Phase 4: Update Other Affected Modules - Find all domain_id references, add TypeORM relationships, update DTOs/services/controllers; Phase 5: Data Migration - Create migration script, populate Domain table, verify data integrity, add constraints; Phase 6: Testing Implementation - Create domain factory, write unit tests, write integration tests, verify coverage 70%+; Phase 7: Documentation and Validation - Verify Swagger docs, create seed data, update README, run linting and formatting</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** the current codebase with manually-entered domain_id UUIDs
+    **When** we implement the Domain entity with relationships
+    **Then** all domain_id fields must reference valid Domain records through proper foreign key constraints
+
+    **AC #1:** Phone numbers must be unique per domain (same phone allowed across different domains)
+    **AC #2:** Domain CRUD operations must be available through API
+    **AC #3:** All existing tests must continue to pass
+    **AC #4:** Migration must successfully convert existing domain_id values
+    **AC #5:** Test coverage must remain at 70%+
+    **AC #6:** Users can be created/updated with proper domain validation
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec.md" title="Domain Entity Technical Specification" section="The Change" snippet="Currently, the domain_id field exists in multiple tables as a manually-entered UUID string without any database-level constraints, relationships, or validation. Implement a proper Domain entity with full relational database design." />
+      <doc path="docs/product-brief-Boilerplate-2025-11-04.md" title="Boilerplate Product Brief" section="Executive Summary" snippet="Boilerplate is a production-ready, enterprise-grade NestJS boilerplate for all company backend projects. Reduces new project setup from 1 week to 1 day." />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="Project Classification" snippet="Technical Type: API/Backend Framework (Boilerplate). This project is a backend API boilerplate positioned as an internal developer productivity tool." />
+      <doc path="README.md" title="Project Documentation" section="Environment Setup" snippet="This project uses environment variables for configuration. Configure database, JWT, AWS S3, SendGrid, Redis, and other services via .env file." />
+      <doc path="docs/archive/architecture.md" title="System Architecture" section="Architecture Overview" snippet="NestJS-based backend with modular architecture, Prisma ORM, PostgreSQL/MongoDB support, comprehensive testing infrastructure." />
+    </docs>
+
+    <code>
+      <file path="prisma/schema.prisma" kind="schema" symbol="Schema" lines="1-50" reason="Database schema definition - add Domain model here" />
+      <file path="src/modules/users/user.entity.ts" kind="entity" symbol="User" lines="30-40" reason="ManyToOne relationship example to follow for Domain entity" />
+      <file path="src/common/enums/status.enum" kind="enum" symbol="StatusEnum" lines="1-20" reason="Status enum definition (ACTIVE/PASSIVE pattern)" />
+      <file path="src/modules/users/user.service.ts" kind="service" symbol="UserService" lines="50-80" reason="Create user with relations pattern" />
+      <file path="src/modules/users/user.service.ts" kind="service" symbol="UserService" lines="100-120" reason="Query with relations pattern" />
+      <file path="src/database/prisma.service.ts" kind="service" symbol="PrismaService" lines="1-30" reason="Prisma client injection pattern" />
+      <file path="src/modules/users/user.controller.ts" kind="controller" symbol="UserController" lines="1-50" reason="Controller structure and patterns" />
+      <file path="package.json" kind="config" symbol="dependencies" lines="62-103" reason="NestJS 11.0.1, Prisma 6.18.0, TypeScript 5.7.3 dependencies" />
+      <file path="jest.config.js" kind="config" symbol="JestConfiguration" lines="1-30" reason="Test configuration - 70% coverage threshold, Jest 30.0.0" />
+      <file path=".eslintrc.js" kind="config" symbol="ESLintRules" lines="50-108" reason="8-category import organization pattern" />
+    </code>
+
+    <dependencies>
+      <ecosystem key="node">
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@nestjs/platform-express" version="^11.0.1" />
+        <package name="@nestjs/typeorm" version="implied" />
+        <package name="typeorm" version="implied" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="prisma" version="^6.18.0" dev="true" />
+        <package name="typescript" version="^5.7.3" dev="true" />
+        <package name="class-validator" version="^0.14.2" />
+        <package name="class-transformer" version="^0.5.1" />
+        <package name="uuid" version="^13.0.0" />
+        <package name="jest" version="^30.0.0" dev="true" />
+        <package name="@nestjs/testing" version="^11.0.1" dev="true" />
+        <package name="eslint" version="^9.18.0" dev="true" />
+        <package name="prettier" version="^3.4.2" dev="true" />
+        <package name="husky" version="^9.1.7" dev="true" />
+        <package name="@nestjs/swagger" version="^11.2.1" />
+        <package name="swagger-ui-express" version="^5.0.1" />
+        <package name="winston" version="^3.18.3" />
+        <package name="@sentry/node" version="^7.120.4" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must follow Controller-Service-Repository layered architecture pattern
+    - Use TypeORM decorators: @Entity, @PrimaryGeneratedColumn('uuid'), @ManyToOne, @JoinColumn, @Column, @CreateDateColumn, @UpdateDateColumn, @DeleteDateColumn
+    - Follow 8-category import organization: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events
+    - Use path aliases: @/ maps to src/ for absolute imports
+    - Domain entity must support soft delete via @DeleteDateColumn
+    - ManyToOne relationship: onDelete SET NULL, onUpdate CASCADE
+    - Phone number uniqueness constraint: (phone_number, domain_id) UNIQUE
+    - JSONB columns for flexible data: info (CompanyInfo), contact (ContactInfo)
+    - Status enum: ACTIVE = 1, PASSIVE = 0
+    - Test coverage must maintain 70%+ threshold
+    - All new code must have corresponding unit tests
+    - Must use Faker.js for test data generation
+    - Follow existing controller-service-repository test patterns
+  </constraints>
+
+  <interfaces>
+    <interface name="CompanyInfo" kind="TypeScript Interface" signature="interface CompanyInfo { vat?: string; tax_number?: string; address?: string; email?: string; phone_number?: string; website?: string; }" path="src/modules/domain/interface/domain-info.interface.ts" />
+    <interface name="ContactInfo" kind="TypeScript Interface" signature="interface ContactInfo { first_name?: string; last_name?: string; phone_number?: string; email?: string; title?: string; }" path="src/modules/domain/interface/contact-info.interface.ts" />
+    <interface name="StatusEnum" kind="Enum" signature="enum StatusEnum { ACTIVE = 1, PASSIVE = 0 }" path="src/common/enums/status.enum" />
+    <interface name="Domain" kind="Entity" signature="class Domain { id: string; company: string; name: string; logo: string; info?: CompanyInfo; industry?: string; note?: string; contact?: ContactInfo; status: StatusEnum; created_at: Date; updated_at: Date; deleted_at?: Date | null; }" path="src/modules/domain/domain.entity.ts" />
+    <interface name="CreateDomainDto" kind="DTO" signature="class CreateDomainDto { company: string; name: string; logo: string; info?: CompanyInfo; industry?: string; note?: string; contact?: ContactInfo; }" path="src/modules/domain/dto/create-domain.dto.ts" />
+    <interface name="UpdateDomainDto" kind="DTO" signature="class UpdateDomainDto { company?: string; name?: string; logo?: string; info?: CompanyInfo; industry?: string; note?: string; contact?: ContactInfo; status?: StatusEnum; }" path="src/modules/domain/dto/update-domain.dto.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>Testing uses Jest 30.0.0 with @nestjs/testing utilities. Test files follow pattern: *.spec.ts for unit tests, *.integration.spec.ts for integration tests. Coverage threshold: 70% minimum, common modules 100%, service classes 80%. Must use Faker.js for test data generation. Test structure follows controller-service-repository pattern with beforeEach setup. Mock repositories using getRepositoryToken(). Integration tests use Test.createTestingModule().</standards>
+    <locations>
+      Unit Tests: test/modules/domain/domain.service.spec.ts, test/modules/domain/domain.controller.spec.ts
+      Integration Tests: test/modules/domain/domain.integration.spec.ts
+      Test Factories: test/modules/domain/factories/domain.factory.ts
+      Global Tests: test/jest-setup.ts, test/factories/
+    </locations>
+    <ideas>
+      - Test DomainService.create() with valid data (AC #2)
+      - Test DomainService.findOne() with existing/non-existing IDs (AC #2)
+      - Test DomainService.update() with partial updates (AC #2)
+      - Test UserService.createUser() requires valid domain (AC #6)
+      - Test phone uniqueness per domain constraint (AC #1)
+      - Test migration script converts existing domain_id values (AC #4)
+      - Test all existing tests still pass after changes (AC #3)
+      - Test test coverage remains above 70% (AC #5)
+      - Test Domain CRUD API endpoints return correct responses (AC #2)
+      - Test soft delete on Domain entity
+    </ideas>
+  </tests>
+</story-context>

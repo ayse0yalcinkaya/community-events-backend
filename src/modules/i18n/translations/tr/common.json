@@ -1,0 +1,9 @@
+{
+  "SUCCESS": "İşlem başarılı",
+  "ERROR": "Bir hata oluştu",
+  "NOT_FOUND": "Kaynak bulunamadı",
+  "UNAUTHORIZED": "Yetkisiz erişim",
+  "FORBIDDEN": "Erişim yasak",
+  "VALIDATION_ERROR": "Doğrulama hatası",
+  "INTERNAL_ERROR": "Sunucu hatası"
+}

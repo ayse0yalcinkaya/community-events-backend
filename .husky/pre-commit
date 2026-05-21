@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo '🔍 Running pre-commit checks...'
+
+# Stage 1: Lint check (auto-fix violations)
+echo '📋 Running ESLint...'
+npm run lint
+if [ $? -ne 0 ]; then
+  echo '❌ ESLint check failed. Please fix the errors before committing.'
+  exit 1
+fi
+
+echo 'Running Tests...'
+npm run test
+if [ $? -ne 0 ]; then
+  echo '❌ Tests failed. Please fix the errors before committing.'
+  exit 1
+fi
+
+
+echo "run build check"
+npm run build
+if [ $? -ne 0 ]; then
+  echo '❌ Build failed. Please fix the errors before committing.'
+  exit 1
+fi
+
+echo '✅ All pre-commit checks passed!'
+exit 0

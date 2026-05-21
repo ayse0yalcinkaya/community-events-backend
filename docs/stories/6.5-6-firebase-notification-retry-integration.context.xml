@@ -1,0 +1,420 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6.5</epicId>
+    <storyId>6</storyId>
+    <title>Firebase Notification Retry Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/6.5-6-firebase-notification-retry-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>FirebaseService'te retry mekanizmasını Common RetryService ile entegre etmek</iWant>
+    <soThat>push notification gönderimlerinde geçici network hataları ve Firebase API hatalarında otomatik retry yapılsın ve kritik bildirimlerin güvenilirliği artsın</soThat>
+    <tasks>
+- Task 1: FirebaseService Dependencies Update (AC: 6.5.6.1)
+  - Subtask 1.1: Constructor'a RetryService inject et
+  - Subtask 1.2: Import statement ekle: import { RetryService } from '@/common/services/retry.service';
+  - Subtask 1.3: Private readonly property: private readonly retryService: RetryService
+  - Subtask 1.4: Constructor'a ConfigService inject et
+  - Subtask 1.5: ConfigService'den config değerlerini al: firebaseRetryMaxAttempts, firebaseRetryBaseDelay
+
+- Task 2: Environment Configuration (AC: 6.5.6.5)
+  - Subtask 2.1: .env.example dosyasına yeni variables ekle: FIREBASE_RETRY_MAX_ATTEMPTS=5, FIREBASE_RETRY_BASE_DELAY=2000
+
+- Task 3: FirebaseService Send Retry Integration (AC: 6.5.6.2)
+  - Subtask 3.1: sendPush() method'u refactor et
+  - Subtask 3.2: Wrap Firebase Admin SDK send() with RetryService
+  - Subtask 3.3: Update logging (preserve existing logs)
+  - Subtask 3.4: Error handling: Preserve existing error handling and Sentry tracking
+
+- Task 4: Error Classification Logic (AC: 6.5.6.3, 6.5.6.4)
+  - Subtask 4.1: Add error classification logic before retry
+  - Subtask 4.2: Preserve existing error messages and Sentry logging
+  - Subtask 4.3: Test error classification with different Firebase error codes
+
+- Task 5: Logging Integration (AC: 6.5.6.6)
+  - Subtask 5.1: Keep existing debug logs
+  - Subtask 5.2: Keep existing error logs
+  - Subtask 5.3: RetryService logging otomatik (context string ile)
+  - Subtask 5.4: Preserve existing Sentry error tracking
+
+- Task 6: Unit Tests - FirebaseService (AC: 6.5.6.7)
+  - Subtask 6.1: Test file güncelle: src/modules/notifications/services/firebase.service.spec.ts
+  - Subtask 6.2: Mock RetryService, Firebase Admin SDK, ConfigService
+  - Subtask 6.3: Test: Push notification send successful on first attempt
+  - Subtask 6.4: Test: Push notification retry on network error ('messaging/unavailable')
+  - Subtask 6.5: Test: Push notification retry on server error
+  - Subtask 6.6: Test: Push notification no retry for invalid token ('messaging/invalid-registration-token')
+  - Subtask 6.7: Test: Push notification retry exhaustion
+  - Subtask 6.8: Test: Sentry logging preserved during retry
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC-6.5.6.1: FirebaseService Dependencies Update
+- src/modules/notifications/services/firebase.service.ts güncellendi
+- Constructor'da RetryService inject edilmiş
+- RetryService (Story 6.5-2'den) import edilmiş: src/common/services/retry.service.ts
+- ConfigService inject edilmiş (retry configuration için)
+
+AC-6.5.6.2: FirebaseService Send Retry Integration
+- sendPush() method'u RetryService ile wrap edilmiş
+- Firebase Admin SDK send() çağrısı retry ile sarmalanmış
+- Max attempts: 5 (critical communication), Base delay: 2000ms (external service)
+
+AC-6.5.6.3: Error Handling - Firebase Specific Errors
+- Network errors: Retry (RetryService handles)
+- Firebase server errors (5xx, 'messaging/unavailable'): Retry
+- Invalid token ('messaging/invalid-registration-token'): Don't retry, throw immediately
+- Invalid message format (400): Don't retry, throw immediately
+- Quota exceeded (429): Retry (RetryService handles with exponential backoff)
+
+AC-6.5.6.4: Error Classification Logic
+- Check Firebase error codes before retry
+- messaging/invalid-registration-token → throw immediately (skip retry)
+- messaging/invalid-argument → throw immediately (skip retry)
+- messaging/unavailable → let RetryService handle (retry)
+- Network errors → let RetryService handle (retry)
+- Preserve existing error messages and Sentry logging
+
+AC-6.5.6.5: Environment Configuration
+- .env.example dosyasına yeni environment variables eklendi
+- FIREBASE_RETRY_MAX_ATTEMPTS=5, FIREBASE_RETRY_BASE_DELAY=2000
+- ConfigService integration with defaults
+
+AC-6.5.6.6: Logging Integration
+- Preserve all existing debug and error logs
+- Preserve existing Sentry error tracking
+- RetryService automatic logging via context string
+
+AC-6.5.6.7: Unit Tests - FirebaseService
+- Test file: src/modules/notifications/services/firebase.service.spec.ts güncellendi
+- Test scenarios: successful send, retry on network error, retry on server error, no retry for invalid token, retry exhaustion, Sentry logging preserved
+- Mock RetryService, Firebase Admin SDK, ConfigService
+
+AC-6.5.6.8: Configuration Service Integration
+- ConfigService injected in constructor
+- Read retry configuration from environment with defaults
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+<!-- Epic and Technical Specifications -->
+<doc>
+  <path>docs/epics/epic-6.5-document-generator-cache-retry.md</path>
+  <title>Epic 6.5: Common Cache & Retry Services</title>
+  <section>Story 6.5-6: Firebase Notification Retry Integration</section>
+  <snippet>FirebaseService'te retry mekanizmasını entegre etmek. Firebase Admin SDK send metodunu retry ile sarmalama. Max attempts: 5, Base delay: 2000ms. Error handling for invalid tokens (skip retry), network errors (retry), server errors (retry).</snippet>
+</doc>
+
+<doc>
+  <path>docs/tech-spec-epic-6.5.md</path>
+  <title>Epic Technical Specification: Common Cache & Retry Services</title>
+  <section>Retry Workflow and Integration Points</section>
+  <snippet>RetryService provides exponential backoff retry mechanism. Formula: 2^(attempt-1) * baseDelay. Context-based logging. Integration with external services (S3, Mail, SMS, Firebase). Error classification: 4xx client errors don't retry, 5xx and network errors retry.</snippet>
+</doc>
+
+<doc>
+  <path>docs/tech-spec-epic-6.5.md</path>
+  <title>Epic Technical Specification: Common Cache & Retry Services</title>
+  <section>Error Handling</section>
+  <snippet>Retry mechanism handles transient failures automatically. Final failure throws last error. Non-retryable errors (4xx validation) should be detected and thrown immediately to skip retry. Configurable retry attempts and delays for different operation types.</snippet>
+</doc>
+
+<!-- Previous Story Learnings -->
+<doc>
+  <path>docs/stories/6.5-5-mail-sms-services-retry-integration.md</path>
+  <title>Story 6.5.5: Mail & SMS Services Retry Integration</title>
+  <section>Learnings from Previous Story</section>
+  <snippet>RetryService integration pattern: inject via constructor, wrap external service calls with executeWithRetry. Error classification: 4xx errors skip retry, 5xx/network errors retry. ConfigService integration for retry configuration. Exponential backoff: 2^(attempt-1) * baseDelay. Context string for logging critical for debugging.</snippet>
+</doc>
+
+<doc>
+  <path>docs/stories/6.5-2-common-retry-service-exponential-backoff.md</path>
+  <title>Story 6.5.2: Common Retry Service (Exponential Backoff)</title>
+  <section>RetryService Usage Patterns</section>
+  <snippet>RetryService available at src/common/services/retry.service.ts. Exported from CommonModule. Usage: Inject via constructor. Method: executeWithRetry with options (maxAttempts, baseDelay, context). Logging: Each attempt, retry delay, success on retry, final failure.</snippet>
+</doc>
+</docs>
+
+    <code>
+<!-- Existing FirebaseService Implementation -->
+<code>
+  <path>src/modules/notifications/services/firebase.service.ts</path>
+  <kind>service</kind>
+  <symbol>FirebaseService</symbol>
+  <lines>1-247</lines>
+  <reason>Current FirebaseService implementation with sendPush method, error handling (invalid-registration-token, unavailable), Sentry error tracking. This is the primary service to modify for retry integration.</reason>
+</code>
+
+<code>
+  <path>src/modules/notifications/services/firebase.service.ts</path>
+  <kind>service</kind>
+  <symbol>sendPush</symbol>
+  <lines>105-246</lines>
+  <reason>Main method to wrap with retry. Currently handles Firebase messaging errors (invalid-registration-token, unavailable) with Sentry logging. Need to add retry wrapper while preserving error handling.</reason>
+</code>
+
+<!-- RetryService (Dependency) -->
+<code>
+  <path>src/common/services/retry.service.ts</path>
+  <kind>service</kind>
+  <symbol>RetryService</symbol>
+  <lines>all</lines>
+  <reason>Common retry service with exponential backoff from Story 6.5-2. Provides executeWithRetry method. This is the service to inject into FirebaseService.</reason>
+</code>
+
+<!-- Existing Tests -->
+<code>
+  <path>src/modules/notifications/services/firebase.service.spec.ts</path>
+  <kind>test</kind>
+  <symbol>FirebaseService tests</symbol>
+  <lines>1-187</lines>
+  <reason>Existing unit tests for FirebaseService. Tests: initialization, sendPush success, invalid token error, service unavailable error. Need to add retry-related tests while preserving existing test coverage.</reason>
+</code>
+
+<!-- Similar Integration Examples -->
+<code>
+  <path>src/modules/mail/services/mail.service.ts</path>
+  <kind>service</kind>
+  <symbol>MailService with RetryService</symbol>
+  <lines>all</lines>
+  <reason>Example of RetryService integration from Story 6.5-5. Shows retry pattern, error classification, ConfigService integration. Use as reference for FirebaseService integration.</reason>
+</code>
+
+<code>
+  <path>src/modules/sms/services/sms.service.ts</path>
+  <kind>service</kind>
+  <symbol>SMSService with RetryService</symbol>
+  <lines>all</lines>
+  <reason>Another example of RetryService integration from Story 6.5-5. Shows external API retry pattern, error handling, configuration management. Reference for implementing similar pattern in FirebaseService.</reason>
+</code>
+</code>
+
+    <dependencies>
+<!-- Node.js Dependencies -->
+<node>
+  <package>@nestjs/common</package>
+  <version>^11.x</version>
+  <reason>NestJS core - Injectable, Logger decorators</reason>
+</node>
+
+<package>@nestjs/config</package>
+  <version>^3.x</version>
+  <reason>ConfigService for retry configuration (NEW dependency for FirebaseService)</reason>
+</package>
+
+<package>firebase-admin</package>
+  <version>latest</version>
+  <reason>Firebase Admin SDK for push notifications (existing dependency)</reason>
+</package>
+
+<package>@sentry/node</package>
+  <version>latest</version>
+  <reason>Sentry error tracking (existing dependency, preserve integration)</reason>
+</package>
+
+<!-- Internal Dependencies -->
+<internal>
+  <name>RetryService</name>
+  <path>src/common/services/retry.service.ts</path>
+  <from>Story 6.5-2</from>
+  <reason>Exponential backoff retry mechanism</reason>
+</internal>
+
+<internal>
+  <name>LoggerService</name>
+  <path>Epic 7.3</path>
+  <reason>Structured logging (already used by FirebaseService)</reason>
+</internal>
+</dependencies>
+  </artifacts>
+
+  <constraints>
+1. **Service Integration Pattern:**
+   - FirebaseService must inject RetryService via constructor
+   - Use dependency injection pattern (NestJS)
+   - Import: import { RetryService } from '@/common/services/retry.service';
+
+2. **Retry Configuration:**
+   - Max attempts: 5 (configurable via FIREBASE_RETRY_MAX_ATTEMPTS)
+   - Base delay: 2000ms (configurable via FIREBASE_RETRY_BASE_DELAY)
+   - Same as email/SMS services (critical communication)
+   - Use ConfigService for environment variable management
+
+3. **Error Classification (Critical):**
+   - messaging/invalid-registration-token: Don't retry, throw immediately
+   - messaging/invalid-argument: Don't retry, throw immediately
+   - messaging/unavailable: Retry via RetryService
+   - messaging/server-error: Retry via RetryService
+   - Network errors (ETIMEDOUT, ECONNRESET): Retry via RetryService
+   - Quota exceeded (429): Retry via RetryService
+
+4. **Preserve Existing Functionality:**
+   - Keep all existing error handling logic
+   - Preserve Sentry error tracking (Sentry.captureException calls)
+   - Maintain existing log messages and format
+   - Keep FIREBASE_ENABLED=false skip logic
+   - Preserve Firebase Admin SDK initialization
+
+5. **Exponential Backoff:**
+   - Formula: 2^(attempt-1) * baseDelay
+   - Delay sequence: 0ms → 2000ms → 4000ms → 8000ms → 16000ms
+   - First attempt: Immediate (no delay)
+
+6. **Logging Requirements:**
+   - Context string format: Firebase Notification: ${deviceToken.substring(0, 20)}...
+   - Preserve existing debug logs (send start, success)
+   - Preserve existing error logs (invalid token, failed)
+   - RetryService handles automatic retry logging
+
+7. **Import Organization:**
+   - 8-group import order: Libraries → DTOs → Services → Repositories → Entities → Interfaces → Enums → Events
+   - RetryService import in Services group
+   - ConfigService import in Libraries group (@nestjs/config)
+
+8. **Testing Requirements:**
+   - All existing tests must pass
+   - Add new tests for retry scenarios
+   - Mock RetryService, ConfigService
+   - Verify Sentry logging preserved during retry
+   - Test error classification (invalid token skip retry, network error retry)
+</constraints>
+
+  <interfaces>
+<!-- RetryService Interface -->
+<interface>
+  <name>RetryService.executeWithRetry</name>
+  <kind>function signature</kind>
+  <signature>
+async executeWithRetry&lt;T&gt;(
+  operation: () =&gt; Promise&lt;T&gt;,
+  options?: RetryOptions
+): Promise&lt;T&gt;
+
+interface RetryOptions {
+  maxAttempts?: number;      // Default: 3
+  baseDelay?: number;         // Default: 1000ms
+  context?: string;           // For logging
+  onRetry?: (attempt: number, error: Error) =&gt; void;
+}
+  </signature>
+  <path>src/common/services/retry.service.ts</path>
+</interface>
+
+<!-- Firebase Admin SDK Interface -->
+<interface>
+  <name>Firebase Admin SDK - messaging().send()</name>
+  <kind>function signature</kind>
+  <signature>
+async send(message: admin.messaging.Message): Promise&lt;string&gt;
+
+// Message interface includes:
+// - token: string (device token)
+// - notification: { title: string, body: string }
+// - data?: Record&lt;string, string&gt;
+// - apns, android: platform-specific configs
+  </signature>
+  <path>firebase-admin</path>
+</interface>
+
+<!-- ConfigService Interface -->
+<interface>
+  <name>ConfigService.get</name>
+  <kind>function signature</kind>
+  <signature>
+get&lt;T = any&gt;(propertyPath: string, defaultValue?: T): T
+
+// Usage:
+// this.configService.get&lt;number&gt;('FIREBASE_RETRY_MAX_ATTEMPTS', 5)
+// this.configService.get&lt;number&gt;('FIREBASE_RETRY_BASE_DELAY', 2000)
+  </signature>
+  <path>@nestjs/config</path>
+</interface>
+
+<!-- Firebase Error Codes -->
+<interface>
+  <name>Firebase Error Codes</name>
+  <kind>error codes</kind>
+  <signature>
+// Firebase messaging error codes:
+// - messaging/invalid-registration-token: Invalid device token (don't retry)
+// - messaging/invalid-argument: Invalid message format (don't retry)
+// - messaging/unavailable: Service unavailable (retry)
+// - messaging/server-error: Server error (retry)
+// - messaging/quota-exceeded: Quota exceeded (retry with backoff)
+
+// Error object structure:
+// error.code: string (error code)
+// error.message: string (error message)
+  </signature>
+  <path>firebase-admin</path>
+</interface>
+</interfaces>
+
+  <tests>
+    <standards>
+Unit tests for FirebaseService use Jest testing framework with @nestjs/testing module.
+Follow Arrange-Act-Assert (AAA) pattern.
+Mock external dependencies: Firebase Admin SDK (admin.messaging().send), RetryService, ConfigService.
+Test both success and error scenarios.
+Verify Sentry error tracking preserved (Sentry.captureException calls).
+Test retry scenarios: network errors retry, invalid token skip retry, retry exhaustion.
+Existing tests at src/modules/notifications/services/firebase.service.spec.ts.
+Similar retry integration test patterns available in src/modules/mail/__tests__/services/mail.service.spec.ts and src/modules/sms/__tests__/services/sms.service.spec.ts.
+    </standards>
+
+    <locations>
+- src/modules/notifications/services/firebase.service.spec.ts (existing test file to update)
+- src/modules/mail/__tests__/services/mail.service.spec.ts (reference for retry test patterns)
+- src/modules/sms/__tests__/services/sms.service.spec.ts (reference for retry test patterns)
+    </locations>
+
+    <ideas>
+<!-- AC-6.5.6.7: Unit Tests - FirebaseService -->
+<test ac="AC-6.5.6.7">
+  <description>Test: Push notification send successful on first attempt</description>
+  <approach>Mock RetryService.executeWithRetry to resolve immediately. Mock admin.messaging().send to return message ID. Verify sendPush completes successfully.</approach>
+</test>
+
+<test ac="AC-6.5.6.7">
+  <description>Test: Push notification retry on network error ('messaging/unavailable')</description>
+  <approach>Mock RetryService.executeWithRetry to simulate retry behavior. Mock admin.messaging().send to reject with 'messaging/unavailable' error. Verify retry is attempted (RetryService called).</approach>
+</test>
+
+<test ac="AC-6.5.6.7">
+  <description>Test: Push notification retry on server error</description>
+  <approach>Mock admin.messaging().send to reject with 'messaging/server-error'. Verify RetryService handles retry.</approach>
+</test>
+
+<test ac="AC-6.5.6.7">
+  <description>Test: Push notification no retry for invalid token ('messaging/invalid-registration-token')</description>
+  <approach>Mock admin.messaging().send to reject with 'messaging/invalid-registration-token' error. Verify error is thrown immediately without retry (check error classification logic).</approach>
+</test>
+
+<test ac="AC-6.5.6.7">
+  <description>Test: Push notification retry exhaustion</description>
+  <approach>Mock RetryService.executeWithRetry to reject after max attempts. Verify final error is thrown.</approach>
+</test>
+
+<test ac="AC-6.5.6.7">
+  <description>Test: Sentry logging preserved during retry</description>
+  <approach>Mock Sentry.captureException. Trigger error scenario. Verify Sentry.captureException is called with correct parameters (module, action, errorType tags).</approach>
+</test>
+
+<test ac="AC-6.5.6.1, AC-6.5.6.8">
+  <description>Test: ConfigService integration for retry configuration</description>
+  <approach>Mock ConfigService.get to return custom retry values. Verify FirebaseService uses configured values (firebaseRetryMaxAttempts, firebaseRetryBaseDelay).</approach>
+</test>
+
+<!-- Additional tests for existing functionality -->
+<test ac="existing">
+  <description>Test: Preserve existing tests (initialization, FIREBASE_ENABLED=false, Firebase not initialized)</description>
+  <approach>Ensure all existing tests continue to pass after retry integration. No regressions in initialization logic, disabled state handling, error handling.</approach>
+</test>
+</ideas>
+  </tests>
+</story-context>

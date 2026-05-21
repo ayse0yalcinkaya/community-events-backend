@@ -1,0 +1,66 @@
+// ============================================================================
+// AUTHENTICATION
+// ============================================================================
+
+// Authentication provider types
+enum AuthProvider {
+  AD // Active Directory (future)
+  LOGIN // Phone/email + password login
+}
+
+model UserProvider {
+  id          String       @id @default(uuid()) @db.Uuid
+  userID      String       @db.Uuid
+  provider    AuthProvider
+  identifier  String // AD: username, LOGIN: phoneNumber
+  credentials String? // LOGIN: password hash, AD: null
+  lastLogin   DateTime?
+  status      Int          @default(1) // 1: Active, 0: Inactive
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@unique([userID, provider])
+  @@unique([provider, identifier])
+  @@index([userID])
+  @@index([provider])
+  @@index([status])
+  @@map("user_providers")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userID    String   @db.Uuid
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([userID])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model OTPVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userID    String   @db.Uuid
+  code      String
+  type      String // EMAIL or SMS
+  purpose   String?
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([userID])
+  @@index([expiresAt])
+  @@map("otp_verifications")
+}

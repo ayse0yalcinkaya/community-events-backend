@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'tr' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= t('ticket-pdf.TITLE') %> - <%= ticket.code %></title>
+</head>
+<body>
+  <div class="document-container">
+    <!-- Header -->
+    <header class="document-header">
+      <div class="logo-section">
+        <h1><%= t('ticket-pdf.TITLE') %></h1>
+      </div>
+      <div class="ticket-code">
+        <span class="label"><%= t('ticket-pdf.TICKET_CODE') %>:</span>
+        <span class="value"><%= ticket.code %></span>
+      </div>
+    </header>
+
+    <!-- Ticket Information -->
+    <section class="ticket-info">
+      <h2><%= t('ticket-pdf.TICKET_INFO') %></h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.SUBJECT') %>:</span>
+          <span class="value"><%= ticket.subject %></span>
+        </div>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.STATUS') %>:</span>
+          <span class="value status-badge status-<%= ticket.status.toLowerCase() %>">
+            <%= ticket.statusLabel %>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.SEVERITY') %>:</span>
+          <span class="value severity-badge severity-<%= ticket.severity.toLowerCase() %>">
+            <%= ticket.severityLabel %>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.CHANNEL') %>:</span>
+          <span class="value"><%= ticket.channelLabel %></span>
+        </div>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.CATEGORY') %>:</span>
+          <span class="value"><%= category.name %></span>
+        </div>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.CREATED_AT') %>:</span>
+          <span class="value"><%= ticket.createdAt %></span>
+        </div>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.UPDATED_AT') %>:</span>
+          <span class="value"><%= ticket.updatedAt %></span>
+        </div>
+      </div>
+      <div class="description">
+        <span class="label"><%= t('ticket-pdf.DESCRIPTION') %>:</span>
+        <p><%= ticket.description %></p>
+      </div>
+    </section>
+
+    <!-- User Information -->
+    <section class="user-info">
+      <h2><%= t('ticket-pdf.USER_INFO') %></h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.USER_NAME') %>:</span>
+          <span class="value"><%= user.fullName %></span>
+        </div>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.EMAIL') %>:</span>
+          <span class="value"><%= user.email %></span>
+        </div>
+        <% if (user.phoneNumber) { %>
+        <div class="info-item">
+          <span class="label"><%= t('ticket-pdf.PHONE') %>:</span>
+          <span class="value"><%= user.phoneNumber %></span>
+        </div>
+        <% } %>
+      </div>
+    </section>
+
+    <!-- Solution Steps -->
+    <% if (solutionSteps && solutionSteps.length > 0) { %>
+    <section class="solution-steps">
+      <h2><%= t('ticket-pdf.SOLUTION_STEPS') %></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><%= t('ticket-pdf.STEP_NAME') %></th>
+            <th><%= t('ticket-pdf.STEP_STATUS') %></th>
+            <th><%= t('ticket-pdf.DEPARTMENT') %></th>
+            <th><%= t('ticket-pdf.ASSIGNED_TO') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% solutionSteps.forEach((step) => { %>
+          <tr>
+            <td><%= step.orderNumber %></td>
+            <td><%= step.solutionName %></td>
+            <td><span class="step-status step-<%= step.status.toLowerCase() %>"><%= step.statusLabel %></span></td>
+            <td><%= step.departmentName || '-' %></td>
+            <td><%= step.assignedUserName || '-' %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </section>
+    <% } %>
+
+    <!-- SLA Status -->
+    <% if (slaStatus && slaStatus.length > 0) { %>
+    <section class="sla-status">
+      <h2><%= t('ticket-pdf.SLA_STATUS') %></h2>
+      <table>
+        <thead>
+          <tr>
+            <th><%= t('ticket-pdf.SLA_NAME') %></th>
+            <th><%= t('ticket-pdf.PROCESS') %></th>
+            <th><%= t('ticket-pdf.PLANNED') %></th>
+            <th><%= t('ticket-pdf.ACTUAL') %></th>
+            <th><%= t('ticket-pdf.STATUS') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% slaStatus.forEach((sla) => { %>
+          <tr class="<%= sla.timeExceeded ? 'time-exceeded' : '' %>">
+            <td><%= sla.slaName %></td>
+            <td><%= sla.solutionName %></td>
+            <td><%= sla.plannedHours || '-' %></td>
+            <td><%= sla.actualHours || '-' %></td>
+            <td>
+              <span class="sla-badge sla-<%= sla.status.toLowerCase() %>"><%= sla.statusLabel %></span>
+              <% if (sla.timeExceeded) { %>
+              <span class="exceeded-badge"><%= t('ticket-pdf.TIME_EXCEEDED') %></span>
+              <% } %>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </section>
+    <% } %>
+
+    <!-- Messages / Conversation -->
+    <% if (messages && messages.length > 0) { %>
+    <section class="messages">
+      <h2><%= t('ticket-pdf.MESSAGES') %></h2>
+      <div class="messages-list">
+        <% messages.forEach((msg) => { %>
+        <div class="message message-<%= msg.senderType.toLowerCase() %>">
+          <div class="message-header">
+            <span class="sender-type"><%= msg.senderTypeLabel %></span>
+            <span class="sender-name"><%= msg.senderName %></span>
+            <span class="message-time"><%= msg.createdAt %></span>
+          </div>
+          <div class="message-content">
+            <p><%= msg.content %></p>
+          </div>
+          <% if (msg.files && msg.files.length > 0) { %>
+          <div class="message-attachments">
+            <span class="attachments-label"><%= t('ticket-pdf.ATTACHMENTS') %>:</span>
+            <% msg.files.forEach((file) => { %>
+              <% if (file.isImage && file.base64Data) { %>
+              <div class="attachment-image">
+                <img src="<%= file.base64Data %>" alt="<%= file.originalName %>" />
+                <span class="image-caption"><%= file.originalName %></span>
+              </div>
+              <% } else { %>
+              <div class="attachment-file">
+                <span class="file-icon">&#128206;</span>
+                <span class="file-name"><%= file.originalName %></span>
+                <span class="file-size">(<%= Math.round(file.size / 1024) %> KB)</span>
+              </div>
+              <% } %>
+            <% }); %>
+          </div>
+          <% } %>
+        </div>
+        <% }); %>
+      </div>
+    </section>
+    <% } %>
+
+    <!-- Footer -->
+    <footer class="document-footer">
+      <p><%= t('ticket-pdf.GENERATED_AT') %>: <%= generatedAt %></p>
+    </footer>
+  </div>
+</body>
+</html>

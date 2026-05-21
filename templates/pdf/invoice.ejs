@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'en' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= t('invoice.title', { defaultValue: 'Invoice' }) %></title>
+</head>
+<body>
+  <div class="invoice-container">
+    <header>
+      <h1><%= t('invoice.title', { defaultValue: 'Invoice' }) %></h1>
+      <p class="invoice-number">
+        <%= t('invoice.number', { args: { number: data.invoiceNumber || 'N/A' }, defaultValue: 'Invoice #' + (data.invoiceNumber || 'N/A') }) %>
+      </p>
+    </header>
+
+    <section class="invoice-details">
+      <div class="from">
+        <h2><%= t('invoice.from', { defaultValue: 'From' }) %></h2>
+        <p><%= data.from?.name || 'Company Name' %></p>
+        <p><%= data.from?.address || 'Address' %></p>
+      </div>
+
+      <div class="to">
+        <h2><%= t('invoice.to', { defaultValue: 'To' }) %></h2>
+        <p><%= data.to?.name || 'Customer Name' %></p>
+        <p><%= data.to?.address || 'Address' %></p>
+      </div>
+    </section>
+
+    <section class="invoice-items">
+      <table>
+        <thead>
+          <tr>
+            <th><%= t('invoice.item', { defaultValue: 'Item' }) %></th>
+            <th><%= t('invoice.quantity', { defaultValue: 'Quantity' }) %></th>
+            <th><%= t('invoice.price', { defaultValue: 'Price' }) %></th>
+            <th><%= t('invoice.total', { defaultValue: 'Total' }) %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (data.items && Array.isArray(data.items)) { %>
+            <% data.items.forEach(item => { %>
+              <tr>
+                <td><%= item.name || 'Item' %></td>
+                <td><%= item.quantity || 0 %></td>
+                <td><%= item.price || 0 %></td>
+                <td><%= (item.quantity || 0) * (item.price || 0) %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="4"><%= t('invoice.noItems', { defaultValue: 'No items' }) %></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="invoice-summary">
+      <div class="total">
+        <strong>
+          <%= t('invoice.grandTotal', { args: { total: data.total || 0 }, defaultValue: 'Grand Total: ' + (data.total || 0) }) %>
+        </strong>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
+

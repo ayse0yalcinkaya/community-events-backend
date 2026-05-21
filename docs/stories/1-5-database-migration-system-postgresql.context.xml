@@ -1,0 +1,225 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>5</storyId>
+    <title>Database Migration System (PostgreSQL)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-5-database-migration-system-postgresql.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Prisma migration system kurulmuş</iWant>
+    <soThat>schema değişikliklerini version control edebileyim</soThat>
+    <tasks>
+      - Task 1: Prisma migrations klasörünü oluştur ve .gitignore'ı yapılandır (AC: 1)
+      - Task 2: İlk migration oluştur - init migration ile core tables (AC: 2, 4)
+      - Task 3: package.json scripts ekle - migration commands (AC: 3)
+      - Task 4: MongoDB için migration skip logic (AC: 5)
+      - Task 5: README migration workflow dokümantasyonu (AC: 6)
+      - Task 6: Integration test ve validation (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-1.5.1: `prisma/migrations/` klasörü oluşturulmuş (gitignore'dan exclude)
+    AC-1.5.2: İlk migration oluşturulmuş (`init` migration - tüm core tables SQL)
+    AC-1.5.3: Migration commands `package.json`'a eklendi (prisma:generate, prisma:migrate, prisma:deploy)
+    AC-1.5.4: Migration başarıyla çalışıyor (PostgreSQL database'de tüm tablolar oluşuyor)
+    AC-1.5.5: MongoDB için migration skip ediliyor (schema.prisma MongoDB ise migrate command hata vermiyor veya warning veriyor)
+    AC-1.5.6: README'de migration workflow açıklanmış (adımlar documented)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-1.md" title="Epic 1 Technical Specification" section="AC-1.5.1 - AC-1.5.6">
+        Complete acceptance criteria specifications for migration system. Defines migration workflow, commands, PostgreSQL-specific implementation, MongoDB skip logic, and documentation requirements.
+      </doc>
+      <doc path="docs/tech-spec-epic-1.md" title="Epic 1 Technical Specification" section="Data Models and Contracts">
+        Complete database schema definition for all core entities: User, RefreshToken, OTPVerification, Permission, Role, UserPermission, UserRole, RolePermission, File, Notification, NotificationPreference. Multi-tenancy domainID pattern and soft-delete pattern defined.
+      </doc>
+      <doc path="docs/tech-spec-epic-1.md" title="Epic 1 Technical Specification" section="Workflows and Sequencing">
+        Database setup flow and migration workflow. Init migration creates all core tables. Migration commands: prisma migrate dev (development), prisma migrate deploy (production).
+      </doc>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 1.5">
+        User story definition: Database migration system for PostgreSQL with version control. Includes init migration, package.json scripts, MongoDB skip logic, README documentation.
+      </doc>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Database & ORM">
+        Prisma ORM v6.16.0+ configuration, migration patterns, connection pooling, multi-tenancy support via domainID fields.
+      </doc>
+      <doc path="docs/tech-spec-epic-1.md" title="Epic 1 Technical Specification" section="NFR - Reliability/Availability">
+        Migration rollback strategy, transactional migrations (PostgreSQL DDL support), shadow database validation, migration lock mechanism.
+      </doc>
+      <doc path="docs/tech-spec-epic-1.md" title="Epic 1 Technical Specification" section="Dependencies and Integrations">
+        Prisma v6.16.0+ dependency, PostgreSQL 15+ database server, migration system integration points with PrismaService.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/database/prisma.service.ts" kind="service" symbol="PrismaService" lines="1-31" reason="Existing PrismaService extends PrismaClient, provides database connection lifecycle management. Migration will use this service for database operations.">
+      </artifact>
+      <artifact path="src/database/prisma.module.ts" kind="module" symbol="PrismaModule" lines="1-8" reason="Global module providing PrismaService. Migration system integrates with this module for database access.">
+      </artifact>
+      <artifact path="prisma/schema.prisma" kind="schema" symbol="PostgreSQL Schema" lines="1-250" reason="Complete database schema for PostgreSQL. Init migration will generate SQL from this schema to create all tables: users, permissions, roles, refresh_tokens, otp_verifications, user_permissions, user_roles, role_permissions, files, notifications, notification_preferences.">
+      </artifact>
+      <artifact path="prisma/schema-postgres.prisma" kind="schema-source" symbol="Source PostgreSQL Schema" lines="all" reason="Source schema file for PostgreSQL database. Contains original entity definitions copied to schema.prisma during setup.">
+      </artifact>
+      <artifact path="prisma/schema-mongodb.prisma" kind="schema-source" symbol="Source MongoDB Schema" lines="all" reason="Source schema file for MongoDB database. Used for MongoDB projects (schemaless, no migrations).">
+      </artifact>
+      <artifact path="package.json" kind="manifest" symbol="NPM Package Manifest" lines="8-21" reason="Existing scripts section. Will add migration commands: prisma:generate, prisma:migrate, prisma:deploy.">
+      </artifact>
+      <artifact path="scripts/setup.ts" kind="script" symbol="Database Setup Script" lines="all" reason="Setup script from Story 1.3 that copies schema files. Determines database type (PostgreSQL vs MongoDB) for migration logic.">
+      </artifact>
+      <artifact path=".gitignore" kind="config" symbol="Git Ignore Configuration" lines="all" reason="Git ignore file. Must ensure prisma/migrations/ is NOT ignored (migrations need version control).">
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@prisma/client" version="^6.18.0">Prisma Client for database operations</package>
+        <package name="prisma" version="^6.18.0">Prisma CLI for migrations and schema management</package>
+        <package name="@nestjs/common" version="^11.0.1">NestJS core framework</package>
+        <package name="@nestjs/core" version="^11.0.1">NestJS dependency injection and modules</package>
+        <package name="typescript" version="^5.7.3">TypeScript compiler</package>
+        <package name="ts-node" version="^10.9.2">TypeScript execution for scripts</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    **Multi-tenancy Pattern:**
+    - Every entity MUST include domainID field (UUID type)
+    - All queries MUST filter by domainID for data isolation
+    - Migration SQL must include domainID columns and indexes
+
+    **Soft-Delete Pattern:**
+    - User and File entities use deletedAt field (nullable DateTime)
+    - Queries filter deletedAt IS NULL to exclude soft-deleted records
+    - Migration creates deletedAt columns with proper indexes
+
+    **Foreign Key Constraints:**
+    - Cascade deletes: RefreshToken, OTPVerification, UserPermission, UserRole (onDelete: Cascade)
+    - User-related tables cascade on user deletion
+    - Migration SQL must include CASCADE constraints
+
+    **Index Strategy:**
+    - Index on domainID for all tables (multi-tenancy performance)
+    - Index on frequently queried fields: email, token, userID, expiresAt
+    - Unique constraints: [module, action], [domainID, name], [userID, permissionID, domainID]
+    - Migration generates all indexes
+
+    **Migration Safety:**
+    - Transactional DDL (PostgreSQL support - rollback on error)
+    - Shadow database validation (Prisma creates temp DB to validate)
+    - Migration lock file prevents concurrent migrations
+    - All migrations committed to Git (NOT in .gitignore)
+
+    **Provider-Specific Logic:**
+    - PostgreSQL: Full migration system (SQL files generated)
+    - MongoDB: Skip migrations (schemaless database, no SQL)
+    - Conditional logic based on schema.prisma provider field
+
+    **Version Control:**
+    - migrations/ folder MUST NOT be in .gitignore
+    - All migration files tracked in Git
+    - Migration history maintained in _prisma_migrations table
+  </constraints>
+
+  <interfaces>
+    **Prisma Migration CLI:**
+    - Command: `npx prisma migrate dev --name <migration_name>`
+      - Creates new migration with timestamp prefix
+      - Applies migration to database
+      - Regenerates Prisma Client
+      - Interactive (prompts for migration name)
+
+    - Command: `npx prisma migrate deploy`
+      - Applies pending migrations only
+      - Non-interactive (CI/CD safe)
+      - Fails if schema drift detected
+
+    - Command: `npx prisma generate`
+      - Generates Prisma Client from schema
+      - Required after schema changes
+      - Updates TypeScript types
+
+    - Command: `npx prisma migrate resolve --rolled-back <migration_name>`
+      - Marks failed migration as rolled back
+      - Used for manual rollback resolution
+
+    **package.json Scripts to Add:**
+    - `"prisma:generate": "prisma generate"` - Generate Prisma Client
+    - `"prisma:migrate": "prisma migrate dev"` - Run migration in development
+    - `"prisma:deploy": "prisma migrate deploy"` - Deploy migrations to production
+
+    **Migration File Structure:**
+    ```
+    prisma/migrations/
+    ├── <timestamp>_init/
+    │   └── migration.sql  (CREATE TABLE statements)
+    ├── migration_lock.toml (provider: "postgresql")
+    └── _prisma_migrations (metadata table, auto-created)
+    ```
+
+    **PrismaService Interface (from Story 1.4):**
+    - `PrismaService extends PrismaClient`
+    - `async onModuleInit()` - Database connection
+    - `async $queryRaw<template>` - Raw SQL queries
+    - Used for testing migration results
+  </interfaces>
+
+  <tests>
+    <standards>
+      **Testing Framework:** Jest v30.0.0 (configured in package.json)
+      **Test Location:** src/**/*.spec.ts for unit tests, test/**/*.e2e-spec.ts for E2E tests
+      **Integration Testing:** Test migration execution, verify table creation, check schema constraints
+      **Database:** Use test database for integration tests (separate from development DB)
+      **Cleanup:** Drop tables between tests for clean state
+    </standards>
+
+    <locations>
+      - Unit tests: src/**/*.spec.ts
+      - Integration tests: test/**/*.integration.spec.ts
+      - E2E tests: test/**/*.e2e-spec.ts
+      - Coverage: coverage/ directory (generated by jest --coverage)
+    </locations>
+
+    <ideas>
+      **AC-1.5.1 Test Ideas:**
+      - Verify prisma/migrations/ folder exists after migration
+      - Check .gitignore does NOT contain prisma/migrations/
+      - Verify migration_lock.toml created with provider: "postgresql"
+
+      **AC-1.5.2 Test Ideas:**
+      - Run `npx prisma migrate dev --name init`
+      - Verify migration SQL file created in migrations/<timestamp>_init/
+      - Check SQL contains CREATE TABLE for all core entities
+      - Verify _prisma_migrations table has init migration record
+      - Query information_schema.tables to list all created tables
+
+      **AC-1.5.3 Test Ideas:**
+      - Check package.json has prisma:generate script
+      - Check package.json has prisma:migrate script
+      - Check package.json has prisma:deploy script
+      - Run `npm run prisma:generate` successfully
+      - Run `npm run prisma:migrate` successfully
+
+      **AC-1.5.4 Test Ideas:**
+      - Connect to PostgreSQL database after migration
+      - Query each table to verify it exists
+      - Check foreign key constraints (INFORMATION_SCHEMA.TABLE_CONSTRAINTS)
+      - Verify indexes created (pg_indexes view)
+      - Test simple INSERT into User table
+
+      **AC-1.5.5 Test Ideas:**
+      - Test with MongoDB schema (schema.prisma provider: "mongodb")
+      - Verify migration command gracefully skips or warns
+      - Ensure no error thrown for MongoDB projects
+
+      **AC-1.5.6 Test Ideas:**
+      - Verify README.md contains "Database Migrations" section
+      - Check documentation includes migration workflow steps
+      - Verify migration naming best practices documented
+    </ideas>
+  </tests>
+</story-context>

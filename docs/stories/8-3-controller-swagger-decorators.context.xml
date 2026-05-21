@@ -1,0 +1,549 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>8.3</storyId>
+    <title>Controller Swagger Decorators</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8-3-controller-swagger-decorators.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Swagger decorators applied to all controller endpoints</iWant>
+    <soThat>every API endpoint is properly documented with request/response schemas and authentication requirements</soThat>
+    <tasks>
+- [ ] Task 1: Create custom decorator infrastructure (AC: 8.3.1)
+  - [ ] Subtask 1.1: Create `src/common/decorators/api-endpoint.decorator.ts`
+  - [ ] Subtask 1.2: Import required decorators from `@nestjs/swagger`
+  - [ ] Subtask 1.3: Import factory functions from `@/common/swagger`
+  - [ ] Subtask 1.4: Define `ApiEndpointOptions` interface
+  - [ ] Subtask 1.5: Implement `ApiEndpoint()` decorator function
+  - [ ] Subtask 1.6: Add conditional logic for `isPublic` option
+  - [ ] Subtask 1.7: Add conditional logic for `isPaginated` option
+  - [ ] Subtask 1.8: Use `applyDecorators()` to compose decorator array
+  - [ ] Subtask 1.9: Add JSDoc documentation with usage examples
+
+- [ ] Task 2: Create CRUD shortcut decorators (AC: 8.3.2)
+  - [ ] Subtask 2.1: Create `src/common/decorators/api-crud.decorator.ts`
+  - [ ] Subtask 2.2: Import `ApiEndpoint` and Swagger decorators
+  - [ ] Subtask 2.3: Implement `@ApiGetAll(type)` decorator
+  - [ ] Subtask 2.4: Implement `@ApiGetOne(type)` with `@ApiNotFoundResponse()`
+  - [ ] Subtask 2.5: Implement `@ApiCreate(type)` with `@ApiCreatedResponse()`
+  - [ ] Subtask 2.6: Implement `@ApiUpdate(type)` with `@ApiNotFoundResponse()`
+  - [ ] Subtask 2.7: Implement `@ApiDelete()` with `@ApiNoContentResponse()`
+  - [ ] Subtask 2.8: Add JSDoc documentation for each decorator
+
+- [ ] Task 3: Update AuthController with Swagger decorators (AC: 8.3.3, 8.3.4, 8.3.5)
+  - [ ] Subtask 3.1: Add `@ApiTags('Authentication')` to controller class
+  - [ ] Subtask 3.2: Document `POST /auth/register` endpoint
+  - [ ] Subtask 3.3: Document `POST /auth/login/admin` endpoint
+  - [ ] Subtask 3.4: Document `POST /auth/login/otp/request` endpoint
+  - [ ] Subtask 3.5: Document `POST /auth/login/otp/verify` endpoint
+  - [ ] Subtask 3.6: Document `POST /auth/refresh` endpoint (mark as public)
+  - [ ] Subtask 3.7: Document `POST /auth/logout` endpoint
+  - [ ] Subtask 3.8: Document `POST /auth/forgot-password` endpoint (mark as public)
+  - [ ] Subtask 3.9: Document `POST /auth/reset-password` endpoint (mark as public)
+  - [ ] Subtask 3.10: Document `POST /auth/verify-phone` endpoint (mark as public)
+  - [ ] Subtask 3.11: Document `POST /auth/resend-otp` endpoint (mark as public)
+
+- [ ] Task 4: Update UsersController with Swagger decorators (AC: 8.3.3, 8.3.4, 8.3.5)
+  - [ ] Subtask 4.1: Add `@ApiTags('Users')` to controller class
+  - [ ] Subtask 4.2: Apply `@ApiGetAll(UserResDto)` to `GET /users`
+  - [ ] Subtask 4.3: Add `@ApiQuery()` decorators for pagination params
+  - [ ] Subtask 4.4: Apply `@ApiGetOne(UserResDto)` to `GET /users/:id`
+  - [ ] Subtask 4.5: Add `@ApiParam()` decorator for `id` parameter
+  - [ ] Subtask 4.6: Apply `@ApiCreate(UserResDto)` to `POST /users`
+  - [ ] Subtask 4.7: Apply `@ApiUpdate(UserResDto)` to `PATCH /users/:id`
+  - [ ] Subtask 4.8: Add `@ApiParam()` decorator for `id` parameter
+  - [ ] Subtask 4.9: Apply `@ApiDelete()` to `DELETE /users/:id`
+  - [ ] Subtask 4.10: Add `@ApiParam()` decorator for `id` parameter
+
+- [ ] Task 5: Update ProfileController with Swagger decorators (AC: 8.3.3, 8.3.4)
+  - [ ] Subtask 5.1: Add `@ApiTags('Profile')` to controller class
+  - [ ] Subtask 5.2: Apply `@ApiGetOne(UserResDto)` to `GET /users/me`
+  - [ ] Subtask 5.3: Apply `@ApiUpdate(UserResDto)` to `PATCH /users/me`
+
+- [ ] Task 6: Update PermissionsController with Swagger decorators (AC: 8.3.3, 8.3.4, 8.3.5)
+  - [ ] Subtask 6.1: Add `@ApiTags('Permissions')` to controller class
+  - [ ] Subtask 6.2: Apply `@ApiGetAll(PermissionResDto)` to `GET /permissions`
+  - [ ] Subtask 6.3: Document `GET /permissions/modules` endpoint
+  - [ ] Subtask 6.4: Document `GET /permissions/users/:id/permissions` endpoint
+  - [ ] Subtask 6.5: Document `POST /permissions/users/:id/permissions` endpoint
+  - [ ] Subtask 6.6: Document `DELETE /permissions/users/:id/permissions` endpoint
+
+- [ ] Task 7: Update FilesController with Swagger decorators (AC: 8.3.3, 8.3.4, 8.3.5)
+  - [ ] Subtask 7.1: Add `@ApiTags('Files')` to controller class
+  - [ ] Subtask 7.2: Document `POST /files/upload` endpoint with `@ApiConsumes('multipart/form-data')`
+  - [ ] Subtask 7.3: Add `@ApiBody()` decorator for file upload specification
+  - [ ] Subtask 7.4: Apply `@ApiGetAll(FileResDto)` to `GET /files`
+  - [ ] Subtask 7.5: Apply `@ApiGetOne(FileResDto)` to `GET /files/:id`
+  - [ ] Subtask 7.6: Document `GET /files/:id/download` endpoint
+  - [ ] Subtask 7.7: Apply `@ApiDelete()` to `DELETE /files/:id`
+
+- [ ] Task 8: Update Auth DTOs with `@ApiProperty()` decorators (AC: 8.3.6)
+  - [ ] Subtask 8.1: Update `RegisterDto` with example values
+  - [ ] Subtask 8.2: Update `LoginAdminDto` with example values
+  - [ ] Subtask 8.3: Update auth response DTOs
+
+- [ ] Task 9: Update User/Permission DTOs with `@ApiProperty()` decorators (AC: 8.3.6)
+  - [ ] Subtask 9.1: Update `CreateUserDto` with example values
+  - [ ] Subtask 9.2: Update `UpdateUserDto` with example values
+  - [ ] Subtask 9.3: Update permission DTOs
+
+- [ ] Task 10: Update File DTOs with `@ApiProperty()` decorators (AC: 8.3.6)
+  - [ ] Subtask 10.1: Update file upload DTOs
+  - [ ] Subtask 10.2: Add `@ApiProperty()` for file metadata fields
+
+- [ ] Task 11: Verify Response DTOs (AC: 8.3.7)
+  - [ ] Subtask 11.1: Verify `UserResDto` has correct decorators
+  - [ ] Subtask 11.2: Verify `PermissionResDto` has correct decorators
+  - [ ] Subtask 11.3: Verify `FileResDto` has correct decorators
+  - [ ] Subtask 11.4: Check all sensitive fields have `@Exclude()` decorator
+
+- [ ] Task 12: Export decorators from barrel file
+  - [ ] Subtask 12.1: Update `src/common/decorators/index.ts`
+  - [ ] Subtask 12.2: Export `ApiEndpoint` decorator
+  - [ ] Subtask 12.3: Export all CRUD shortcut decorators
+
+- [ ] Task 13: Manual Swagger UI validation (AC: 8.3.8)
+  - [ ] Subtask 13.1: Start application in development mode
+  - [ ] Subtask 13.2: Navigate to `http://localhost:3000/api/docs`
+  - [ ] Subtask 13.3: Verify all controllers appear with correct tags
+  - [ ] Subtask 13.4: Test "Try it out" functionality
+
+- [ ] Task 14: Write unit tests for custom decorators
+  - [ ] Subtask 14.1: Create test file for `@ApiEndpoint` decorator
+  - [ ] Subtask 14.2: Test decorator composition
+  - [ ] Subtask 14.3: Create test file for CRUD shortcuts
+  - [ ] Subtask 14.4: Run tests and verify all pass
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **AC-8.3.1:** Custom `@ApiEndpoint` decorator created
+   - File: `src/common/decorators/api-endpoint.decorator.ts`
+   - Function signature: `ApiEndpoint(summary: string, options?: ApiEndpointOptions)`
+   - Options interface includes: `type?`, `isPaginated?`, `isPublic?`
+   - Automatically applies: `@ApiOperation`, `@ApiBadRequestResponse`, `@ApiBearerAuth`, `@ApiUnauthorizedResponse`, `@ApiOkResponse`
+   - Uses `createApiResponseClass()` for single responses
+   - Uses `createPaginatedApiResponseClass()` for paginated responses
+
+2. **AC-8.3.2:** CRUD shortcut decorators created
+   - File: `src/common/decorators/api-crud.decorator.ts`
+   - Decorators: `@ApiGetAll`, `@ApiGetOne`, `@ApiCreate`, `@ApiUpdate`, `@ApiDelete`
+   - Each shortcut wraps `@ApiEndpoint` with appropriate settings
+
+3. **AC-8.3.3:** All controllers have `@ApiTags()` decorator
+   - AuthController - Tag: "Authentication"
+   - UsersController - Tag: "Users"
+   - ProfileController - Tag: "Profile"
+   - PermissionsController - Tag: "Permissions"
+   - FilesController - Tag: "Files"
+
+4. **AC-8.3.4:** All controller methods have endpoint documentation
+   - CRUD shortcuts or custom `@ApiEndpoint()` for all methods
+   - Summary text in Turkish
+   - Response DTO types specified
+   - Public endpoints marked with `isPublic: true`
+
+5. **AC-8.3.5:** Path and query parameters documented
+   - `@ApiParam()` for all path parameters
+   - `@ApiQuery()` for query parameters
+   - Descriptions in Turkish
+
+6. **AC-8.3.6:** Request DTOs have `@ApiProperty()` decorators
+   - All request DTOs updated
+   - Example values provided
+   - Enum values documented
+
+7. **AC-8.3.7:** Response DTOs verified for Swagger metadata
+   - All response DTOs checked for `@Expose()` decorators
+   - Sensitive fields marked with `@Exclude()`
+
+8. **AC-8.3.8:** Swagger UI validation complete
+   - All controllers visible at `/api/docs`
+   - All endpoints listed with summaries
+   - "Try it out" functionality works
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-8.md</path>
+        <title>Epic 8 Technical Specification - API Documentation (Swagger)</title>
+        <section>APIs and Interfaces - Custom Decorator Interfaces</section>
+        <snippet>Defines ApiEndpoint decorator interface with type, isPaginated, and isPublic options. Automatically applies ApiOperation, response schemas, and authentication decorators. CRUD shortcuts wrap ApiEndpoint for common operations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-8.md</path>
+        <title>Epic 8 Technical Specification</title>
+        <section>Data Models and Contracts - Response Wrapper Classes</section>
+        <snippet>Factory functions create runtime response classes: createApiResponseClass() for single items, createPaginatedApiResponseClass() for arrays with count. ErrorApiResponseClass for errors.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-8.md</path>
+        <title>Epic 8 Technical Specification</title>
+        <section>Workflows and Sequencing - Story 8.3</section>
+        <snippet>Implementation workflow: 1) Create api-endpoint.decorator.ts with ApiEndpoint() 2) Create api-crud.decorator.ts with shortcuts 3) Apply decorators to all controllers (Auth, Users, Profile, Permissions, Files) 4) Add @ApiProperty to DTOs 5) Verify Swagger UI</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-8-api-documentation-swagger.md</path>
+        <title>Epic 8: API Documentation (Swagger)</title>
+        <section>Story 8.3 - Controller Swagger Decorators</section>
+        <snippet>As a developer, I want controller endpoints with Swagger decorators, so that every endpoint is documented. Acceptance: @ApiTags on controllers, @ApiOperation on methods, @ApiProperty on DTOs, example values in Swagger UI.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/api-contracts.md</path>
+        <title>API Contracts</title>
+        <section>Response Format Standards</section>
+        <snippet>Success response: {success: true, status: 200|201, data: T|T[], count?: number, message: string}. Error response: {success: false, status: 4xx|5xx, message: string, errors?: Array}. HTTP status codes: 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns</title>
+        <section>API Response Format (Auto-Wrapped by Interceptor)</section>
+        <snippet>Controllers return DTOs directly. Interceptor auto-wraps in {success, status, data, message} format. Paginated responses return {data, count} and interceptor adds success/status/message. Factory classes must match this format.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns</title>
+        <section>Controller Pattern</section>
+        <snippet>Controller pattern: @ApiTags at class level, @Controller with path, @ApiBearerAuth for auth, @UseGuards for JWT/permissions, methods use @ApiOperation and response decorators, return DTOs directly (interceptor wraps).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Unit Tests</section>
+        <snippet>Unit testing pattern: Arrange-Act-Assert. Test decorator composition, verify correct decorators applied, check isPublic/isPaginated options. Coverage target: 90% for custom decorators.</snippet>
+      </doc>
+      <doc>
+        <path>stories/8-2-swagger-response-factory-functions.md</path>
+        <title>Story 8.2 - Swagger Response Factory Functions</title>
+        <section>Completion Notes</section>
+        <snippet>Factory functions implemented and tested. createApiResponseClass() and createPaginatedApiResponseClass() available at src/common/swagger/api-response.factory.ts. ErrorApiResponseClass for error responses. All exported from src/common/swagger/index.ts. 21 unit tests passing.</snippet>
+      </doc>
+      <doc>
+        <path>stories/8-1-swagger-module-setup.md</path>
+        <title>Story 8.1 - Swagger Module Setup</title>
+        <section>Completion Notes</section>
+        <snippet>Swagger UI operational at /api/docs with environment control. DocumentBuilder configured with Bearer JWT authentication. Plugin enabled in nest-cli.json for compile-time metadata extraction. All prerequisites for decorator application ready.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/common/swagger/api-response.factory.ts</path>
+        <kind>factory</kind>
+        <symbol>createApiResponseClass</symbol>
+        <lines>35-63</lines>
+        <reason>Factory function to create runtime response classes for Swagger. Use this in @ApiEndpoint decorator to generate type-safe response schemas. Returns class with success, status, data, message properties.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/swagger/api-response.factory.ts</path>
+        <kind>factory</kind>
+        <symbol>createPaginatedApiResponseClass</symbol>
+        <lines>69-97</lines>
+        <reason>Factory function for paginated response classes. Use in @ApiEndpoint with isPaginated: true option. Returns class with success, status, data[], count, message properties.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/swagger/api-response.factory.ts</path>
+        <kind>class</kind>
+        <symbol>ErrorApiResponseClass</symbol>
+        <lines>99-114</lines>
+        <reason>Standard error response class for Swagger. Use in @ApiBadRequestResponse and other error decorators. Properties: success: false, status, message, errors?</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/swagger/index.ts</path>
+        <kind>barrel</kind>
+        <symbol>exports</symbol>
+        <lines>1-4</lines>
+        <reason>Barrel export for Swagger utilities. Import factory functions from this path: import { createApiResponseClass, ErrorApiResponseClass } from '@/common/swagger'</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>AuthController</symbol>
+        <lines>1-200</lines>
+        <reason>Authentication controller with 10 route methods. Needs @ApiTags('Authentication'), @ApiOperation on each method, @ApiBody for request DTOs, @ApiResponse for responses. Public endpoints: register, refresh, forgotPassword, resetPassword, verifyPhone, resendOtp.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/users.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>UsersController</symbol>
+        <lines>1-230</lines>
+        <reason>Users CRUD controller with 5 methods. Needs @ApiTags('Users'), CRUD shortcuts (@ApiGetAll, @ApiGetOne, @ApiCreate, @ApiUpdate, @ApiDelete), @ApiQuery for pagination, @ApiParam for :id parameter.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/profile.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>ProfileController</symbol>
+        <lines>1-83</lines>
+        <reason>Profile self-service controller with getProfile and updateProfile methods. Needs @ApiTags('Profile'), @ApiGetOne for GET, @ApiUpdate for PATCH.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/permissions/controllers/permissions.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>PermissionsController</symbol>
+        <lines>1-215</lines>
+        <reason>Permissions controller with 5 methods. Needs @ApiTags('Permissions'), custom @ApiEndpoint decorators for specialized operations (getAllPermissions, getPermissionModules, getUserPermissions, assignPermissions, revokePermissions).</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/controllers/files.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>FilesController</symbol>
+        <lines>1-333</lines>
+        <reason>File management controller with upload, list, get, download, delete methods. Needs @ApiTags('Files'), @ApiConsumes('multipart/form-data') for upload, @ApiBody with file schema, CRUD shortcuts for other methods.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/index.ts</path>
+        <kind>barrel</kind>
+        <symbol>exports</symbol>
+        <lines>1-7</lines>
+        <reason>Decorators barrel export. Add new exports for ApiEndpoint and CRUD shortcuts here. Current exports: @Permission, @CurrentUser, @Public, @ApiPaginatedResponse.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public</symbol>
+        <lines>1-15</lines>
+        <reason>Marks endpoints as public (no JWT required). Use this to identify which endpoints should have isPublic: true in @ApiEndpoint options.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/api-paginated-response.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>ApiPaginatedResponse</symbol>
+        <lines>1-98</lines>
+        <reason>Existing Swagger decorator for paginated responses. Similar pattern to CRUD shortcuts - composes multiple Swagger decorators. Use as reference for implementing @ApiEndpoint and CRUD decorators.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/response/user-res.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>UserResDto</symbol>
+        <lines>1-37</lines>
+        <reason>User response DTO. Already has @Expose decorators. Verify @ApiProperty decorators are present. Properties: id, phoneNumber, firstName, lastName, email, role, isActive, phoneVerified, createdAt, updatedAt.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/files/dto/response/file-res.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>FileResDto</symbol>
+        <lines>1-42</lines>
+        <reason>File response DTO. Uses @Expose and @Transform decorators. Verify @ApiProperty decorators. Properties: id, filename, originalName, mimeType, size, sizeFormatted, createdAt.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/dto/register.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>RegisterDto</symbol>
+        <lines>1-43</lines>
+        <reason>Registration request DTO. Add @ApiProperty with example values. Properties: phoneNumber, firstName, lastName, role, password?, email?.</reason>
+      </artifact>
+      <artifact>
+        <path>src/main.ts</path>
+        <kind>config</kind>
+        <symbol>SwaggerModule setup</symbol>
+        <lines>37-68</lines>
+        <reason>Swagger configuration in main.ts. DocumentBuilder with Bearer JWT auth configured. Swagger UI at /api/docs. Environment-controlled with SWAGGER_ENABLED. Reference for understanding Bearer auth setup (JWT-auth scheme name).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>@nestjs/swagger</package>
+        <version>^11.2.1</version>
+        <reason>Core Swagger/OpenAPI integration for NestJS. Provides all decorator functions: ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery, ApiProperty, etc.</reason>
+      </node>
+      <package>@nestjs/common</package>
+        <version>^11.0.1</version>
+        <reason>NestJS core decorators. Provides applyDecorators() for decorator composition, Type helper for generic types, and all HTTP method decorators.</reason>
+      </node>
+      <node>
+        <package>class-transformer</package>
+        <version>^0.5.1</version>
+        <reason>DTO transformation with @Expose and @Exclude decorators. Already used in response DTOs for field filtering.</reason>
+      </node>
+      <node>
+        <package>class-validator</package>
+        <version>^0.14.1</version>
+        <reason>Validation decorators. Swagger plugin auto-infers types from these decorators (@IsString, @IsNumber, etc.).</reason>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+**Decorator Composition:**
+- Use `applyDecorators()` from @nestjs/common to combine multiple decorators into single function
+- Return type must be MethodDecorator for controller method decorators
+- Order matters for metadata registration - apply decorators in logical sequence
+
+**Turkish Communication Language:**
+- All endpoint summaries in Turkish (configured in bmad/bmm/config.yaml: communication_language: Turkish)
+- Parameter descriptions in Turkish
+- Example values can be in English (technical context)
+
+**Response Format Alignment:**
+- Factory classes MUST match LoggingInterceptor structure
+- Success: {success: true, status: 200|201, data: T, message: string}
+- Paginated: {success: true, status: 200, data: T[], count: number, message: string}
+- Error: {success: false, status: 4xx|5xx, message: string, errors?: string[]}
+
+**Import Path Standards:**
+- Use @/common/swagger for factory functions (path alias configured)
+- Use @/common/decorators for custom decorators
+- Follow 8-group import organization: Libraries, DTOs, Services, Repositories, Entities, Interfaces, Enums, Events
+
+**Swagger Plugin Configuration:**
+- Plugin enabled in nest-cli.json with classValidatorShim: true
+- Auto-infers types from class-validator decorators
+- Explicit @ApiProperty still needed for example values and descriptions
+- Plugin works on DTOs but decorators must be manually applied to controllers
+
+**File Organization:**
+- Custom decorators in src/common/decorators/
+- Test files in __tests__/ subdirectory
+- Barrel exports in index.ts for clean imports
+- Swagger utilities in src/common/swagger/
+
+**Testing Requirements:**
+- Unit tests for decorator composition (90% coverage target)
+- Verify correct decorators applied in different scenarios
+- Test isPublic and isPaginated options
+- Manual Swagger UI validation critical for integration verification
+  </constraints>
+
+  <interfaces>
+**ApiEndpoint Decorator Interface:**
+```typescript
+interface ApiEndpointOptions {
+  type?: any;              // Response DTO class
+  isPaginated?: boolean;   // Use paginated response class
+  isPublic?: boolean;      // Skip auth decorators
+}
+
+function ApiEndpoint(summary: string, options?: ApiEndpointOptions): MethodDecorator
+```
+
+**CRUD Shortcut Decorators:**
+```typescript
+// All return MethodDecorator
+ApiGetAll(type: any)      // Paginated list with summary "Tümünü listele"
+ApiGetOne(type: any)      // Single item with summary "Detayı getir", includes 404
+ApiCreate(type: any)      // Create with summary "Yeni kayıt oluştur", 201 response
+ApiUpdate(type: any)      // Update with summary "Kaydı güncelle", includes 404
+ApiDelete()               // Delete with summary "Kaydı sil", 204 response, includes 404
+```
+
+**Factory Functions (from Story 8.2):**
+```typescript
+// Located at: src/common/swagger/api-response.factory.ts
+createApiResponseClass<T>(DataDto: Type<T>): Type<ApiResponse<T>>
+createPaginatedApiResponseClass<T>(DataDto: Type<T>): Type<PaginatedApiResponse<T>>
+class ErrorApiResponseClass { success: false, status: number, message: string, errors?: string[] }
+```
+
+**Response Interfaces:**
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  status: number;
+  data: T;
+  message: string;
+}
+
+interface PaginatedApiResponse<T> {
+  success: boolean;
+  status: number;
+  data: T[];
+  count: number;
+  message: string;
+}
+```
+
+**Swagger Decorators to Use:**
+```typescript
+import {
+  ApiTags,              // Controller grouping
+  ApiOperation,         // Endpoint summary
+  ApiBearerAuth,        // JWT auth requirement
+  ApiOkResponse,        // 200 success response
+  ApiCreatedResponse,   // 201 created response
+  ApiNoContentResponse, // 204 no content response
+  ApiBadRequestResponse,    // 400 error
+  ApiUnauthorizedResponse,  // 401 error
+  ApiNotFoundResponse,      // 404 error
+  ApiParam,             // Path parameter
+  ApiQuery,             // Query parameter
+  ApiBody,              // Request body
+  ApiConsumes,          // Content type (multipart/form-data for file upload)
+  ApiProperty,          // DTO field documentation
+  ApiPropertyOptional,  // Optional DTO field
+} from '@nestjs/swagger';
+```
+  </interfaces>
+
+  <tests>
+    <standards>
+**Unit Testing (Primary for Decorators):**
+- Framework: Jest (already configured in project)
+- Pattern: Arrange-Act-Assert
+- Coverage Target: 90% for custom decorator logic
+- Test Files:
+  - src/common/decorators/__tests__/api-endpoint.decorator.spec.ts
+  - src/common/decorators/__tests__/api-crud.decorator.spec.ts
+- Test Cases:
+  - Verify @ApiEndpoint applies all required decorators
+  - Test isPublic: true excludes auth decorators
+  - Test isPaginated: true uses paginated response class
+  - Verify CRUD shortcuts apply correct decorator composition
+  - Test return types are valid MethodDecorators
+
+**Manual Swagger UI Testing (Critical):**
+- Environment: Development with SWAGGER_ENABLED=true
+- URL: http://localhost:3000/api/docs
+- Validation Checklist:
+  - All 5-6 controllers visible with correct tags
+  - All endpoints listed under correct controller
+  - Summaries in Turkish
+  - Request schemas show all fields with examples
+  - Response schemas match DTO structure
+  - Paginated responses show count property
+  - Error responses documented (400, 401, 403, 404)
+  - "Authorize" button functional
+  - JWT token input works
+  - "Try it out" executes requests successfully
+
+**Integration Testing (E2E):**
+- Test OpenAPI JSON export at /api/docs-json
+- Validate document structure and completeness
+- Verify all paths and operations present
+- Check security requirements documented
+    </standards>
+    <locations>
+- Unit tests: src/common/decorators/__tests__/*.spec.ts
+- E2E tests: test/swagger.e2e-spec.ts (create new file)
+- Test utilities: test/factories/ (for mock data)
+    </locations>
+    <ideas>
+**Test Ideas Mapped to Acceptance Criteria:**
+
+AC-8.3.1 (ApiEndpoint Decorator):
+- Test that ApiEndpoint with no options applies operation + bad request response
+- Test that ApiEndpoint with type applies Ok response with correct class
+- Test that isPublic: true skips ApiBearerAuth and ApiUnauthorizedResponse
+- Test that isPaginated: true uses createPaginatedApiResponseClass
+- Test that isPublic: false (default) includes auth decorators
+
+AC-8.3.2 (CRUD Shortcuts):
+- Test ApiGetAll applies paginated response and correct summary
+- Test ApiGetOne applies NotFoundResponse
+- Test ApiCreate applies CreatedResponse with 201 status
+- Test ApiUpdate applies NotFoundResponse
+- Test ApiDelete applies NoContentResponse and NotFoundResponse
+
+AC-8.3.8 (Swagger UI Integration):
+- Test /api/docs returns 200 when SWAGGER_ENABLED=true
+- Test /api/docs-json exports valid OpenAPI 3.0 document
+- Test all controller tags present in document
+- Test authentication requirements documented
+- Test request/response schemas complete
+    </ideas>
+  </tests>
+</story-context>

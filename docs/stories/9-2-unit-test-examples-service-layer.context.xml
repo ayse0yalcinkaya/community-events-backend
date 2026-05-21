@@ -1,0 +1,392 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>9.2</storyId>
+    <title>Unit Test Examples (Service Layer)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-2-unit-test-examples-service-layer.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>service layer unit test examples</iWant>
+    <soThat>test pattern'ini öğrenebilleyim ve tutarlı, kaliteli unit testler yazabileyim</soThat>
+    <tasks>
+      <task id="1" ac="9.2.1, 9.2.6">UsersService Test Dosyası Setup</task>
+      <task id="2" ac="9.2.2">Create User Test Cases</task>
+      <task id="3" ac="9.2.3">Find User Test Cases</task>
+      <task id="4" ac="9.2.4">Update User Test Cases</task>
+      <task id="5" ac="9.2.5">Delete User Test Cases</task>
+      <task id="6" ac="9.2.7">Coverage Validation ve Performance Test</task>
+      <task id="7" ac="All">Additional Service Test Examples</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="9.2.1" title="UsersService Unit Test Dosyası Oluştur">
+      <given>users modülü için unit test yokken</given>
+      <when>src/modules/users/__tests__/users.service.spec.ts dosyası oluşturulduğunda</when>
+      <then>
+        - Dosya __tests__/ klasörü altında bulunmalı
+        - Arrange-Act-Assert (AAA) pattern kullanılmalı
+        - TestingModule.createTestingModule() ile test setup yapılmalı
+        - UsersRepository ve I18nService mock'lanmalı
+      </then>
+    </criterion>
+    <criterion id="9.2.2" title="Create User Test Cases">
+      <given>UsersService.create() metodu test edildiğinde</given>
+      <when>çeşitli senaryolar test edildiğinde</when>
+      <then>
+        - should create user successfully (normal akış)
+        - should throw ConflictException when email exists (duplicate kontrolü)
+        - should hash password before creating user (password hashing kontrolü)
+        - Repository.create() mock'unun doğru parametrelerle çağrıldığı verify edilmeli
+        - Return edilen user object'i beklenen yapıda olmalı
+      </then>
+    </criterion>
+    <criterion id="9.2.3" title="Find User Test Cases">
+      <given>UsersService.findOne() metodu test edildiğinde</given>
+      <when>çeşitli senaryolar test edildiğinde</when>
+      <then>
+        - should return user when found (user bulunduğunda return eder)
+        - should throw NotFoundException when user not found (user bulunamazsa exception)
+        - should throw NotFoundException for soft-deleted user (soft-delete edilmiş user için exception)
+        - Repository.findOne() mock'unun doğru parametrelerle çağrıldığı verify edilmeli
+        - I18nService.t() mock'u translate key ile çağrılmalı
+      </then>
+    </criterion>
+    <criterion id="9.2.4" title="Update User Test Cases">
+      <given>UsersService.update() metodu test edildiğinde</given>
+      <when>çeşitli senaryolar test edildiğinde</when>
+      <then>
+        - should update user successfully (normal akış)
+        - should throw NotFoundException when user not found for update
+        - should throw ConflictException when updating to existing email
+        - should not update password if not provided (password optional)
+        - Repository.update() mock'unun doğru parametrelerle çağrıldığı verify edilmeli
+      </then>
+    </criterion>
+    <criterion id="9.2.5" title="Delete User Test Cases">
+      <given>UsersService.remove() (soft-delete) metodu test edildiğinde</given>
+      <when>çeşitli senaryolar test edildiğinde</when>
+      <then>
+        - should soft-delete user successfully (deletedAt set edilmeli)
+        - should throw NotFoundException when user not found for delete
+        - should not hard-delete user (hard delete değil, soft delete yapılmalı)
+        - Repository.update() mock'u deletedAt field'ı ile çağrılmalı
+      </then>
+    </criterion>
+    <criterion id="9.2.6" title="Mock Setup ve Test Isolation">
+      <given>her test case bağımsız çalışmalıyken</given>
+      <when>testler sırayla execute edildiğinde</when>
+      <then>
+        - beforeEach block'unda TestingModule setup yapılmalı
+        - afterEach block'unda jest.clearAllMocks() çağrılmalı
+        - Her test kendi mock data'sını oluşturmalı (shared state yok)
+        - Mock'ların return value'ları her test için spesifik olmalı
+        - Test execution order önemli olmamalı (test isolation)
+      </then>
+    </criterion>
+    <criterion id="9.2.7" title="Coverage ve Performance">
+      <given>UsersService unit testleri tamamlandığında</given>
+      <when>npm run test:cov çalıştırıldığında</when>
+      <then>
+        - UsersService coverage %80 veya üzeri olmalı
+        - Tüm service layer testleri < 1 saniyede tamamlanmalı
+        - Coverage report'ta uncovered lines açıkça görünmeli
+        - Branch coverage (if/else, error handling) %80+ olmalı
+      </then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>APIs and Interfaces - TestingModule API Pattern</section>
+        <snippet>Unit Test Setup using TestingModule: Test.createTestingModule() ile providers mock'lama, Arrange-Act-Assert pattern, mock isolation ve cleanup best practices</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Workflows and Sequencing - Unit Test Workflow</section>
+        <snippet>AAA Pattern: 1) ARRANGE (setup test data and mocks), 2) ACT (execute method under test), 3) ASSERT (verify results), 4) CLEANUP (jest.clearAllMocks)</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Data Models and Contracts - Test Configuration Schema</section>
+        <snippet>Coverage Thresholds: Global 70%, Services 80%, Common 100%. jest.config.js konfigürasyonu ile coverage enforcement</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic Technical Specification: Testing Infrastructure</title>
+        <section>Test Strategy Summary - Unit Testing Strategy</section>
+        <snippet>Focus: Service layer, utility functions, guards. Approach: Mock all dependencies, fast execution. Tools: Jest, @nestjs/testing, TestingModule. Pattern: AAA</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-9-testing-infrastructure.md</path>
+        <title>Epic 9: Testing Infrastructure</title>
+        <section>Story 9.2: Unit Test Examples (Service Layer)</section>
+        <snippet>As a developer, I want service layer unit test examples, so that test yazabileyim. Acceptance Criteria: UsersService tests, AAA pattern, mocking, coverage 80%+, fast execution</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/9-1-jest-configuration-test-setup.md</path>
+        <title>Story 9.1: Jest Configuration & Test Setup</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>Test utilities in test/utils/ (mockI18nService, mockLogger, mockPrismaService) created in Epic 8.5-4. Coverage thresholds active (Global 70%, Services 80%, Common 100%). Path aliases (@/) working in tests</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/modules/users/services/users.service.ts</path>
+        <kind>service</kind>
+        <symbol>UsersService</symbol>
+        <lines>28-end</lines>
+        <reason>Service under test. Contains methods: findOne, updateProfile, findAll, create, update, remove. Uses PrismaService and I18nService dependencies that need mocking</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/services/users.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersService Test Suite</symbol>
+        <lines>1-100</lines>
+        <reason>Existing test file showing AAA pattern, TestingModule setup, PrismaService and I18nService mocking. Good reference for test structure and mock patterns. Contains findOne, updateProfile test examples</reason>
+      </artifact>
+      <artifact>
+        <path>test/utils/mockI18nService.ts</path>
+        <kind>test-utility</kind>
+        <symbol>createMockI18nService</symbol>
+        <lines>1-23</lines>
+        <reason>Reusable I18nService mock factory from Epic 8.5-4. Returns jest.fn() mocks for t() and translate() methods. Can be imported and used in UsersService tests</reason>
+      </artifact>
+      <artifact>
+        <path>test/utils/mockPrismaService.ts</path>
+        <kind>test-utility</kind>
+        <symbol>createMockPrismaService</symbol>
+        <lines>all</lines>
+        <reason>Reusable PrismaService mock with all model methods (findFirst, findMany, create, update, etc). Created in Epic 8.5-4. Alternative to inline mock creation</reason>
+      </artifact>
+      <artifact>
+        <path>test/utils/index.ts</path>
+        <kind>test-utility</kind>
+        <symbol>Barrel exports</symbol>
+        <lines>all</lines>
+        <reason>Central export for all test utilities. Allows clean imports: import { createMockI18nService } from 'test/utils'</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/request/create-user.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>CreateUserDto</symbol>
+        <lines>all</lines>
+        <reason>DTO for user creation. Used as input type for create tests. Contains email, password, firstName, lastName, phoneNumber fields</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/dto/request/update-user.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>UpdateUserDto</symbol>
+        <lines>all</lines>
+        <reason>DTO for user updates. Used as input type for update tests. Contains partial user fields</reason>
+      </artifact>
+      <artifact>
+        <path>jest.config.js</path>
+        <kind>config</kind>
+        <symbol>Jest Configuration</symbol>
+        <lines>1-37</lines>
+        <reason>Jest configuration from Story 9.1. Coverage thresholds: Services 80%, Common 100%, Global 70%. Path aliases, coverage reporters configured</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="jest" version="^30.0.0" usage="Core test framework for test runner, assertions, mocking"/>
+        <package name="@nestjs/testing" version="^11.0.1" usage="TestingModule for dependency injection in tests, test app bootstrap"/>
+        <package name="ts-jest" version="^29.2.5" usage="TypeScript preprocessor to compile TS test files"/>
+        <package name="@types/jest" version="^30.0.0" usage="Jest type definitions for TypeScript support"/>
+        <package name="@nestjs/common" version="^11.0.1" usage="Exception classes (NotFoundException, ConflictException) for assertion testing"/>
+        <package name="nestjs-i18n" version="^10.x" usage="I18nService for internationalization - needs mocking in tests"/>
+        <package name="@prisma/client" version="^6.18.0" usage="Prisma Client types (User entity), PrismaService needs mocking"/>
+        <package name="bcrypt" version="^6.0.0" usage="Password hashing - mock bcrypt.hash in tests"/>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="testing-pattern">
+      Arrange-Act-Assert (AAA) pattern mandatory:
+      1. ARRANGE: Setup mock data, configure mock return values, prepare test input
+      2. ACT: Call the method under test with test input
+      3. ASSERT: Verify return value, check mock method calls, validate exceptions
+      4. CLEANUP: jest.clearAllMocks() in afterEach
+      [Source: docs/tech-spec-epic-9.md#Workflows-and-Sequencing]
+    </constraint>
+    <constraint type="mock-strategy">
+      Mock all dependencies using TestingModule:
+      - PrismaService: Mock with jest.fn() for user.findFirst, user.create, user.update
+      - I18nService: Mock with jest.fn() for translate method (or use test/utils/mockI18nService.ts)
+      - Logger: Suppress logs or mock Logger class
+      - NO real database connections in unit tests
+      [Source: docs/tech-spec-epic-9.md#Test-Strategy-Summary]
+    </constraint>
+    <constraint type="coverage-threshold">
+      Service layer coverage must be >= 80%:
+      - Branch coverage 80%+
+      - Function coverage 80%+
+      - Line coverage 80%+
+      - Statement coverage 80%+
+      Enforced by jest.config.js coverageThreshold for './src/**/services/**/*.ts'
+      [Source: jest.config.js lines 29-34, docs/tech-spec-epic-9.md]
+    </constraint>
+    <constraint type="test-isolation">
+      Each test must be independent:
+      - No shared state between tests
+      - Mock reset in afterEach with jest.clearAllMocks()
+      - Each test creates its own mock data
+      - Test execution order must not matter
+      [Source: docs/tech-spec-epic-9.md#Non-Functional-Requirements → Reliability]
+    </constraint>
+    <constraint type="performance">
+      Unit tests must be fast:
+      - Service test execution < 1 second for entire suite
+      - No real database queries (use mocks)
+      - No async delays or timeouts
+      - Immediate mock responses
+      [Source: docs/tech-spec-epic-9.md#Non-Functional-Requirements → Performance]
+    </constraint>
+    <constraint type="test-file-naming">
+      Test file naming convention:
+      - Unit tests: *.spec.ts (e.g., users.service.spec.ts)
+      - Integration tests: *.integration-spec.ts (Story 9.3, not this story)
+      - E2E tests: *.e2e-spec.ts (Story 9.4, not this story)
+      - Location: src/modules/users/__tests__/ or next to source file
+      [Source: docs/tech-spec-epic-9.md#System-Architecture-Alignment]
+    </constraint>
+    <constraint type="descriptive-test-names">
+      Test names must be descriptive:
+      - Format: "should [expected behavior] when [condition]"
+      - Example: "should throw NotFoundException when user not found"
+      - NOT: "test1", "testCreate", etc.
+      - Helps debugging and documentation
+      [Source: docs/tech-spec-epic-9.md#Test-Strategy-Summary]
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>UsersService.findOne</name>
+      <kind>service-method</kind>
+      <signature>async findOne(id: string, domainID: string): Promise&lt;User&gt;</signature>
+      <path>src/modules/users/services/users.service.ts:43-62</path>
+      <description>Finds user by ID with multi-tenancy and soft-delete filtering. Throws NotFoundException if user not found or soft-deleted. Uses prisma.user.findFirst() and i18n.translate()</description>
+    </interface>
+    <interface>
+      <name>UsersService.updateProfile</name>
+      <kind>service-method</kind>
+      <signature>async updateProfile(userId: string, domainID: string, updateProfileDto: UpdateProfileDto): Promise&lt;User&gt;</signature>
+      <path>src/modules/users/services/users.service.ts:73-121</path>
+      <description>Updates user profile with validation and uniqueness checks. Verifies user exists, checks phoneNumber uniqueness, updates user. Throws NotFoundException or ConflictException</description>
+    </interface>
+    <interface>
+      <name>UsersService.findAll</name>
+      <kind>service-method</kind>
+      <signature>async findAll(queryDto: QueryUserDto, domainID: string): Promise&lt;{data: User[]; total: number}&gt;</signature>
+      <path>src/modules/users/services/users.service.ts:129-150</path>
+      <description>Finds all users with pagination, filtering, and sorting. Admin operation. Returns object with data array and total count</description>
+    </interface>
+    <interface>
+      <name>TestingModule.createTestingModule</name>
+      <kind>test-utility-method</kind>
+      <signature>Test.createTestingModule(metadata: ModuleMetadata): TestingModuleBuilder</signature>
+      <path>@nestjs/testing</path>
+      <description>Creates testing module with mock providers. Pattern: provide service under test + mock dependencies with useValue. Call .compile() to get TestingModule, then module.get&lt;Service&gt;(Service) to get instance</description>
+    </interface>
+    <interface>
+      <name>createMockI18nService</name>
+      <kind>test-utility-function</kind>
+      <signature>createMockI18nService(): MockI18nService</signature>
+      <path>test/utils/mockI18nService.ts:16-20</path>
+      <description>Factory function for I18nService mock. Returns object with jest.fn() mocks for t(), translate(), lang() methods. Reusable across all tests</description>
+    </interface>
+    <interface>
+      <name>PrismaService.user</name>
+      <kind>prisma-model-delegate</kind>
+      <signature>user: { findFirst, findMany, create, update, count, ... }</signature>
+      <path>@prisma/client</path>
+      <description>Prisma user model delegate. Methods to mock in tests: findFirst (find one user), create (create user), update (update user), findMany (find multiple users), count (count users)</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing standards for Story 9.2:
+      - Framework: Jest v30.x with @nestjs/testing
+      - Pattern: Arrange-Act-Assert (AAA) in every test
+      - Mock Strategy: TestingModule with useValue for dependency injection
+      - Test Isolation: beforeEach setup, afterEach jest.clearAllMocks()
+      - Coverage Target: 80%+ for service layer (branches, functions, lines, statements)
+      - Performance: Unit tests < 1 second execution
+      - File Location: src/modules/users/__tests__/users.service.spec.ts OR src/modules/users/services/users.service.spec.ts
+      - Naming Convention: describe() for service/method groups, it() with "should [action] when [condition]"
+      - Reuse test utilities from test/utils/ (mockI18nService, mockPrismaService)
+      [Source: docs/tech-spec-epic-9.md, jest.config.js, docs/stories/9-1-jest-configuration-test-setup.md]
+    </standards>
+    <locations>
+      <location>src/modules/users/__tests__/users.service.spec.ts</location>
+      <location>src/modules/users/services/users.service.spec.ts (alternative, already exists)</location>
+      <location>test/utils/*.ts (reusable mock factories)</location>
+    </locations>
+    <ideas>
+      <idea ac="9.2.1">
+        Setup test structure:
+        - Import Test, TestingModule from @nestjs/testing
+        - Import UsersService, PrismaService, I18nService
+        - describe('UsersService') block
+        - beforeEach: Create TestingModule with mocked PrismaService and I18nService
+        - afterEach: jest.clearAllMocks()
+        - Get service instance: module.get&lt;UsersService&gt;(UsersService)
+      </idea>
+      <idea ac="9.2.2">
+        Create user tests:
+        - Test: "should create user successfully" - Mock prisma.user.findFirst(null), prisma.user.create(user), assert return value
+        - Test: "should throw ConflictException when email exists" - Mock prisma.user.findFirst(existingUser), assert ConflictException thrown
+        - Test: "should hash password before creating user" - Mock bcrypt.hash, verify prisma.user.create called with hashedPassword
+      </idea>
+      <idea ac="9.2.3">
+        Find user tests:
+        - Test: "should return user when found" - Mock prisma.user.findFirst(user), assert return value matches
+        - Test: "should throw NotFoundException when user not found" - Mock prisma.user.findFirst(null), assert NotFoundException thrown, verify i18n.translate called
+        - Test: "should throw NotFoundException for soft-deleted user" - Mock prisma.user.findFirst with deletedAt set, assert NotFoundException
+      </idea>
+      <idea ac="9.2.4">
+        Update user tests:
+        - Test: "should update user successfully" - Mock findOne, prisma.user.update, assert updated user returned
+        - Test: "should throw NotFoundException when user not found for update" - Mock findOne to throw NotFoundException
+        - Test: "should throw ConflictException when updating to existing email" - Mock prisma.user.findFirst with conflicting email user
+        - Test: "should not update password if not provided" - Mock prisma.user.update, verify password field not included
+      </idea>
+      <idea ac="9.2.5">
+        Delete user tests:
+        - Test: "should soft-delete user successfully" - Mock findOne, prisma.user.update with deletedAt, assert deletedAt set
+        - Test: "should throw NotFoundException when user not found for delete" - Mock findOne to throw NotFoundException
+        - Test: "should not hard-delete user" - Verify prisma.user.delete NOT called, only prisma.user.update with deletedAt
+      </idea>
+      <idea ac="9.2.6">
+        Test isolation:
+        - Verify jest.clearAllMocks() called in afterEach
+        - Each test creates its own mock data (no shared mockUser variable mutations)
+        - Mock return values set per test in ARRANGE phase
+        - Run tests in random order to verify independence
+      </idea>
+      <idea ac="9.2.7">
+        Coverage validation:
+        - Run: npm run test:cov
+        - Open: coverage/index.html
+        - Verify: UsersService coverage >= 80% (branches, functions, lines, statements)
+        - Run: npm test users.service.spec
+        - Verify: Execution time < 1 second
+        - Add tests for uncovered branches if needed
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

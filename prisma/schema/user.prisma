@@ -1,0 +1,62 @@
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+// User type for hierarchical role categorization
+enum UserType {
+  ADMIN
+  USER
+}
+
+enum LegalEntityType {
+  INDIVIDUAL
+  CORPORATE
+}
+
+model User {
+  id              String          @id @default(uuid()) @db.Uuid
+  email           String?
+  firstName       String
+  lastName        String
+  phoneNumber     String          @unique
+  phoneVerified   Boolean         @default(false)
+  isActive        Boolean         @default(true)
+  userType        UserType        @default(USER)
+  VKN             String?         @unique @db.VarChar(11)
+  legalEntityType LegalEntityType @default(INDIVIDUAL)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+
+  // Relations (CLEAN: NO role string field - ONLY relational via UserRole)
+  refreshTokens           RefreshToken[]
+  otpVerifications        OTPVerification[]
+  roleID                  String?                  @db.Uuid
+  role                    Role?                    @relation(fields: [roleID], references: [id], onDelete: SetNull)
+  userProviders           UserProvider[] // Multiple auth providers (AD, LOGIN)
+  files                   File[]
+  notificationLogs        NotificationLog[]
+  notifications           Notification[]    @relation("UserNotifications")
+  sentNotifications       Notification[]    @relation("SenderNotifications")
+  notificationPreferences NotificationPreference[]
+  deviceTokens            DeviceToken[]
+  auditLogs               AuditLog[]
+
+  // Chat Relations
+  chatMessagesSent      ChatMessage[]      @relation("ChatSender")
+  chatMessagesReceived  ChatMessage[]      @relation("ChatReceiver")
+  chatGroupMemberships  ChatGroupMember[]
+  chatGroupMessagesSent ChatGroupMessage[]
+
+  // Profile Image
+  profileImageID           String?                   @unique @db.Uuid
+  profileImage             File?                     @relation("UserProfileImage", fields: [profileImageID], references: [id], onDelete: SetNull)
+  chatDeletedConversations      ChatDeletedConversation[]
+  chatGroupDeletedConversations ChatGroupDeletedConversation[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@index([userType])
+  @@index([VKN])
+  @@map("users")
+}

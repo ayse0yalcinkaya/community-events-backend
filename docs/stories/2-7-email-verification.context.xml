@@ -1,0 +1,207 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.7</storyId>
+    <title>Phone Verification (SMS OTP)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-7-email-verification.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>kullanıcı (user)</asA>
+    <iWant>telefon numaramı SMS OTP ile verify edebilmek</iWant>
+    <soThat>hesabımı aktif hale getirip login olabileyim</soThat>
+    <tasks>
+      - Task 1: VerifyPhoneDto oluştur (src/modules/auth/dto/verify-phone.dto.ts)
+      - Task 2: ResendVerificationOtpDto oluştur (src/modules/auth/dto/resend-verification-otp.dto.ts)
+      - Task 3: AuthService.verifyPhone() method implement et
+      - Task 4: AuthController.verifyPhone() endpoint oluştur (POST /auth/verify-phone)
+      - Task 5: AuthService.resendVerificationOtp() method implement et
+      - Task 6: AuthController.resendVerificationOtp() endpoint oluştur (POST /auth/resend-verification-otp)
+      - Task 7: Unit test yaz - verifyPhone
+      - Task 8: Unit test yaz - resendVerificationOtp
+      - Task 9: Integration test yaz (test/auth-phone-verification.e2e-spec.ts)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-2.7.1: POST /auth/verify-phone endpoint oluşturulmuş (public, authentication required değil)
+    AC-2.7.2: Request DTO: phoneNumber + code (6-digit OTP)
+    AC-2.7.3: OTP validated (exists, not expired, code match, attempts &lt; 3, purpose: 'phone-verification')
+    AC-2.7.4: Valid OTP → User.phoneVerified = true update edilir
+    AC-2.7.5: OTP cleanup (verified=true marked or deleted)
+    AC-2.7.6: Response: { success: true, message: "Phone verified successfully" }
+    AC-2.7.7: Invalid OTP scenarios handled (expired, invalid code, max attempts)
+    AC-2.7.8: POST /auth/resend-verification-otp endpoint oluşturulmuş (public)
+    AC-2.7.9: Resend endpoint: phoneNumber ile yeni OTP generate eder ve SMS gönderir
+    AC-2.7.10: Rate limiting: 3 attempts / 15 minutes per phone (resend endpoint)
+    AC-2.7.11: Already verified users için graceful response (200 OK, "Already verified")
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-2.md" title="Epic 2 Technical Specification">
+        <section>Story 2.7: Phone Verification</section>
+        <snippet>Phone verification using SMS OTP with purpose='phone-verification'. OTP expiry: 5 minutes, max 3 attempts. Unverified users (phoneVerified=false) cannot login. Story 2.3 and 2.3.2 enforce this check.</snippet>
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="OTP Verification System">
+        <section>OTP Purpose Isolation</section>
+        <snippet>Purpose field added in Story 2.6 to differentiate OTP types: 'login', 'password-reset', 'phone-verification'. Each purpose isolated to prevent cross-usage attacks.</snippet>
+      </doc>
+      <doc path="docs/tech-spec-epic-2.md" title="NFR Security">
+        <section>Rate Limiting Strategy</section>
+        <snippet>Resend verification OTP: 3 attempts / 15 minutes per phone. Uses @Throttle decorator with ttl: 900000ms (15 min).</snippet>
+      </doc>
+      <doc path="docs/epics.md" title="Epic 2 Stories">
+        <section>Story 2.7: Phone Verification (SMS OTP)</section>
+        <snippet>POST /auth/verify-phone validates OTP and updates User.phoneVerified. POST /auth/resend-verification-otp generates new OTP with rate limiting.</snippet>
+      </doc>
+      <doc path="docs/architecture.md" title="Authentication Architecture">
+        <section>Phone-Based Authentication</section>
+        <snippet>JWT + Phone-based auth. Phone verification required before login. phoneVerified flag enforced in login flows.</snippet>
+      </doc>
+      <doc path="docs/stories/2-6-password-reset-flow.md" title="Previous Story Learnings">
+        <section>OTP Purpose Field Pattern</section>
+        <snippet>OTPVerification.purpose field implemented (migration 20251105114216). OtpService methods extended: generateOtp(userID, purpose), validateOtp(userID, code, purpose?). SMS service stub with PHONE_VERIFICATION template ready.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/modules/auth/services/otp.service.ts" kind="service" symbol="OtpService">
+        <lines>1-150</lines>
+        <reason>Complete OTP service with purpose field support. Methods: generateOtp(userID, purpose), validateOtp(userID, code, purpose?), deleteOtp(userID, code). Purpose type includes 'phone-verification'.</reason>
+      </artifact>
+      <artifact path="src/modules/auth/services/sms.service.ts" kind="service" symbol="SmsService">
+        <lines>1-44</lines>
+        <reason>SMS service stub with template support. sendOTP() method accepts template: 'LOGIN_OTP' | 'PASSWORD_RESET' | 'PHONE_VERIFICATION'. Logs to console (Epic 5.1 will add FONIVA).</reason>
+      </artifact>
+      <artifact path="src/modules/auth/auth.service.ts" kind="service" symbol="AuthService">
+        <lines>entire file</lines>
+        <reason>Main authentication service. Need to add verifyPhone() and resendVerificationOtp() methods. Already has forgotPassword() and resetPassword() patterns to follow.</reason>
+      </artifact>
+      <artifact path="src/modules/auth/auth.controller.ts" kind="controller" symbol="AuthController">
+        <lines>entire file</lines>
+        <reason>Auth REST controller. Need to add POST /auth/verify-phone and POST /auth/resend-verification-otp endpoints with @Public() decorator.</reason>
+      </artifact>
+      <artifact path="src/modules/auth/dto/forgot-password.dto.ts" kind="dto" symbol="ForgotPasswordDto">
+        <lines>1-7</lines>
+        <reason>Example DTO pattern for phone validation. Use @IsPhoneNumber('TR') and @IsNotEmpty() decorators. Follow same pattern for VerifyPhoneDto and ResendVerificationOtpDto.</reason>
+      </artifact>
+      <artifact path="src/modules/auth/dto/reset-password.dto.ts" kind="dto" symbol="ResetPasswordDto">
+        <lines>entire file</lines>
+        <reason>Example DTO with OTP code validation. Uses @Length(6,6) and @Matches(/^\d{6}$/) for 6-digit code. Copy pattern for VerifyPhoneDto code field.</reason>
+      </artifact>
+      <artifact path="src/modules/auth/decorators/public.decorator.ts" kind="decorator" symbol="Public">
+        <lines>entire file</lines>
+        <reason>Public decorator for endpoints that don't require JWT authentication. Apply to both verify-phone and resend-verification-otp endpoints.</reason>
+      </artifact>
+      <artifact path="src/database/prisma.service.ts" kind="service" symbol="PrismaService">
+        <lines>entire file</lines>
+        <reason>Database service for Prisma queries. Use prisma.user.findUnique(), prisma.user.update(), prisma.otpVerification methods.</reason>
+      </artifact>
+      <artifact path="prisma/schema.prisma" kind="schema" symbol="User">
+        <lines>20-50</lines>
+        <reason>User model with phoneVerified field (Boolean @default(false)). Story will update this field to true after OTP validation.</reason>
+      </artifact>
+      <artifact path="prisma/schema.prisma" kind="schema" symbol="OTPVerification">
+        <lines>74-93</lines>
+        <reason>OTPVerification model with purpose field (String?, nullable). Purpose values: 'login', 'password-reset', 'phone-verification'. Expiry, attempts, verified fields.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        @nestjs/common: ^11.0.1
+        @nestjs/throttler: ^6.4.0
+        @nestjs/passport: ^11.0.5
+        @prisma/client: ^6.18.0
+        class-validator: ^0.14.2
+        class-transformer: ^0.5.1
+        bcrypt: ^6.0.0
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. Use OtpService.validateOtp() with purpose='phone-verification' to ensure OTP purpose isolation
+    2. Apply @Public() decorator to both endpoints (users not logged in during verification)
+    3. Apply @Throttle({ default: { limit: 3, ttl: 900000 } }) to resend-verification-otp endpoint only
+    4. Follow error handling pattern from Story 2.6: Map OTP validation reasons to user-friendly messages
+    5. Implement graceful already-verified handling: Return 200 OK if user.phoneVerified === true (idempotent)
+    6. Update User.phoneVerified = true before deleting OTP (order matters for atomicity)
+    7. Use prisma.otpVerification.updateMany() to invalidate previous phone-verification OTPs in resend flow
+    8. Follow response format pattern: { success: true, message/data: {...} }
+    9. DTOs must be in src/modules/auth/dto/ directory
+    10. E2E test must be in test/ directory with .e2e-spec.ts suffix
+  </constraints>
+
+  <interfaces>
+    <interface name="OtpService.generateOtp" kind="function signature">
+      <signature>async generateOtp(userID: string, purpose: OtpPurpose): Promise&lt;string&gt;</signature>
+      <path>src/modules/auth/services/otp.service.ts:26</path>
+    </interface>
+    <interface name="OtpService.validateOtp" kind="function signature">
+      <signature>async validateOtp(userID: string, code: string, purpose?: OtpPurpose): Promise&lt;OtpValidationResult&gt;</signature>
+      <path>src/modules/auth/services/otp.service.ts:79</path>
+    </interface>
+    <interface name="OtpService.deleteOtp" kind="function signature">
+      <signature>async deleteOtp(userID: string, code: string): Promise&lt;void&gt;</signature>
+      <path>src/modules/auth/services/otp.service.ts</path>
+    </interface>
+    <interface name="SmsService.sendOTP" kind="function signature">
+      <signature>async sendOTP(phoneNumber: string, otpCode: string, template: 'LOGIN_OTP' | 'PASSWORD_RESET' | 'PHONE_VERIFICATION'): Promise&lt;void&gt;</signature>
+      <path>src/modules/auth/services/sms.service.ts:18</path>
+    </interface>
+    <interface name="POST /auth/verify-phone" kind="REST endpoint">
+      <signature>POST /auth/verify-phone
+Body: { phoneNumber: string, code: string }
+Response: { success: boolean, message: string }
+Status: 200 OK (success) | 400 Bad Request (invalid OTP)</signature>
+      <path>To be created in auth.controller.ts</path>
+    </interface>
+    <interface name="POST /auth/resend-verification-otp" kind="REST endpoint">
+      <signature>POST /auth/resend-verification-otp
+Body: { phoneNumber: string }
+Response: { success: boolean, data: { message: string, expiresIn: number } }
+Status: 200 OK | 404 Not Found | 429 Too Many Requests</signature>
+      <path>To be created in auth.controller.ts</path>
+    </interface>
+    <interface name="OtpValidationResult" kind="interface">
+      <signature>interface OtpValidationResult {
+  valid: boolean;
+  userID?: string;
+  reason?: 'EXPIRED' | 'INVALID_CODE' | 'MAX_ATTEMPTS' | 'NOT_FOUND';
+  attemptsRemaining?: number;
+}</signature>
+      <path>src/modules/auth/services/otp.service.ts:7</path>
+    </interface>
+    <interface name="OtpPurpose" kind="type">
+      <signature>type OtpPurpose = 'login' | 'password-reset' | 'phone-verification';</signature>
+      <path>src/modules/auth/services/otp.service.ts:5</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest testing framework with unit and E2E tests. Unit tests in src/modules/auth/auth.service.spec.ts using mocked PrismaService, OtpService, and SmsService. E2E tests in test/ directory with real database (test DB). Follow test patterns from test/auth-password-reset.e2e-spec.ts (Story 2.6). Test coverage for all acceptance criteria. Use describe/it blocks with clear test names.
+    </standards>
+    <locations>
+      src/modules/auth/auth.service.spec.ts (unit tests)
+      test/auth-phone-verification.e2e-spec.ts (E2E tests)
+    </locations>
+    <ideas>
+      AC-2.7.1-2.7.2: Test verifyPhone() with valid phoneNumber and code
+      AC-2.7.3: Test OTP validation with purpose='phone-verification' filter
+      AC-2.7.4: Test User.phoneVerified updated to true after valid OTP
+      AC-2.7.5: Test OTP deleted or marked verified=true after validation
+      AC-2.7.6: Test successful response format
+      AC-2.7.7: Test all OTP failure modes (expired, invalid code, max attempts exceeded)
+      AC-2.7.8-2.7.9: Test resendVerificationOtp() generates new OTP and sends SMS
+      AC-2.7.10: Test rate limiting on resend endpoint (4th request in 15 min → 429)
+      AC-2.7.11: Test already verified user returns success without error
+      E2E: Test full registration → OTP verification → login flow
+      E2E: Test resend invalidates previous OTP
+      E2E: Test user can login after phone verification (was blocked before)
+    </ideas>
+  </tests>
+</story-context>

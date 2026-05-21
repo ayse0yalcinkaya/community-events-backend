@@ -1,0 +1,26 @@
+# .windsurf/workflows/agentic-tdd.yml
+name: 'agentic-tdd-strict'
+description: 'Strict TDD with human validation checkpoints'
+
+steps:
+  - id: write_failing_test
+    name: 'Write Failing Test'
+    prompt: |
+      Write unit tests for: {{feature_description}}
+      Tests must FAIL initially.
+      Output test code only.
+    next: validate_test
+
+  - id: validate_test
+    name: '🛑 HUMAN REVIEW: Approve Tests'
+    type: human
+    description: 'Review failing tests. Do NOT proceed without approval.'
+    approved_next: write_code
+    rejected_next: write_failing_test
+
+  - id: write_code
+    name: 'Implement Minimum Code'
+    prompt: |
+      Write MINIMUM code to pass: {{test_code}}
+      No extra features.
+    next: validate_code

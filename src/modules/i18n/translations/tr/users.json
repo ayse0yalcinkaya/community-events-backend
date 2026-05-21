@@ -1,0 +1,7 @@
+{
+  "USER_CREATED": "Kullanıcı oluşturuldu",
+  "USER_UPDATED": "Kullanıcı güncellendi",
+  "USER_DELETED": "Kullanıcı silindi",
+  "USER_NOT_FOUND": "Kullanıcı bulunamadı",
+  "INVALID_CREDENTIALS": "Geçersiz kimlik bilgileri"
+}

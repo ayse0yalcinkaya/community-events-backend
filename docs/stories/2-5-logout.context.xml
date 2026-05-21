@@ -1,0 +1,254 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.5</storyId>
+    <title>Logout</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-5-logout.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>logout olabilmek</iWant>
+    <soThat>refresh token'ım invalidate olsun ve oturumum güvenli şekilde sonlansın</soThat>
+    <tasks>
+      - Task 1: LogoutDto oluştur (AC: 2)
+        - Subtask 1.1: src/modules/auth/dto/logout.dto.ts oluştur
+        - Subtask 1.2: LogoutDto class-validator decorators ekle (@IsUUID, @IsNotEmpty)
+      - Task 2: AuthService.logout() method implement et (AC: 3, 7, 8)
+        - Subtask 2.1: src/modules/auth/auth.service.ts dosyasını düzenle
+        - Subtask 2.2: logout(refreshToken: string) method oluştur
+        - Subtask 2.3: Database'den refresh token lookup yap (prisma.refreshToken.findUnique)
+        - Subtask 2.4: Token bulunamazsa → Idempotency için success dön (no error)
+        - Subtask 2.5: Token bulunursa → prisma.refreshToken.delete() ile sil
+        - Subtask 2.6: Return { success: true, message: "Logged out successfully" }
+      - Task 3: AuthController.logout() endpoint oluştur (AC: 1, 4, 5, 6)
+        - Subtask 3.1: src/modules/auth/auth.controller.ts dosyasını düzenle
+        - Subtask 3.2: POST /auth/logout route tanımla
+        - Subtask 3.3: @UseGuards(JwtAuthGuard) decorator ekle (protected route)
+        - Subtask 3.4: @Body() LogoutDto parametre ekle
+        - Subtask 3.5: AuthService.logout() çağır
+        - Subtask 3.6: Response dön: { success: true, message: "Logged out successfully" }
+        - Subtask 3.7: Exception handling ekle
+      - Task 4: Unit test yaz (AC: All)
+        - Subtask 4.1: src/modules/auth/auth.service.spec.ts dosyasını genişlet
+        - Subtask 4.2: Mock PrismaService
+        - Subtask 4.3: Test: logout() with valid token deletes token from database
+        - Subtask 4.4: Test: logout() with non-existent token returns success (idempotent)
+        - Subtask 4.5: Test: logout() does not throw error for missing token
+      - Task 5: Integration test yaz (AC: 1, 4, 5, 6, 7)
+        - Subtask 5.1: test/auth-logout.e2e-spec.ts dosyası oluştur
+        - Subtask 5.2: Test setup: Create test user, login to get tokens
+        - Subtask 5.3: Test: POST /auth/logout with valid token → 200 OK, returns success message
+        - Subtask 5.4: Test: Refresh token deleted from database after logout
+        - Subtask 5.5: Test: Old refresh token cannot be used after logout (POST /auth/refresh → 401)
+        - Subtask 5.6: Test: Access token still valid until expiry (protected route accessible)
+        - Subtask 5.7: Test: POST /auth/logout with non-existent token → 200 OK (idempotent)
+        - Subtask 5.8: Test: POST /auth/logout without JWT → 401 Unauthorized
+        - Subtask 5.9: Test: Logout multiple times (idempotency test)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC-2.5.1: POST /auth/logout endpoint oluşturulmuş ve çalışıyor (JWT guard ile korunmuş)
+    2. AC-2.5.2: Request body'de refreshToken (string) alınıyor ve validate ediliyor
+    3. AC-2.5.3: Refresh token database'den siliniyor (invalidate)
+    4. AC-2.5.4: Response döndürülüyor: { success: true, message: "Logged out successfully" }
+    5. AC-2.5.5: Logout sonrası eski refresh token kullanılamıyor (401 Unauthorized)
+    6. AC-2.5.6: Access token hala geçerli (expiry'e kadar, client-side discard expected)
+    7. AC-2.5.7: İdempotent operation (token bulunamazsa da 200 OK - no disclosure)
+    8. AC-2.5.8: Geçersiz refresh token → 404 Not Found (ama idempotency için 200 döndür)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication &amp; Session Management</title>
+        <section>Story 2.5: Logout</section>
+        <snippet>POST /auth/logout endpoint (protected, JWT required). Refresh token deleted from database. Response: { success: true, message: "Logged out successfully" }. Idempotent operation (non-existent token returns success). MVP: Token blacklist yok, Phase 2'de Redis blacklist.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication &amp; Session Management</title>
+        <section>NFR-Security</section>
+        <snippet>Refresh Token Security: Database-backed (revokable), UUID format, rotation pattern, expiration checked. Idempotent Logout: No token existence disclosure, generic success message.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication &amp; Session Management</title>
+        <section>NFR-Reliability</section>
+        <snippet>Token Revocation Consistency: Logout idempotent, multiple requests safe. Concurrent logout handling via database unique constraints. No transaction needed for single delete operation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boilerplate - Epic Breakdown</title>
+        <section>Story 2.5: Logout</section>
+        <snippet>As a user, I want logout olabilmek, So that refresh token'ım invalidate olsun. JWT access token'ları stateless (blacklist MVP'de yok). Sadece refresh token invalidate. MVP: Token blacklist yok, Phase 2'de Redis blacklist.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/2-4-token-refresh.md</path>
+        <title>Story 2.4: Token Refresh</title>
+        <section>Learnings from Previous Story</section>
+        <snippet>RefreshToken Database Operations Ready: findUnique, delete patterns working. Idempotency pattern established. JwtAuthGuard available. Response format patterns established. Testing infrastructure ready.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/modules/auth/auth.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>AuthController</symbol>
+        <lines>1-109</lines>
+        <reason>Controller where POST /auth/logout endpoint will be added. Shows @UseGuards(JwtAuthGuard) pattern for protected routes and response format convention.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/auth.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthService</symbol>
+        <lines>1-135</lines>
+        <reason>Service where logout() method will be implemented. Shows PrismaService injection pattern, error handling (UnauthorizedException), and idempotency patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/dto/refresh-token.dto.ts</path>
+        <kind>dto</kind>
+        <symbol>RefreshTokenDto</symbol>
+        <lines>1-7</lines>
+        <reason>Similar DTO pattern for LogoutDto. Shows @IsUUID() and @IsNotEmpty() validators for refresh token string validation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>1-60</lines>
+        <reason>JWT Guard used to protect logout endpoint. Shows canActivate() method that validates JWT tokens and @Public() decorator bypass pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/auth/services/token.service.ts</path>
+        <kind>service</kind>
+        <symbol>TokenService</symbol>
+        <lines>n/a</lines>
+        <reason>Token service that handles refresh token operations. Reference for refresh token database patterns (findUnique, delete).</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>RefreshToken</symbol>
+        <lines>56-72</lines>
+        <reason>RefreshToken entity schema. Shows token field (unique), userID foreign key with Cascade delete, and indexed fields for performance.</reason>
+      </artifact>
+      <artifact>
+        <path>test/auth-refresh-token.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>auth-refresh-token.e2e-spec.ts</symbol>
+        <lines>n/a</lines>
+        <reason>E2E test reference showing test setup pattern: create user, login, test token operations, verify database state changes.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@nestjs/common" version="^11.0.1">Core NestJS decorators (Controller, Post, Body, UseGuards, Injectable)</package>
+        <package name="@nestjs/passport" version="^11.0.5">Passport integration for JWT authentication</package>
+        <package name="@nestjs/jwt" version="^11.0.1">JWT token generation and validation</package>
+        <package name="@prisma/client" version="^6.18.0">Database ORM for RefreshToken queries</package>
+        <package name="class-validator" version="^0.14.2">DTO validation decorators (@IsUUID, @IsNotEmpty)</package>
+        <package name="class-transformer" version="^0.5.1">Object transformation (plainToInstance)</package>
+      </node>
+      <node_dev>
+        <package name="@nestjs/testing" version="^11.0.1">Testing utilities for unit tests</package>
+        <package name="jest" version="^30.0.0">Testing framework</package>
+        <package name="supertest" version="^7.0.0">E2E HTTP testing</package>
+      </node_dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MUST use JwtAuthGuard to protect POST /auth/logout endpoint (requires valid JWT)
+    - MUST implement idempotent logout (non-existent token returns 200 OK, no error)
+    - MUST use generic success message (no token existence disclosure for security)
+    - MUST delete refresh token from database using prisma.refreshToken.delete()
+    - MUST return response format: { success: true, message: "Logged out successfully" }
+    - MUST follow RefreshTokenDto pattern for LogoutDto (class-validator decorators)
+    - MUST NOT throw exception for non-existent token (idempotency requirement)
+    - MUST NOT implement access token blacklist (MVP scope - stateless JWT pattern)
+    - NO transaction needed (single delete operation is atomic)
+    - Testing MUST cover idempotency (logout multiple times succeeds)
+    - Testing MUST verify access token still valid after logout until expiry
+    - Testing MUST verify old refresh token cannot be reused after logout
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /auth/logout</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        POST /auth/logout
+        Headers: Authorization: Bearer &lt;JWT&gt;
+        Body: { refreshToken: string (UUID) }
+        Response: { success: boolean, message: string }
+      </signature>
+      <path>src/modules/auth/auth.controller.ts</path>
+    </interface>
+    <interface>
+      <name>AuthService.logout</name>
+      <kind>service method</kind>
+      <signature>
+        async logout(refreshToken: string): Promise&lt;{ success: boolean; message: string }&gt;
+      </signature>
+      <path>src/modules/auth/auth.service.ts</path>
+    </interface>
+    <interface>
+      <name>LogoutDto</name>
+      <kind>DTO class</kind>
+      <signature>
+        class LogoutDto {
+          @IsUUID()
+          @IsNotEmpty()
+          refreshToken!: string;
+        }
+      </signature>
+      <path>src/modules/auth/dto/logout.dto.ts</path>
+    </interface>
+    <interface>
+      <name>PrismaService.refreshToken.findUnique</name>
+      <kind>database query</kind>
+      <signature>
+        prisma.refreshToken.findUnique({ where: { token: refreshToken } })
+      </signature>
+      <path>src/database/prisma.service.ts</path>
+    </interface>
+    <interface>
+      <name>PrismaService.refreshToken.delete</name>
+      <kind>database query</kind>
+      <signature>
+        prisma.refreshToken.delete({ where: { id: storedToken.id } })
+      </signature>
+      <path>src/database/prisma.service.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing infrastructure ready from previous stories. Unit tests use Jest with mock PrismaService. E2E tests use supertest with test database setup (jest-e2e-setup.ts). Follow existing auth test patterns: create user → login → test operation → verify database state. All tests must verify idempotency, error handling, and security requirements (generic error messages, no credential disclosure).
+    </standards>
+    <locations>
+      - Unit tests: src/modules/auth/auth.service.spec.ts
+      - E2E tests: test/auth-logout.e2e-spec.ts (new file to create)
+      - Test setup: test/jest-e2e-setup.ts
+      - Test config: test/jest-e2e.json
+    </locations>
+    <ideas>
+      - Unit Test (AC-2.5.3, 2.5.7): logout() with valid token deletes token from database
+      - Unit Test (AC-2.5.7): logout() with non-existent token returns success (idempotent)
+      - Unit Test (AC-2.5.4): logout() returns correct response format
+      - E2E Test (AC-2.5.1): POST /auth/logout requires JWT (401 without token)
+      - E2E Test (AC-2.5.1, 2.5.2, 2.5.4): POST /auth/logout with valid token → 200 OK with success message
+      - E2E Test (AC-2.5.3, 2.5.5): Refresh token deleted from database after logout, cannot be reused
+      - E2E Test (AC-2.5.6): Access token still valid until expiry (protected route accessible)
+      - E2E Test (AC-2.5.7): POST /auth/logout with non-existent token → 200 OK (idempotent)
+      - E2E Test (AC-2.5.7): Logout multiple times (idempotency test) → all succeed
+      - E2E Test (AC-2.5.2): Invalid refreshToken format → 400 Bad Request (validation error)
+    </ideas>
+  </tests>
+</story-context>

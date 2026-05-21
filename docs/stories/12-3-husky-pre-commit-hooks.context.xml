@@ -1,0 +1,151 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>12</epicId>
+    <storyId>12.3</storyId>
+    <title>Husky Pre-Commit Hooks</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/12-3-husky-pre-commit-hooks.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>pre-commit hooks</iWant>
+    <soThat>bad code commit edilemesin</soThat>
+    <tasks>7 main tasks with 25+ subtasks defined covering Husky installation, pre-commit hook creation, lint check, format check, optional test run, commit blocking, and documentation</tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Husky installed ve initialized
+2. `.husky/pre-commit` hook oluşturulmuş
+3. Pre-commit checks:
+   - Lint check (eslint --fix)
+   - Format check (prettier --check)
+   - Optional: Test run (fast unit tests only)
+4. Commit blocked if checks fail
+5. `package.json`: `"prepare": "husky install"`
+6. README: Hook'ları bypass etme (--no-verify) discouraged
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics/epic-12-code-quality-standards.md</path>
+        <title>Epic 12: Code Quality &amp; Standards</title>
+        <section>Story 12.3: Husky Pre-Commit Hooks</section>
+        <snippet>Story 12.3: Husky Pre-Commit Hooks - As a developer, I want pre-commit hooks, so that bad code commit edilemesin. Dependencies: Story 12.2</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-12.md</path>
+        <title>Epic Technical Specification: Code Quality &amp; Standards</title>
+        <section>AC 12.3: Husky Pre-Commit Hooks</section>
+        <snippet>AC 12.3: Husky Pre-Commit Hooks - Requirements: Husky installed, .husky/pre-commit hook, pre-commit checks (lint, format, optional tests), commit blocked on failures</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-12.md</path>
+        <title>Epic Technical Specification: Code Quality &amp; Standards</title>
+        <section>Pre-Commit Workflow</section>
+        <snippet>Pre-Commit Workflow diagram: Developer git commit → Trigger .husky/pre-commit → Run eslint --fix → Check violations → Run prettier --check → Block on failures → Allow/Block commit</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD-NFR-CodingStandards.md</path>
+        <title>PRD - Non-Functional Requirements: Coding Standards</title>
+        <section>NFR-4.12: Testing Pattern</section>
+        <snippet>hrsync-backend proven testing patterns with Jest, Arrange-Act-Assert pattern, proper mocking with jest.clearAllMocks()</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/12-2-prettier-configuration.md</path>
+        <title>Story 12.2: Prettier Configuration</title>
+        <section>Dev Notes - Learnings from Previous Story</section>
+        <snippet>Prettier Foundation Established: .prettierrc configured, ESLint + Prettier integration active, format on save configured, integration strategy for Husky</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>docs/stories/12-1-eslint-configuration.md</path>
+        <kind>story</kind>
+        <symbol>ESLint Configuration</symbol>
+        <lines>1-50</lines>
+        <reason>Provides ESLint configuration foundation that Husky pre-commit hook will leverage for lint checks</reason>
+      </file>
+      <file>
+        <path>docs/stories/12-2-prettier-configuration.md</path>
+        <kind>story</kind>
+        <symbol>Prettier Configuration</symbol>
+        <lines>1-50</lines>
+        <reason>Provides Prettier configuration and format script that Husky pre-commit hook will use for format checks</reason>
+      </file>
+      <file>
+        <path>docs/tech-spec-epic-12.md</path>
+        <kind>tech-spec</kind>
+        <symbol>CLI Commands Interface</symbol>
+        <lines>106-114</lines>
+        <reason>Defines npm run lint, npm run format commands that pre-commit hook will execute</reason>
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem>Node.js</ecosystem>
+      <packages>
+        <package>eslint ^9.18.0</package>
+        <package>prettier ^3.4.2</package>
+        <package>husky (TBD - to be installed)</package>
+        <package>@typescript-eslint/parser ^8.20.0</package>
+        <package>eslint-config-prettier ^10.0.1</package>
+        <package>eslint-plugin-prettier ^5.2.2</package>
+        <package>typescript ^5.7.3</package>
+      </packages>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Pre-commit hooks must complete in &lt; 10 seconds for developer productivity
+    - Husky v8+ required for git hooks management
+    - Integration with existing ESLint (Story 12.1) and Prettier (Story 12.2) configurations
+    - Lint-first approach: ESLint fix before Prettier check
+    - Fail-fast behavior: Stop on first failure
+    - Reuse existing .eslintrc.js, .prettierrc, package.json scripts
+    - Optional test run limited to fast unit tests only
+    - Staged files only for faster execution
+    - Commit blocked on violations with clear error messages
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Git Pre-Commit Hook</name>
+      <kind>Git Hook</kind>
+      <signature>.husky/pre-commit (executable script)</signature>
+      <path>docs/stories/12-3-husky-pre-commit-hooks.md</path>
+    </interface>
+    <interface>
+      <name>NPM Scripts</name>
+      <kind>CLI Commands</kind>
+      <signature>npm run lint (eslint --fix), npm run format (prettier --write)</signature>
+      <path>docs/tech-spec-epic-12.md#CLI-Commands-Interface</path>
+    </interface>
+    <interface>
+      <name>ESLint Configuration</name>
+      <kind>Linting Rules</kind>
+      <signature>.eslintrc.js with @typescript-eslint/recommended, plugin:prettier/recommended</signature>
+      <path>docs/stories/12-1-eslint-configuration.md</path>
+    </interface>
+    <interface>
+      <name>Prettier Configuration</name>
+      <kind>Code Formatting</kind>
+      <signature>.prettierrc with semi: true, singleQuote: true, tabWidth: 2, trailingComma: all, arrowParens: always</signature>
+      <path>docs/stories/12-2-prettier-configuration.md</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Jest testing framework with Arrange-Act-Assert pattern. All configuration validated with CLI commands. Fast execution requirement &lt; 10s. Clear error messages, commit blocked on violations. Follow Epic 9 testing infrastructure patterns and hrsync-backend proven testing practices.</standards>
+    <locations>src/**/*.test.ts, src/**/*.spec.ts, __test__/ directory, test/ directory. Pre-commit hook tests: verify hook registration, verify checks execute, verify violations block commit, verify fast execution &lt; 10s.</locations>
+    <ideas>
+      - Test: Verify husky install works and .husky directory created
+      - Test: Verify pre-commit hook is registered and executable
+      - Test: Verify lint check executes and violations block commit
+      - Test: Verify format check executes and formatting issues block commit
+      - Test: Verify optional test run doesn't exceed 10s limit
+      - Test: Verify commit with violations is blocked
+      - Test: Verify commit after fixes is allowed
+    </ideas>
+  </tests>
+</story-context>

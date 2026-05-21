@@ -1,0 +1,158 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>3</storyId>
+    <title>Email Templates (Handlebars)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-3-email-templates-handlebars.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>email template engine</iWant>
+    <soThat>dynamic email content oluşturabileyim</soThat>
+    <tasks>
+      <task id="1" ac="5.3.2">Install Handlebars library
+        <subtask>Install handlebars: npm install handlebars</subtask>
+        <subtask>Install handlebars types: npm install --save-dev @types/handlebars</subtask>
+      </task>
+      <task id="2" ac="5.3.1">Create template directory and files
+        <subtask>Create src/modules/mail/templates/ directory</subtask>
+        <subtask>Create verification.hbs template with variables: {{firstName}}, {{verificationLink}}</subtask>
+        <subtask>Create password-reset.hbs template with variables: {{firstName}}, {{resetLink}}</subtask>
+        <subtask>Create welcome.hbs template with variables: {{firstName}}, {{loginLink}}</subtask>
+      </task>
+      <task id="3" ac="5.3.2">Create TemplateService
+        <subtask>Create src/modules/mail/services/template.service.ts</subtask>
+        <subtask>Configure Handlebars instance</subtask>
+        <subtask>Implement template compilation with cache (Map&lt;string, HandlebarsTemplateDelegate&gt;)</subtask>
+        <subtask>Implement render(templateName: string, data: object): Promise&lt;string&gt; method</subtask>
+        <subtask>Load template file from src/modules/mail/templates/ directory</subtask>
+        <subtask>Compile template (cache if not already compiled)</subtask>
+        <subtask>Render template with data → return HTML string</subtask>
+        <subtask>Error handling: Template not found, compilation errors</subtask>
+      </task>
+      <task id="4" ac="5.3.3">Add template support to MailService
+        <subtask>Inject TemplateService into MailService</subtask>
+        <subtask>Implement sendTemplateEmail(to, subject, templateName, data): Promise&lt;void&gt; method</subtask>
+        <subtask>Call TemplateService.render(templateName, data) → get HTML</subtask>
+        <subtask>Call MailService.sendEmail(to, subject, html) with rendered HTML</subtask>
+        <subtask>Error handling: Template rendering failures wrapped</subtask>
+      </task>
+      <task id="5" ac="5.3.2">Register TemplateService in MailModule
+        <subtask>Add TemplateService to MailModule providers</subtask>
+        <subtask>Export TemplateService (if needed by other modules)</subtask>
+      </task>
+      <task id="6" ac="All">Testing
+        <subtask>Unit test TemplateService.render() (mock file system, test template compilation, test caching)</subtask>
+        <subtask>Unit test TemplateService.render() error handling (template not found, invalid template syntax)</subtask>
+        <subtask>Unit test MailService.sendTemplateEmail() (mock TemplateService, mock IEmailProvider, test delegation)</subtask>
+        <subtask>Integration test template rendering (test real template files with sample data)</subtask>
+        <subtask>Integration test MailService.sendTemplateEmail() end-to-end (template → render → send email)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="5.3.1">Template files oluşturulmuş (src/modules/mail/templates/ klasörü)
+      - Template files: verification.hbs, password-reset.hbs, welcome.hbs
+      - Template variables: {{firstName}}, {{verificationLink}}, {{resetLink}}, etc.
+    </ac>
+    <ac id="5.3.2">TemplateService oluşturulmuş (src/modules/mail/services/template.service.ts)
+      - render(templateName: string, data: object): Promise&lt;string&gt; method
+      - Handlebars configured ve compile ediliyor
+      - Template compile ve cache (performance optimization)
+      - Template path: src/modules/mail/templates/
+    </ac>
+    <ac id="5.3.3">MailService template support eklendi
+      - sendTemplateEmail(to: string, subject: string, templateName: string, data: object): Promise&lt;void&gt; method
+      - Template rendering via TemplateService
+      - Delegates to MailService.sendEmail() with rendered HTML content
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Story-5.3">
+        Email Templates (Handlebars) story specifications, AC-5.3.1 through AC-5.3.3, TemplateService design, template compilation caching strategy
+      </doc>
+      <doc path="docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md" title="Epic 5: Communication Infrastructure" section="Story-5.3">
+        Epic-level story breakdown, template files and variables specification
+      </doc>
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Error-Handling-Pattern">
+        Error handling pattern: Template not found → NotFoundException, compilation errors → BadRequestException, i18n support
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="">
+        Testing standards: Arrange-Act-Assert pattern, unit test coverage requirements, integration test approach
+      </doc>
+      <doc path="docs/stories/5-2-email-provider-interface-sendgrid-implementation.md" title="Story 5.2: Email Provider Interface" section="Dev Notes">
+        Mail module structure established, error handling pattern, MailService implementation, MailModule structure
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/modules/mail/services/mail.service.ts" kind="service" symbol="MailService" lines="42-106" reason="MailService.sendEmail() method to be extended with sendTemplateEmail() method">
+        Provider-agnostic email service with sendEmail() method. Will be extended with sendTemplateEmail() that uses TemplateService for rendering.
+      </artifact>
+      <artifact path="src/modules/mail/mail.module.ts" kind="module" symbol="MailModule" lines="41-56" reason="MailModule providers array needs TemplateService added">
+        Mail module definition with dynamic provider injection. TemplateService needs to be added to providers array.
+      </artifact>
+      <artifact path="src/modules/mail/interfaces/mail-provider.interface.ts" kind="interface" symbol="IEmailProvider" lines="24-40" reason="Email provider interface - MailService uses this for email sending">
+        IEmailProvider interface with send() method. MailService delegates to this interface for email sending.
+      </artifact>
+      <artifact path="src/modules/mail/providers/sendgrid.provider.ts" kind="provider" symbol="SendGridProvider" lines="1-176" reason="SendGrid provider implementation - MailService uses this via IEmailProvider interface">
+        SendGrid provider implementation. MailService uses this through IEmailProvider interface for actual email sending.
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="handlebars" version="^4.7.8">Template engine for email templates - needs to be installed</package>
+        <package name="@types/handlebars" version="^4.0.0">TypeScript types for Handlebars - dev dependency</package>
+        <package name="@nestjs/common" version="^11.0.1">NestJS framework - Injectable decorator, Logger, exceptions</package>
+        <package name="@nestjs/config" version="^4.0.2">ConfigService for configuration access</package>
+        <package name="nestjs-i18n" version="^10.5.1">I18nService for internationalized error messages</package>
+        <package name="winston" version="^3.18.3">Logger for error logging</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Template Engine Pattern: Handlebars template engine for email content, template compilation with caching for performance (compile once, render many times)</constraint>
+    <constraint>Service Layer Pattern: TemplateService for template rendering (single responsibility), MailService for email sending orchestration (uses TemplateService)</constraint>
+    <constraint>Performance Optimization: Template compilation cached in memory (Map&lt;string, HandlebarsTemplateDelegate&gt;), first render compiles and caches, subsequent renders use cached template</constraint>
+    <constraint>Error Handling Pattern: Template not found → NotFoundException with i18n message, compilation errors → BadRequestException, rendering errors → wrap and log, throw BadRequestException</constraint>
+    <constraint>Template Variable Naming: Use camelCase for template variables ({{firstName}}, {{verificationLink}}, {{resetLink}}), consistent naming across all templates</constraint>
+    <constraint>Module Structure: Template files in src/modules/mail/templates/, TemplateService in src/modules/mail/services/template.service.ts, clear separation between template rendering and email sending</constraint>
+    <constraint>Testing Requirements: Unit tests for TemplateService.render() (mock file system, test compilation, test caching), unit tests for MailService.sendTemplateEmail() (mock TemplateService, mock IEmailProvider), integration tests for template rendering and email sending</constraint>
+    <constraint>Coding Standards: Follow NestJS module structure pattern, use Injectable decorator, use Logger for error logging, use i18n for error messages, follow Arrange-Act-Assert test pattern</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="IEmailProvider" kind="TypeScript interface" signature="send(to: string, subject: string, html: string, text?: string): Promise&lt;EmailResult&gt;" path="src/modules/mail/interfaces/mail-provider.interface.ts">
+      Email provider interface used by MailService for email sending. TemplateService renders HTML, MailService calls IEmailProvider.send() with rendered HTML.
+    </interface>
+    <interface name="MailService.sendEmail" kind="method" signature="sendEmail(to: string, subject: string, html: string, text?: string): Promise&lt;void&gt;" path="src/modules/mail/services/mail.service.ts">
+      Existing MailService method that sends email via IEmailProvider. sendTemplateEmail() will call TemplateService.render() then delegate to this method.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Arrange-Act-Assert pattern. Unit tests use mocks for dependencies (file system, TemplateService, IEmailProvider). Integration tests use real template files and test end-to-end flow. Test coverage target: 80%+ for services. Use Jest testing framework with @nestjs/testing module.
+    </standards>
+    <locations>
+      Unit tests: src/modules/mail/__tests__/services/template.service.spec.ts
+      Integration tests: test/integration/mail-template.e2e-spec.ts (if created)
+      Existing test pattern: src/modules/mail/__tests__/providers/sendgrid.provider.spec.ts, src/modules/mail/__tests__/services/mail.service.spec.ts
+    </locations>
+    <ideas>
+      <test ac="5.3.2">Unit test TemplateService.render() → Loads template file from templates directory, compiles template on first call (cache miss), uses cached compiled template on subsequent calls (cache hit), renders template with data variables correctly, throws NotFoundException when template file not found, throws BadRequestException when template syntax invalid, handles missing template variables gracefully</test>
+      <test ac="5.3.3">Unit test MailService.sendTemplateEmail() → Calls TemplateService.render() with correct parameters, calls MailService.sendEmail() with rendered HTML, wraps template rendering errors and throws BadRequestException, delegates email sending errors to MailService error handling</test>
+      <test ac="5.3.1,5.3.2">Integration test template rendering → Real template files with sample data (verification.hbs, password-reset.hbs, welcome.hbs), verify template compiled only once and used multiple times (caching)</test>
+      <test ac="5.3.3">Integration test MailService.sendTemplateEmail() → End-to-end flow (template → render → send email via SendGridProvider)</test>
+      <test ac="All">E2E test template email sending → MailService.sendTemplateEmail() → SendGrid API → Email delivered with correct content, verify {{firstName}}, {{verificationLink}} replaced correctly in email</test>
+    </ideas>
+  </tests>
+</story-context>
+

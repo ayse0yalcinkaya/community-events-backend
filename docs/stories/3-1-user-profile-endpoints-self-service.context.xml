@@ -1,0 +1,485 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/3-1" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1</storyId>
+    <title>User Profile Endpoints (Self-Service)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-1-user-profile-endpoints-self-service.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>kendi profilimi görüntüleyip güncelleyebilmek</iWant>
+    <soThat>bilgilerimi yönetebilleyim</soThat>
+    <tasks>
+      <task id="1" status="pending" acceptanceCriteria="AC-3.1.1">
+        <description>Create ProfileController and setup module structure</description>
+        <subtasks>
+          <subtask id="1.1">Create src/modules/users/controllers/profile.controller.ts</subtask>
+          <subtask id="1.2">Setup module imports (UsersService, JwtAuthGuard)</subtask>
+          <subtask id="1.3">Add controller to UsersModule providers</subtask>
+        </subtasks>
+      </task>
+      <task id="2" status="pending" acceptanceCriteria="AC-3.1.1">
+        <description>Implement GET /users/me endpoint</description>
+        <subtasks>
+          <subtask id="2.1">Add @Get('me') route with @UseGuards(JwtAuthGuard)</subtask>
+          <subtask id="2.2">Extract current user with @CurrentUser() decorator</subtask>
+          <subtask id="2.3">Call UsersService.findOne(userId, domainID)</subtask>
+          <subtask id="2.4">Transform response to UserResDto using plainToInstance</subtask>
+          <subtask id="2.5">Return success response with user data</subtask>
+          <subtask id="2.6">Add error handling (401 if unauthorized)</subtask>
+        </subtasks>
+      </task>
+      <task id="3" status="pending" acceptanceCriteria="AC-3.1.2">
+        <description>Create DTOs for profile update</description>
+        <subtasks>
+          <subtask id="3.1">Create src/modules/users/dto/request/update-profile.dto.ts</subtask>
+          <subtask id="3.2">Add fields: firstName (optional, string, 2-50 chars)</subtask>
+          <subtask id="3.3">Add field: lastName (optional, string, 2-50 chars)</subtask>
+          <subtask id="3.4">Add field: phoneNumber (optional, @IsPhoneNumber('TR'))</subtask>
+          <subtask id="3.5">Add validation decorators (@IsOptional, @IsString, @MinLength, @MaxLength)</subtask>
+        </subtasks>
+      </task>
+      <task id="4" status="pending" acceptanceCriteria="AC-3.1.2">
+        <description>Implement PATCH /users/me endpoint</description>
+        <subtasks>
+          <subtask id="4.1">Add @Patch('me') route with @UseGuards(JwtAuthGuard)</subtask>
+          <subtask id="4.2">Extract current user with @CurrentUser() decorator</subtask>
+          <subtask id="4.3">Validate UpdateProfileDto using ValidationPipe</subtask>
+          <subtask id="4.4">Check phoneNumber change → require OTP verification (use OtpService from Story 2.8)</subtask>
+          <subtask id="4.5">Call UsersService.updateProfile(userId, updateProfileDto)</subtask>
+          <subtask id="4.6">Handle phoneNumber uniqueness (throw 409 if duplicate)</subtask>
+          <subtask id="4.7">Transform response to UserResDto</subtask>
+          <subtask id="4.8">Return success response with updated user data</subtask>
+        </subtasks>
+      </task>
+      <task id="5" status="pending" acceptanceCriteria="AC-3.1.1, AC-3.1.2">
+        <description>Create/extend UsersService methods</description>
+        <subtasks>
+          <subtask id="5.1">Create UsersService if not exists (src/modules/users/services/users.service.ts)</subtask>
+          <subtask id="5.2">Implement findOne(id: string, domainID: string): Promise&lt;User&gt;</subtask>
+          <subtask id="5.3">Add domainID filtering and deletedAt: null check</subtask>
+          <subtask id="5.4">Implement updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise&lt;User&gt;</subtask>
+          <subtask id="5.5">Add phoneNumber uniqueness check before update</subtask>
+          <subtask id="5.6">Add logging for profile operations</subtask>
+        </subtasks>
+      </task>
+      <task id="6" status="pending" acceptanceCriteria="AC-3.1.1">
+        <description>Create UserResDto response DTO</description>
+        <subtasks>
+          <subtask id="6.1">Create src/modules/users/dto/response/user-res.dto.ts</subtask>
+          <subtask id="6.2">Add @Expose() decorated fields: id, phoneNumber, firstName, lastName, email, role, isActive, phoneVerified, createdAt, updatedAt</subtask>
+          <subtask id="6.3">Exclude sensitive fields (passwordHash, domainID, deletedAt) by omitting them</subtask>
+        </subtasks>
+      </task>
+      <task id="7" status="pending" acceptanceCriteria="AC-3.1.1, AC-3.1.2">
+        <description>Setup UsersModule if not exists</description>
+        <subtasks>
+          <subtask id="7.1">Create src/modules/users/users.module.ts if not exists</subtask>
+          <subtask id="7.2">Import PrismaModule for database access</subtask>
+          <subtask id="7.3">Import AuthModule for JwtAuthGuard</subtask>
+          <subtask id="7.4">Provide UsersService</subtask>
+          <subtask id="7.5">Register ProfileController</subtask>
+          <subtask id="7.6">Export UsersService for use by other modules</subtask>
+        </subtasks>
+      </task>
+      <task id="8" status="pending" acceptanceCriteria="AC-3.1.1, AC-3.1.2">
+        <description>Write unit tests for ProfileController</description>
+        <subtasks>
+          <subtask id="8.1">Test GET /users/me returns current user profile</subtask>
+          <subtask id="8.2">Test GET /users/me returns 401 if unauthorized</subtask>
+          <subtask id="8.3">Test PATCH /users/me updates firstName and lastName</subtask>
+          <subtask id="8.4">Test PATCH /users/me validates input (400 for invalid data)</subtask>
+          <subtask id="8.5">Test PATCH /users/me returns 409 for duplicate phoneNumber</subtask>
+          <subtask id="8.6">Mock UsersService methods</subtask>
+        </subtasks>
+      </task>
+      <task id="9" status="pending" acceptanceCriteria="AC-3.1.1, AC-3.1.2">
+        <description>Write integration tests for profile endpoints</description>
+        <subtasks>
+          <subtask id="9.1">Test E2E: GET /users/me with valid JWT → returns UserResDto</subtask>
+          <subtask id="9.2">Test E2E: GET /users/me without JWT → 401 Unauthorized</subtask>
+          <subtask id="9.3">Test E2E: PATCH /users/me updates profile successfully</subtask>
+          <subtask id="9.4">Test E2E: PATCH /users/me with duplicate phoneNumber → 409 Conflict</subtask>
+          <subtask id="9.5">Test E2E: passwordHash never returned in response</subtask>
+          <subtask id="9.6">Test E2E: phoneNumber change requires OTP verification</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="AC-3.1.1" priority="P0">
+      <summary>GET /users/me endpoint returns current user profile</summary>
+      <details>
+        <detail>User authenticated with valid JWT token</detail>
+        <detail>Response contains UserResDto (id, phoneNumber, firstName, lastName, email, role, isActive, phoneVerified, timestamps)</detail>
+        <detail>passwordHash excluded from response</detail>
+        <detail>Returns 401 if token invalid/missing</detail>
+      </details>
+      <testStrategy>Unit tests for controller method, Integration test for full request cycle, E2E test for authentication flow</testStrategy>
+    </ac>
+    <ac id="AC-3.1.2" priority="P0">
+      <summary>PATCH /users/me endpoint updates current user profile</summary>
+      <details>
+        <detail>User can update firstName, lastName, phoneNumber</detail>
+        <detail>phoneNumber update requires OTP verification (Epic 2.7 integration)</detail>
+        <detail>Validation errors return 400 with detailed messages</detail>
+        <detail>phoneNumber uniqueness enforced (409 Conflict if duplicate)</detail>
+        <detail>Returns updated UserResDto</detail>
+      </details>
+      <testStrategy>Unit tests with mocked service, Integration tests for validation and database constraints, E2E tests for OTP verification flow</testStrategy>
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-3.md" relevance="high">
+        <description>Complete technical specification for Epic 3 including Story 3.1 API specifications, data models, acceptance criteria, and system architecture alignment</description>
+        <keySection>
+          <section>Story 3.1 - User Profile Endpoints (Self-Service)</section>
+          <section>APIs and Interfaces - GET /users/me and PATCH /users/me specifications</section>
+          <section>Data Models and Contracts - UserResDto and UpdateProfileDto</section>
+          <section>System Architecture Alignment - Controller-Service pattern</section>
+          <section>Test Strategy Summary - Unit and integration test approach</section>
+        </keySection>
+      </doc>
+      <doc path="docs/epics.md" relevance="medium">
+        <description>Epic breakdown document containing high-level user stories and business requirements for all epics including Epic 3</description>
+        <keySection>
+          <section>Epic 3: User Management &amp; RBAC Permissions</section>
+          <section>Story 3.1: User Profile Endpoints (Self-Service)</section>
+        </keySection>
+      </doc>
+      <doc path="docs/architecture.md" relevance="high">
+        <description>Project architecture decisions including NestJS patterns, multi-tenancy approach, module organization, and response formatting standards</description>
+        <keySection>
+          <section>Decision Summary - Framework, authentication, permission system</section>
+          <section>Project Structure - Module organization patterns</section>
+          <section>Module Organization - Feature modules + Common</section>
+          <section>Response Format - Global Interceptor pattern</section>
+        </keySection>
+      </doc>
+      <doc path="docs/stories/2-8-otp-verification-system.md" relevance="high">
+        <description>Previous story implementing OTP verification system that this story depends on for phoneNumber change validation</description>
+        <keySection>
+          <section>Dev Agent Record - Learnings about OTP service usage</section>
+          <section>OTP Service Integration - Purpose-based OTP types including phone-verification</section>
+        </keySection>
+      </doc>
+      <doc path="prisma/schema.prisma" relevance="high">
+        <description>Database schema defining User entity with all fields including multi-tenancy (domainID) and soft-delete (deletedAt) support</description>
+        <keySection>
+          <section>User model - Fields: id, domainID, phoneNumber, firstName, lastName, email, role, isActive, phoneVerified, passwordHash, deletedAt</section>
+          <section>Indexes - domainID, phoneNumber, email, deletedAt</section>
+        </keySection>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="src/common/guards/jwt-auth.guard.ts" type="guard" mustReuse="true">
+        <description>JWT Authentication Guard extending Passport AuthGuard('jwt') that validates JWT tokens and supports @Public() decorator bypass</description>
+        <usage>Apply to ProfileController methods using @UseGuards(JwtAuthGuard) to protect routes requiring authentication</usage>
+        <keyInterface>
+          <method>canActivate(context: ExecutionContext): boolean</method>
+          <method>handleRequest(err, user, info): User</method>
+        </keyInterface>
+      </artifact>
+      <artifact path="src/modules/auth/decorators/current-user.decorator.ts" type="decorator" mustReuse="true">
+        <description>Parameter decorator to extract authenticated user (JwtPayload) from request after JWT validation</description>
+        <usage>Use @CurrentUser() user: JwtPayload in controller methods to access user.sub (userID), user.domainID, user.phoneNumber, user.roles</usage>
+        <keyInterface>
+          <returns>JwtPayload { sub: string, phoneNumber: string, domainID: string, roles: string[], iat: number, exp: number }</returns>
+        </keyInterface>
+      </artifact>
+      <artifact path="src/modules/auth/interfaces/jwt-payload.interface.ts" type="interface" mustReuse="true">
+        <description>TypeScript interface defining JWT token payload structure with user identification and multi-tenancy fields</description>
+        <usage>Import and use as type for @CurrentUser() decorator parameter</usage>
+        <keyInterface>
+          <field>sub: string - User ID (UUID)</field>
+          <field>phoneNumber: string - E.164 format</field>
+          <field>domainID: string - Multi-tenancy domain UUID</field>
+          <field>roles: string[] - User roles array</field>
+        </keyInterface>
+      </artifact>
+      <artifact path="src/database/prisma.service.ts" type="service" mustReuse="true">
+        <description>Global PrismaService extending PrismaClient for database operations with connection lifecycle management</description>
+        <usage>Inject PrismaService into UsersService for database queries: this.prisma.user.findUnique(), this.prisma.user.update()</usage>
+        <keyInterface>
+          <method>onModuleInit(): Promise&lt;void&gt;</method>
+          <method>onModuleDestroy(): Promise&lt;void&gt;</method>
+          <extends>PrismaClient - All Prisma query methods available</extends>
+        </keyInterface>
+      </artifact>
+      <artifact path="src/modules/auth/services/otp.service.ts" type="service" mustReuse="true">
+        <description>OTP generation and validation service supporting multiple purposes including phone-verification</description>
+        <usage>Inject OtpService into ProfileController for phoneNumber change validation: await otpService.validateOtp(userId, otpCode, 'phone-verification')</usage>
+        <keyInterface>
+          <method>generateOtp(userID: string, purpose: OtpPurpose): Promise&lt;string&gt;</method>
+          <method>validateOtp(userID: string, code: string, purpose: OtpPurpose): Promise&lt;OtpValidationResult&gt;</method>
+          <type>OtpPurpose = 'login' | 'password-reset' | 'phone-verification'</type>
+        </keyInterface>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <package name="@nestjs/common" version="^11.0.1" usage="Core NestJS decorators (@Controller, @Get, @Patch, @UseGuards, @Injectable), HTTP exceptions (UnauthorizedException, ConflictException)" />
+      <package name="@nestjs/core" version="^11.0.1" usage="Reflector for metadata reflection" />
+      <package name="@nestjs/passport" version="^11.0.5" usage="JWT authentication strategy integration" />
+      <package name="@nestjs/jwt" version="^11.0.1" usage="JWT token handling (used by auth module)" />
+      <package name="@prisma/client" version="^6.18.0" usage="Database queries via PrismaService, User entity type" />
+      <package name="class-validator" version="^0.14.2" usage="DTO validation decorators (@IsOptional, @IsString, @IsPhoneNumber, @MinLength, @MaxLength)" />
+      <package name="class-transformer" version="^0.5.1" usage="DTO transformation (plainToInstance with excludeExtraneousValues: true, @Expose() decorator)" />
+      <package name="bcrypt" version="^6.0.0" usage="Password hashing (not needed for this story but part of user service)" />
+      <package name="passport-jwt" version="^4.0.1" usage="JWT strategy for Passport (used by JwtAuthGuard)" />
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture" priority="critical">
+      <title>Controller-Service Pattern Mandatory</title>
+      <description>ProfileController handles HTTP layer (request/response transformation), UsersService handles business logic (validation, database operations). Clear separation of concerns following NestJS best practices.</description>
+      <source>docs/tech-spec-epic-3.md#System-Architecture-Alignment</source>
+      <enforcement>Controllers must not contain business logic or direct database queries. All database operations through service layer.</enforcement>
+    </constraint>
+    <constraint type="security" priority="critical">
+      <title>Multi-Tenancy DomainID Filtering Required</title>
+      <description>All user queries MUST include domainID filter extracted from JWT token via @CurrentUser() decorator. Prevents cross-domain data access.</description>
+      <source>docs/tech-spec-epic-3.md#Security</source>
+      <enforcement>UsersService.findOne() and updateProfile() must filter by domainID. Test cross-domain access attempts return 403/404.</enforcement>
+    </constraint>
+    <constraint type="architecture" priority="critical">
+      <title>Standard Response Format via Interceptor</title>
+      <description>All responses wrapped by ResponseTransformInterceptor. Success: { success: true, data: UserResDto }. Error: { success: false, error: { code, message, details } }</description>
+      <source>docs/tech-spec-epic-3.md#APIs-and-Interfaces</source>
+      <enforcement>Controllers return plain objects/DTOs. Interceptor handles wrapping. No manual response wrapping in controllers.</enforcement>
+    </constraint>
+    <constraint type="security" priority="critical">
+      <title>DTO Transformation with Exclusion</title>
+      <description>Use class-transformer's plainToInstance with excludeExtraneousValues: true. @Expose() decorator on UserResDto fields ensures only intended fields returned. Automatically excludes passwordHash, domainID, deletedAt.</description>
+      <source>docs/tech-spec-epic-3.md#Data-Models-and-Contracts</source>
+      <enforcement>UserResDto must use @Expose() on all returned fields. Transform using plainToInstance(UserResDto, user, { excludeExtraneousValues: true }).</enforcement>
+    </constraint>
+    <constraint type="security" priority="critical">
+      <title>JWT Authentication Required</title>
+      <description>JWT authentication via JwtAuthGuard from Epic 2. @CurrentUser() decorator extracts user from JWT payload. No additional permission checks needed for self-service endpoints.</description>
+      <source>docs/tech-spec-epic-3.md#Dependencies-and-Integrations</source>
+      <enforcement>All ProfileController routes must use @UseGuards(JwtAuthGuard). Extract user via @CurrentUser() decorator, not from request manually.</enforcement>
+    </constraint>
+    <constraint type="data-integrity" priority="critical">
+      <title>Soft-Delete Pattern Required</title>
+      <description>All user queries must filter deletedAt: null to exclude soft-deleted users. Users are never hard-deleted.</description>
+      <source>docs/tech-spec-epic-3.md#Security</source>
+      <enforcement>UsersService.findOne() must include deletedAt: null in WHERE clause. Test that soft-deleted users return 404.</enforcement>
+    </constraint>
+    <constraint type="validation" priority="high">
+      <title>Phone Number Format and Uniqueness</title>
+      <description>phoneNumber validated with @IsPhoneNumber('TR') for Turkish format. Uniqueness enforced per domain in database (unique constraint on [domainID, phoneNumber]).</description>
+      <source>docs/tech-spec-epic-3.md#Data-Models-and-Contracts</source>
+      <enforcement>UpdateProfileDto must use @IsPhoneNumber('TR'). UsersService.updateProfile() must check uniqueness before update, throw ConflictException(409) if duplicate.</enforcement>
+    </constraint>
+    <constraint type="integration" priority="high">
+      <title>OTP Verification for Phone Number Change</title>
+      <description>phoneNumber update requires OTP verification using OtpService from Story 2.8 with purpose='phone-verification'.</description>
+      <source>docs/stories/3-1-user-profile-endpoints-self-service.md#Dev-Notes</source>
+      <enforcement>PATCH /users/me must detect phoneNumber change, require OTP code in request, validate via OtpService.validateOtp() before allowing update.</enforcement>
+    </constraint>
+    <constraint type="testing" priority="high">
+      <title>85% Unit Test Coverage Target</title>
+      <description>Mock PrismaService for database operations. Mock JwtAuthGuard for authentication. Test all success and error paths. Validate DTO transformations exclude sensitive fields.</description>
+      <source>docs/tech-spec-epic-3.md#Test-Strategy-Summary</source>
+      <enforcement>UsersService and ProfileController must have unit tests covering: success cases, 401 unauthorized, 400 validation, 404 not found, 409 conflict, passwordHash exclusion.</enforcement>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <api method="GET" path="/users/me" controller="ProfileController">
+      <description>Get current authenticated user's profile</description>
+      <authentication>Required - JwtAuthGuard</authentication>
+      <authorization>None - Self-service endpoint</authorization>
+      <request>
+        <headers>
+          <header name="Authorization" required="true">Bearer {JWT_TOKEN}</header>
+        </headers>
+        <body>None</body>
+      </request>
+      <response status="200">
+        <format>{ success: true, data: UserResDto }</format>
+        <fields>id, phoneNumber, firstName, lastName, email, role, isActive, phoneVerified, createdAt, updatedAt</fields>
+        <excludedFields>passwordHash, domainID, deletedAt</excludedFields>
+      </response>
+      <errors>
+        <error status="401">Unauthorized - Invalid or missing JWT token</error>
+      </errors>
+    </api>
+    <api method="PATCH" path="/users/me" controller="ProfileController">
+      <description>Update current authenticated user's profile</description>
+      <authentication>Required - JwtAuthGuard</authentication>
+      <authorization>None - Self-service endpoint</authorization>
+      <request>
+        <headers>
+          <header name="Authorization" required="true">Bearer {JWT_TOKEN}</header>
+        </headers>
+        <body type="UpdateProfileDto">
+          <field name="firstName" type="string" optional="true" validation="2-50 chars">Updated first name</field>
+          <field name="lastName" type="string" optional="true" validation="2-50 chars">Updated last name</field>
+          <field name="phoneNumber" type="string" optional="true" validation="@IsPhoneNumber('TR')">Updated phone number - requires OTP verification</field>
+        </body>
+      </request>
+      <response status="200">
+        <format>{ success: true, data: UserResDto }</format>
+        <fields>Updated user object with same structure as GET /users/me</fields>
+      </response>
+      <errors>
+        <error status="400">Bad Request - Validation errors (invalid format, missing OTP for phoneNumber change)</error>
+        <error status="401">Unauthorized - Invalid or missing JWT token</error>
+        <error status="409">Conflict - phoneNumber already exists in domain</error>
+      </errors>
+    </api>
+    <service name="UsersService" module="users">
+      <method name="findOne" returnType="Promise&lt;User&gt;">
+        <parameters>
+          <param name="id" type="string">User UUID</param>
+          <param name="domainID" type="string">Domain UUID for multi-tenancy filtering</param>
+        </parameters>
+        <description>Find single user by ID with domainID and soft-delete filtering</description>
+        <throws>NotFoundException if user not found or deleted</throws>
+      </method>
+      <method name="updateProfile" returnType="Promise&lt;User&gt;">
+        <parameters>
+          <param name="userId" type="string">User UUID</param>
+          <param name="updateProfileDto" type="UpdateProfileDto">Fields to update (firstName, lastName, phoneNumber)</param>
+        </parameters>
+        <description>Update user profile with validation and uniqueness checks</description>
+        <throws>ConflictException if phoneNumber duplicate, BadRequestException if validation fails</throws>
+      </method>
+    </service>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard type="unit" coverage="85%">
+        <framework>Jest with @nestjs/testing</framework>
+        <approach>Mock PrismaService for database operations. Mock JwtAuthGuard for authentication bypass. Test all success and error paths including DTO transformations.</approach>
+        <keyScenarios>
+          <scenario>ProfileController.getProfile() returns UserResDto with passwordHash excluded</scenario>
+          <scenario>ProfileController.getProfile() throws 401 if user not authenticated</scenario>
+          <scenario>ProfileController.updateProfile() updates firstName and lastName successfully</scenario>
+          <scenario>ProfileController.updateProfile() validates input (400 for invalid data)</scenario>
+          <scenario>UsersService.updateProfile() throws 409 for duplicate phoneNumber</scenario>
+          <scenario>UsersService.findOne() filters by domainID and deletedAt: null</scenario>
+        </keyScenarios>
+      </standard>
+      <standard type="integration" coverage="all-endpoints">
+        <framework>Jest + Supertest with test database</framework>
+        <approach>Use test database with transaction rollback. Test complete request/response cycle. Validate JWT authentication flow and DTO transformations.</approach>
+        <keyScenarios>
+          <scenario>E2E: GET /users/me with valid JWT returns UserResDto without sensitive fields</scenario>
+          <scenario>E2E: GET /users/me without JWT returns 401 Unauthorized</scenario>
+          <scenario>E2E: PATCH /users/me updates profile successfully with valid data</scenario>
+          <scenario>E2E: PATCH /users/me with duplicate phoneNumber returns 409 Conflict</scenario>
+          <scenario>E2E: PATCH /users/me with phoneNumber change requires OTP verification</scenario>
+          <scenario>E2E: passwordHash never returned in any response</scenario>
+        </keyScenarios>
+      </standard>
+    </standards>
+
+    <locations>
+      <unitTests path="src/modules/users/controllers/profile.controller.spec.ts">ProfileController unit tests</unitTests>
+      <unitTests path="src/modules/users/services/users.service.spec.ts">UsersService unit tests</unitTests>
+      <integrationTests path="test/users-profile.e2e-spec.ts">E2E tests for profile endpoints</integrationTests>
+    </locations>
+
+    <ideas>
+      <idea acceptanceCriteria="AC-3.1.1" priority="P0">
+        <title>Authenticated user can view own profile</title>
+        <description>User with valid JWT token calls GET /users/me and receives complete profile with all non-sensitive fields</description>
+        <testSteps>
+          <step>Create test user in database</step>
+          <step>Generate valid JWT token for user</step>
+          <step>Call GET /users/me with Authorization header</step>
+          <step>Assert 200 OK response</step>
+          <step>Assert response contains UserResDto fields: id, phoneNumber, firstName, lastName, email, role, isActive, phoneVerified, timestamps</step>
+          <step>Assert response does NOT contain: passwordHash, domainID, deletedAt</step>
+        </testSteps>
+      </idea>
+      <idea acceptanceCriteria="AC-3.1.1" priority="P0">
+        <title>Unauthenticated request returns 401</title>
+        <description>Request to GET /users/me without JWT token is rejected with 401 Unauthorized</description>
+        <testSteps>
+          <step>Call GET /users/me without Authorization header</step>
+          <step>Assert 401 Unauthorized response</step>
+          <step>Assert error message indicates missing/invalid token</step>
+        </testSteps>
+      </idea>
+      <idea acceptanceCriteria="AC-3.1.2" priority="P0">
+        <title>Profile update validates input fields</title>
+        <description>PATCH /users/me with invalid data (e.g., firstName too short, invalid phoneNumber format) returns 400 with detailed validation errors</description>
+        <testSteps>
+          <step>Create test user and generate JWT</step>
+          <step>Call PATCH /users/me with invalid data: { firstName: 'A', phoneNumber: 'invalid' }</step>
+          <step>Assert 400 Bad Request response</step>
+          <step>Assert error details contain field-specific validation messages</step>
+        </testSteps>
+      </idea>
+      <idea acceptanceCriteria="AC-3.1.2" priority="P0">
+        <title>phoneNumber uniqueness enforced per domain</title>
+        <description>Attempting to update phoneNumber to one already used by another user in same domain returns 409 Conflict</description>
+        <testSteps>
+          <step>Create two test users in same domain with different phoneNumbers</step>
+          <step>User1 attempts to update phoneNumber to User2's phoneNumber</step>
+          <step>Assert 409 Conflict response</step>
+          <step>Assert error message indicates phoneNumber already exists</step>
+        </testSteps>
+      </idea>
+      <idea acceptanceCriteria="AC-3.1.2" priority="P0">
+        <title>phoneNumber change requires OTP verification</title>
+        <description>Updating phoneNumber requires OTP code validated via OtpService with purpose='phone-verification'</description>
+        <testSteps>
+          <step>Create test user and generate JWT</step>
+          <step>Call PATCH /users/me with new phoneNumber but no OTP code</step>
+          <step>Assert 400 Bad Request (OTP required)</step>
+          <step>Generate OTP via OtpService.generateOtp(userId, 'phone-verification')</step>
+          <step>Call PATCH /users/me with new phoneNumber and correct OTP code</step>
+          <step>Assert 200 OK response with updated phoneNumber</step>
+        </testSteps>
+      </idea>
+      <idea acceptanceCriteria="AC-3.1.1, AC-3.1.2" priority="P0">
+        <title>passwordHash never in response</title>
+        <description>Verify that passwordHash field is never returned in any profile endpoint response, even if user has a password</description>
+        <testSteps>
+          <step>Create admin user with password (passwordHash set in DB)</step>
+          <step>Call GET /users/me with admin JWT</step>
+          <step>Assert response does not contain 'passwordHash' field</step>
+          <step>Call PATCH /users/me to update profile</step>
+          <step>Assert response does not contain 'passwordHash' field</step>
+        </testSteps>
+      </idea>
+      <idea acceptanceCriteria="AC-3.1.1, AC-3.1.2" priority="P0">
+        <title>Multi-tenancy domainID isolation</title>
+        <description>User can only access/update their own profile within their domain. Cross-domain access blocked.</description>
+        <testSteps>
+          <step>Create user in Domain A</step>
+          <step>Generate JWT for user (contains domainID A)</step>
+          <step>UsersService.findOne() called with domainID from JWT</step>
+          <step>Assert query filters by domainID A</step>
+          <step>Manually test: User with Domain B JWT cannot access Domain A user's profile</step>
+        </testSteps>
+      </idea>
+      <idea acceptanceCriteria="AC-3.1.1" priority="P1">
+        <title>Soft-deleted user returns 404</title>
+        <description>If user is soft-deleted (deletedAt not null), GET /users/me returns 404 Not Found</description>
+        <testSteps>
+          <step>Create test user</step>
+          <step>Soft-delete user (set deletedAt timestamp)</step>
+          <step>Generate JWT for deleted user</step>
+          <step>Call GET /users/me</step>
+          <step>Assert 404 Not Found (user not found due to deletedAt filter)</step>
+        </testSteps>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

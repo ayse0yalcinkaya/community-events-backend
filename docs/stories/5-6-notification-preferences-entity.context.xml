@@ -1,0 +1,179 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.6</storyId>
+    <title>Notification Preferences Entity</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/5-6-notification-preferences-entity.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>notification tercihlerimi ayarlayabilmek</iWant>
+    <soThat>hangi kanaldan notification almak istediğimi seçebilleyim</soThat>
+    <tasks>
+      <task id="1" ac="5.6.1">NotificationPreference entity ve enum'ları hazırla</task>
+      <task id="2" ac="5.6.2,5.6.3,5.6.4">NotificationPreferencesService oluştur</task>
+      <task id="3" ac="5.6.2,5.6.3">DTOs oluştur</task>
+      <task id="4" ac="5.6.2,5.6.3">NotificationPreferencesController oluştur</task>
+      <task id="5" ac="5.6.4">UsersService'e default preferences oluşturma entegrasyonu</task>
+      <task id="6" ac="All">NotificationsModule yapılandırması</task>
+      <task id="7" ac="All">Testing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-5.6.1">NotificationPreference entity oluşturulmuş - Fields: id, domainID, userID, channel (EMAIL|SMS|PUSH), enabled (boolean) - Unique constraint: [domainID, userID, channel] - Entity zaten Prisma schema'da mevcut</criterion>
+    <criterion id="AC-5.6.2">GET /users/me/notification-preferences endpoint - User'ın notification preferences döndürüyor - Default: All channels enabled (EMAIL, SMS, PUSH) - Response DTO: [{ channel, enabled }] - User authenticated with valid JWT token</criterion>
+    <criterion id="AC-5.6.3">PATCH /users/me/notification-preferences endpoint - Request DTO: [{ channel, enabled }] - Bulk update (multiple channels in one request) - Validation: channel must be EMAIL|SMS|PUSH, enabled must be boolean - Creates preferences if not exist, updates if exist</criterion>
+    <criterion id="AC-5.6.4">Default preferences oluşturma - User create'te otomatik oluştur (all channels enabled) - UsersService.create() method'unda default preferences oluştur - Default: EMAIL=enabled, SMS=enabled, PUSH=enabled</criterion>
+    <criterion id="AC-5.6.5">NotificationService bu preferences'i check ediyor (next story için hazırlık) - NotificationPreference entity'yi NotificationService'de kullanılabilir hale getir - Story 5.7'de NotificationService bu preferences'i kullanacak</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-5-communication-infrastructure-foniva-sms-pattern.md" title="Epic 5: Communication Infrastructure" section="Story 5.6: Notification Preferences Entity">
+        Story 5.6 acceptance criteria ve teknik notlar. NotificationPreference entity, GET/PATCH endpoints, default preferences oluşturma pattern'i.
+      </doc>
+      <doc path="docs/tech-spec-epic-5.md" title="Epic 5 Technical Specification" section="Story 5.6: Notification Preferences Entity">
+        AC-5.6.1 through AC-5.6.4 detaylı spesifikasyonları. NotificationPreference entity yapısı, endpoint spesifikasyonları, default preferences pattern'i.
+      </doc>
+      <doc path="docs/stories/3-1-user-profile-endpoints-self-service.md" title="Story 3.1: User Profile Endpoints" section="Controller Pattern">
+        ProfileController pattern'i: GET /users/me ve PATCH /users/me endpoints self-service pattern'i. @CurrentUser() decorator kullanımı, JwtAuthGuard pattern'i.
+      </doc>
+      <doc path="docs/architecture/implementation-patterns-ai-agent-consistency-rules.md" title="Implementation Patterns" section="Controller-Service Pattern">
+        Controller-Service pattern: Controller HTTP layer, Service business logic, PrismaService data access. Multi-tenancy pattern, error handling pattern.
+      </doc>
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Unit Tests, Integration Tests, E2E Tests">
+        Arrange-Act-Assert pattern, test coverage requirements (70% minimum), unit test structure, integration test database setup, E2E test critical user journeys.
+      </doc>
+      <doc path="docs/stories/5-5-integrate-otp-sending.md" title="Story 5.5: Integrate OTP Sending" section="Learnings from Previous Story">
+        OTP message utility pattern, async fire-and-forget pattern, ProfileController pattern reuse, module structure pattern.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/modules/users/controllers/profile.controller.ts" kind="controller" symbol="ProfileController" lines="1-88" reason="Self-service endpoints pattern örneği: GET /users/me ve PATCH /users/me endpoints. @CurrentUser() decorator, JwtAuthGuard, plainToInstance DTO transformation pattern'i." />
+      <file path="src/modules/users/services/users.service.ts" kind="service" symbol="UsersService" lines="1-335" reason="User creation pattern'i. create() method'una default preferences oluşturma entegrasyonu eklenecek. Transaction pattern, error handling pattern." />
+      <file path="src/database/prisma.service.ts" kind="service" symbol="PrismaService" lines="1-40" reason="Database access pattern'i. NotificationPreference entity için PrismaService kullanılacak. Global module, dependency injection pattern'i." />
+      <file path="prisma/schema-postgres.prisma" kind="schema" symbol="NotificationPreference" lines="238-254" reason="NotificationPreference entity definition. Fields: id, domainID, userID, channel (EMAIL|SMS|PUSH), enabled (boolean). Unique constraint: [domainID, userID, channel]." />
+      <file path="src/common/decorators/current-user.decorator.ts" kind="decorator" symbol="CurrentUser" reason="User context extraction decorator. JWT payload'dan user bilgilerini extract eder. NotificationPreferencesController'da kullanılacak." />
+      <file path="src/common/guards/jwt-auth.guard.ts" kind="guard" symbol="JwtAuthGuard" reason="JWT authentication guard. Protected routes için authentication kontrolü. NotificationPreferencesController'da kullanılacak." />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="@nestjs/common" version="^11.0.1" />
+        <package name="@nestjs/core" version="^11.0.1" />
+        <package name="@prisma/client" version="^6.18.0" />
+        <package name="prisma" version="^6.18.0" />
+        <package name="class-transformer" version="^0.5.1" />
+        <package name="class-validator" version="^0.14.2" />
+        <package name="@nestjs/swagger" version="^11.2.1" />
+        <package name="nestjs-i18n" version="^10.5.1" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Controller-Service Pattern: NotificationPreferencesController → NotificationPreferencesService → PrismaService pattern. Controller HTTP layer, Service business logic, PrismaService data access.</constraint>
+    <constraint type="pattern">Multi-Tenancy Pattern: @DomainID decorator + domainID filtering in all queries. NotificationPreference entity includes domainID field. All queries filtered by domainID from JWT token.</constraint>
+    <constraint type="pattern">Self-Service Endpoints Pattern: GET /users/me/notification-preferences ve PATCH /users/me/notification-preferences endpoints. ProfileController pattern'i ile tutarlı. @CurrentUser() decorator ile user context extraction.</constraint>
+    <constraint type="pattern">Default Preferences Pattern: User create'te otomatik default preferences oluşturma. Default: All channels enabled (EMAIL, SMS, PUSH). Lazy initialization: Preferences yoksa GET endpoint'te oluştur. Transaction pattern: User create + preferences create atomic.</constraint>
+    <constraint type="pattern">Bulk Update Pattern: PATCH endpoint bulk update destekliyor (multiple channels in one request). Upsert pattern: Create if not exist, update if exist. Unique constraint: [domainID, userID, channel] kullanarak upsert.</constraint>
+    <constraint type="error-handling">Preferences oluşturma başarısız olursa log et ama user create'i engelleme. Validation errors return 400 with detailed messages. Database constraint violations return 409 Conflict.</constraint>
+    <constraint type="testing">Unit tests: Arrange-Act-Assert pattern, 80%+ coverage for services. Integration tests: Database setup, API integration tests. E2E tests: Full flow tests, critical user journeys.</constraint>
+  </constraints>
+
+  <interfaces>
+    <api method="GET" path="/users/me/notification-preferences" controller="NotificationPreferencesController">
+      <description>Get current authenticated user's notification preferences</description>
+      <authentication>Required - JwtAuthGuard</authentication>
+      <authorization>None - Self-service endpoint</authorization>
+      <request>
+        <headers>
+          <header name="Authorization" required="true">Bearer {JWT_TOKEN}</header>
+        </headers>
+      </request>
+      <response status="200">
+        <format>{ success: true, data: NotificationPreferenceResDto[] }</format>
+        <fields>Array of notification preferences: [{ channel: 'EMAIL'|'SMS'|'PUSH', enabled: boolean }]</fields>
+      </response>
+      <errors>
+        <error status="401">Unauthorized - Invalid or missing JWT token</error>
+      </errors>
+    </api>
+    <api method="PATCH" path="/users/me/notification-preferences" controller="NotificationPreferencesController">
+      <description>Update current authenticated user's notification preferences (bulk update)</description>
+      <authentication>Required - JwtAuthGuard</authentication>
+      <authorization>None - Self-service endpoint</authorization>
+      <request>
+        <headers>
+          <header name="Authorization" required="true">Bearer {JWT_TOKEN}</header>
+        </headers>
+        <body type="UpdateNotificationPreferenceDto[]">
+          <field name="channel" type="NotificationChannel enum" required="true" validation="@IsEnum(NotificationChannel)">EMAIL, SMS, or PUSH</field>
+          <field name="enabled" type="boolean" required="true" validation="@IsBoolean()">Enable or disable notification channel</field>
+        </body>
+      </request>
+      <response status="200">
+        <format>{ success: true, data: NotificationPreferenceResDto[] }</format>
+        <fields>Updated notification preferences array</fields>
+      </response>
+      <errors>
+        <error status="400">Bad Request - Validation errors (invalid channel, missing enabled)</error>
+        <error status="401">Unauthorized - Invalid or missing JWT token</error>
+      </errors>
+    </api>
+    <service name="NotificationPreferencesService" module="notifications">
+      <method name="getPreferences(userID: string, domainID: string): Promise&lt;NotificationPreference[]&gt;">
+        <description>Get user notification preferences. Creates default preferences if not exist (all channels enabled).</description>
+        <parameters>
+          <param name="userID" type="string">User UUID from JWT</param>
+          <param name="domainID" type="string">Domain UUID from JWT for multi-tenancy</param>
+        </parameters>
+        <returns>Promise&lt;NotificationPreference[]&gt; - Array of notification preferences</returns>
+      </method>
+      <method name="updatePreferences(userID: string, domainID: string, preferences: UpdateNotificationPreferenceDto[]): Promise&lt;NotificationPreference[]&gt;">
+        <description>Bulk update notification preferences. Upsert pattern: create if not exist, update if exist.</description>
+        <parameters>
+          <param name="userID" type="string">User UUID from JWT</param>
+          <param name="domainID" type="string">Domain UUID from JWT</param>
+          <param name="preferences" type="UpdateNotificationPreferenceDto[]">Array of preference updates</param>
+        </parameters>
+        <returns>Promise&lt;NotificationPreference[]&gt; - Updated notification preferences array</returns>
+      </method>
+      <method name="createDefaultPreferences(userID: string, domainID: string): Promise&lt;NotificationPreference[]&gt;">
+        <description>Create default notification preferences for new user (all channels enabled).</description>
+        <parameters>
+          <param name="userID" type="string">User UUID</param>
+          <param name="domainID" type="string">Domain UUID</param>
+        </parameters>
+        <returns>Promise&lt;NotificationPreference[]&gt; - Created notification preferences (EMAIL, SMS, PUSH all enabled)</returns>
+      </method>
+    </service>
+    <enum name="NotificationChannel" path="src/modules/notifications/enums/notification-channel.enum.ts">
+      <value>EMAIL</value>
+      <value>SMS</value>
+      <value>PUSH</value>
+    </enum>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing standards: Arrange-Act-Assert pattern. Minimum 70% coverage (enforced by CI/CD). Services: 80%+ coverage. Controllers: 70%+ coverage. Unit tests use Jest with NestJS TestingModule. Integration tests use separate test database. E2E tests cover critical user journeys.
+    </standards>
+    <locations>
+      <location>src/**/*.spec.ts</location>
+      <location>test/**/*.e2e-spec.ts</location>
+    </locations>
+    <ideas>
+      <test ac="AC-5.6.1">Unit test: NotificationChannel enum values (EMAIL, SMS, PUSH). Verify Prisma schema NotificationPreference model exists.</test>
+      <test ac="AC-5.6.2">Unit test: NotificationPreferencesService.getPreferences() returns existing preferences. Unit test: getPreferences() creates default preferences if not exist (all channels enabled). Integration test: GET /users/me/notification-preferences returns user preferences (authenticated). E2E test: GET /users/me/notification-preferences full flow (authenticate → get preferences).</test>
+      <test ac="AC-5.6.3">Unit test: NotificationPreferencesService.updatePreferences() bulk update multiple channels. Unit test: updatePreferences() upsert pattern (create if not exist, update if exist). Integration test: PATCH /users/me/notification-preferences bulk update. Integration test: PATCH validation errors (invalid channel, missing enabled). E2E test: PATCH /users/me/notification-preferences full flow (authenticate → update → verify).</test>
+      <test ac="AC-5.6.4">Unit test: NotificationPreferencesService.createDefaultPreferences() creates EMAIL, SMS, PUSH preferences (all enabled). Integration test: UsersService.create() → default preferences created automatically. Integration test: Transaction - User create + preferences create atomic.</test>
+      <test ac="AC-5.6.5">Unit test: Multi-tenancy - Queries filtered by domainID. Unit test: User isolation - User can only access own preferences.</test>
+    </ideas>
+  </tests>
+</story-context>
+

@@ -1,0 +1,281 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>8.2</storyId>
+    <title>Swagger Response Factory Functions</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-06</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/8-2-swagger-response-factory-functions.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>type-safe Swagger response factory functions</iWant>
+    <soThat>API response schemas are consistent and automatically documented</soThat>
+    <tasks>
+      - Task 1: Create swagger module directory structure (src/common/swagger/, src/common/swagger/__tests__/)
+      - Task 2: Implement generic response class factory (createApiResponseClass<T>)
+      - Task 3: Implement paginated response class factory (createPaginatedApiResponseClass<T>)
+      - Task 4: Create error response class (ErrorApiResponseClass)
+      - Task 5: Create barrel export file (src/common/swagger/index.ts)
+      - Task 6: Write unit tests (12 comprehensive tests, 100% coverage target)
+      - Task 7: Validate TypeScript compilation (npm run build)
+      - Task 8: Integration validation (test with sample DTO, verify Swagger docs)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC-8.2.1: Generic response class factory function created
+      - Function: createApiResponseClass<T>(DataDto: Type<T>)
+      - Location: src/common/swagger/api-response.factory.ts
+      - Returns runtime-generated response class with type metadata
+      - Structure: { success: boolean, status: number, data: T, message: string }
+      - Dynamic class name: ${DataDto.name}Response
+
+    AC-8.2.2: Paginated response class factory function created
+      - Function: createPaginatedApiResponseClass<T>(DataDto: Type<T>)
+      - Structure: { success: boolean, status: number, data: T[], count: number, message: string }
+      - Dynamic class name: ${DataDto.name}PaginatedResponse
+
+    AC-8.2.3: Error response class created
+      - Class: ErrorApiResponseClass
+      - Properties: success (false), status (400), message (string), errors?: string[]
+
+    AC-8.2.4: Factory functions use correct decorators
+      - All properties have @ApiProperty() decorators with examples
+      - Type metadata set for DTO fields
+
+    AC-8.2.5: Response classes match interceptor format
+      - Compatible with auto-wrapped response format
+      - Success: { success, status, data, message }
+      - Paginated: { success, status, data, count, message }
+
+    AC-8.2.6: Exports organized in barrel file
+      - Create src/common/swagger/index.ts
+      - Export all factory functions and classes
+
+    AC-8.2.7: Unit tests for factory functions
+      - File: src/common/swagger/__tests__/api-response.factory.spec.ts
+      - 12 comprehensive tests with 100% coverage
+
+    AC-8.2.8: TypeScript type safety validated
+      - Generic type constraints correct
+      - No compilation errors
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-8.md</path>
+        <title>Epic Technical Specification: API Documentation (Swagger)</title>
+        <section>Detailed Design - Data Models and Contracts</section>
+        <snippet>Defines complete factory function architecture including createApiResponseClass<T>(), createPaginatedApiResponseClass<T>(), and ErrorApiResponseClass. Specifies exact implementation pattern with Object.defineProperty() for dynamic class naming and @ApiProperty() decorator requirements. Contains full code examples for implementation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-8-api-documentation-swagger.md</path>
+        <title>Epic 8: API Documentation (Swagger)</title>
+        <section>Story 8.2: Swagger Response Factory Functions</section>
+        <snippet>High-level story definition specifying that src/common/swagger/api-response.factory.ts must be created with factory functions for response wrapper classes. Documents the response format pattern (success, status, data, message) with paginated variant adding count property.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/8-2-swagger-response-factory-functions.md</path>
+        <title>Story 8.2 Detailed Specification</title>
+        <section>Complete story with 8 Acceptance Criteria and 8 Task Blocks</section>
+        <snippet>Authoritative acceptance criteria defining factory functions, response structure, decorators, barrel exports, unit tests (100% coverage), and TypeScript type safety validation. Includes Dev Notes with architecture patterns, learnings from Story 8.1, and comprehensive unit test examples.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/api-contracts.md</path>
+        <title>API Contracts Architecture</title>
+        <section>Response Format Standards</section>
+        <snippet>Defines standard response wrapper format that factory functions must implement: Success response with { success, status, data, count?, message } and Error response with { success, status, message, errors? }. Critical for alignment between factory classes and actual interceptor implementation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/implementation-patterns-ai-agent-consistency-rules.md</path>
+        <title>Implementation Patterns (AI Agent Consistency Rules)</title>
+        <section>API Response Format and Controller Pattern</section>
+        <snippet>Shows auto-wrapped response interceptor pattern where controllers return plain DTOs, interceptor wraps in response envelope. Demonstrates controller usage of createApiResponseClass(UserResDto) in decorator pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Unit Tests</section>
+        <snippet>Establishes testing pattern with Arrange-Act-Assert structure, mocking strategy, and coverage requirements (100% for utility functions). Provides template for unit test organization applicable to factory function testing.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/main.ts</path>
+        <kind>NestJS Bootstrap File</kind>
+        <symbol>Swagger configuration block</symbol>
+        <lines>37-68</lines>
+        <reason>Shows Swagger/OpenAPI setup using DocumentBuilder and SwaggerModule with Bearer JWT authentication. Demonstrates environment-based control (SWAGGER_ENABLED) and error handling pattern. This is where factory-generated response classes will be used in decorators (Story 8.3).</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/api-paginated-response.decorator.ts</path>
+        <kind>TypeScript Decorator</kind>
+        <symbol>ApiPaginatedResponse decorator</symbol>
+        <lines>1-99</lines>
+        <reason>Established pattern for Swagger decorators using applyDecorators and ApiOkResponse. Reference for decorator structure, though uses different pagination structure (items/metadata vs. data/count).</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/decorators/index.ts</path>
+        <kind>Barrel Export</kind>
+        <symbol>Export pattern</symbol>
+        <lines>1-8</lines>
+        <reason>Shows export pattern for common decorators. Story 8.2 will create similar barrel export at src/common/swagger/index.ts.</reason>
+      </artifact>
+      <artifact>
+        <path>src/common/interceptors/logging.interceptor.ts</path>
+        <kind>NestJS Global Interceptor</kind>
+        <symbol>LoggingInterceptor</symbol>
+        <lines>1-130</lines>
+        <reason>CRITICAL: Global interceptor that AUTO-WRAPS responses. Response factory classes MUST match the structure this interceptor produces: { success, status, data, message }. This ensures Swagger docs reflect actual API responses.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/controllers/users.controller.ts</path>
+        <kind>NestJS Controller</kind>
+        <symbol>UsersController response types</symbol>
+        <lines>50-230</lines>
+        <reason>Current controller structure returning { success, status, data } objects. Story 8.2 factory functions will enable Swagger documentation of these response types. Controllers don't yet have Swagger decorators (Story 8.3).</reason>
+      </artifact>
+      <artifact>
+        <path>test/swagger-setup.e2e-spec.ts</path>
+        <kind>E2E Test Suite</kind>
+        <symbol>Swagger setup tests from Story 8.1</symbol>
+        <lines>1-296</lines>
+        <reason>Testing pattern for Swagger configuration. Shows how to initialize app with Swagger enabled/disabled, validate OpenAPI document structure. Template for integration testing of factory-generated classes.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="@nestjs/swagger" version="^11.2.1">Core Swagger/OpenAPI integration, provides @ApiProperty decorators and SwaggerModule</package>
+        <package name="@nestjs/common" version="^11.0.1">Provides Type helper for generic type handling and applyDecorators</package>
+        <package name="class-transformer" version="^0.5.1">DTO transformation utilities (optional for factory functions)</package>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Response format MUST match logging interceptor structure: { success, status, data, message } for single, { success, status, data, count, message } for paginated
+    - Factory functions MUST use Type<T> from @nestjs/common for generic type parameters
+    - Dynamic class naming MUST use Object.defineProperty(class, 'name', { value: '...' })
+    - All class properties MUST have @ApiProperty() decorators with example values
+    - Type metadata for DTO fields MUST use @ApiProperty({ type: DataDto }) for single, @ApiProperty({ type: [DataDto] }) for array
+    - File location MUST be src/common/swagger/ following project structure conventions
+    - Barrel export MUST be at src/common/swagger/index.ts
+    - Unit tests MUST be in src/common/swagger/__tests__/ directory (not .spec.ts beside files)
+    - Testing coverage target is 100% for utility/factory functions
+    - NO runtime dependencies beyond @nestjs/swagger and @nestjs/common (both already installed)
+    - Factory functions are PURE utilities - no dependency injection, no module imports
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>createApiResponseClass<T>(DataDto: Type<T>): Type<ApiResponse<T>></name>
+      <kind>Factory Function</kind>
+      <signature>
+        export function createApiResponseClass<T>(DataDto: Type<T>): Type<ApiResponse<T>> {
+          class ResponseClass implements ApiResponse<T> {
+            @ApiProperty({ example: true })
+            success: boolean;
+
+            @ApiProperty({ example: 200 })
+            status: number;
+
+            @ApiProperty({ type: DataDto })
+            data: T;
+
+            @ApiProperty({ example: 'Operation successful' })
+            message: string;
+          }
+
+          Object.defineProperty(ResponseClass, 'name', {
+            value: `${DataDto.name}Response`,
+          });
+
+          return ResponseClass;
+        }
+      </signature>
+      <path>src/common/swagger/api-response.factory.ts</path>
+    </interface>
+    <interface>
+      <name>createPaginatedApiResponseClass<T>(DataDto: Type<T>): Type<PaginatedApiResponse<T>></name>
+      <kind>Factory Function</kind>
+      <signature>
+        export function createPaginatedApiResponseClass<T>(DataDto: Type<T>): Type<PaginatedApiResponse<T>> {
+          class PaginatedResponseClass implements PaginatedApiResponse<T> {
+            @ApiProperty({ example: true })
+            success: boolean;
+
+            @ApiProperty({ example: 200 })
+            status: number;
+
+            @ApiProperty({ type: [DataDto] })
+            data: T[];
+
+            @ApiProperty({ example: 150 })
+            count: number;
+
+            @ApiProperty({ example: 'Operation successful' })
+            message: string;
+          }
+
+          Object.defineProperty(PaginatedResponseClass, 'name', {
+            value: `${DataDto.name}PaginatedResponse`,
+          });
+
+          return PaginatedResponseClass;
+        }
+      </signature>
+      <path>src/common/swagger/api-response.factory.ts</path>
+    </interface>
+    <interface>
+      <name>ErrorApiResponseClass</name>
+      <kind>Class</kind>
+      <signature>
+        export class ErrorApiResponseClass {
+          @ApiProperty({ example: false })
+          success: boolean;
+
+          @ApiProperty({ example: 400 })
+          status: number;
+
+          @ApiProperty({ example: 'Validation failed' })
+          message: string;
+
+          @ApiProperty({
+            example: ['field must be a string'],
+            required: false,
+          })
+          errors?: string[];
+        }
+      </signature>
+      <path>src/common/swagger/api-response.factory.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests follow Arrange-Act-Assert pattern with 100% coverage target for utility functions. Use Jest testing framework with @nestjs/testing utilities. Tests located in __tests__/ subdirectories (not .spec.ts beside source files). Mocking not required for pure factory functions. Test file: src/common/swagger/__tests__/api-response.factory.spec.ts with 12 comprehensive tests covering all factory functions, dynamic naming, type metadata, and error response structure.
+    </standards>
+    <locations>
+      - src/common/swagger/__tests__/api-response.factory.spec.ts (unit tests)
+      - test/swagger-setup.e2e-spec.ts (integration tests - future story 8.3)
+    </locations>
+    <ideas>
+      AC-8.2.1: Test createApiResponseClass() returns class constructor with correct structure (4 properties: success, status, data, message)
+      AC-8.2.1: Test dynamic class naming matches ${DTO.name}Response pattern
+      AC-8.2.1: Test data property preserves DTO type metadata
+      AC-8.2.2: Test createPaginatedApiResponseClass() returns paginated class with count property (5 properties total)
+      AC-8.2.2: Test paginated data property is array type
+      AC-8.2.2: Test dynamic class naming matches ${DTO.name}PaginatedResponse pattern
+      AC-8.2.3: Test ErrorApiResponseClass has all required properties (success, status, message, errors)
+      AC-8.2.3: Test errors field is marked as optional (required: false)
+      AC-8.2.4: Test @ApiProperty decorators applied to all properties
+      AC-8.2.4: Test example values present for primitive fields
+      AC-8.2.7: Test factory functions work with multiple DTO types (UserDto, FileDto, RoleDto)
+      AC-8.2.8: Test TypeScript type safety (compilation validation)
+    </ideas>
+  </tests>
+</story-context>

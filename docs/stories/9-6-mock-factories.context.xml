@@ -1,0 +1,285 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>9.6</storyId>
+    <title>Mock Factories</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-10</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/9-6-mock-factories.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>test mock factories</iWant>
+    <soThat>test data kolayca oluşturabileyim</soThat>
+    <tasks>
+- Task 1: Create Factories Directory Structure (AC: 9.6.1)
+  - Subtask 1.1: Create `test/factories/` directory
+  - Subtask 1.2: Create `test/factories/index.ts` barrel export file
+  - Subtask 1.3: Add tsconfig path alias `@/test/*` → `<rootDir>/test/*` (if not exists)
+
+- Task 2: Implement User Factory (AC: 9.6.2)
+  - Subtask 2.1: Create `test/factories/user.factory.ts`
+  - Subtask 2.2: Implement `mockUser(overrides?: Partial<User>): User`
+  - Subtask 2.3: Implement `mockUserDto(overrides?: Partial<UserResDto>): UserResDto`
+  - Subtask 2.4: Add JSDoc comments and usage examples
+  - Subtask 2.5: Export functions from `test/factories/index.ts`
+
+- Task 3: Implement Permission Factory (AC: 9.6.3)
+  - Subtask 3.1: Create `test/factories/permission.factory.ts`
+  - Subtask 3.2: Implement `mockPermission(overrides?: Partial<Permission>): Permission`
+  - Subtask 3.3: Add JSDoc comments
+  - Subtask 3.4: Export from barrel
+
+- Task 4: Implement File Factory (AC: 9.6.4)
+  - Subtask 4.1: Create `test/factories/file.factory.ts`
+  - Subtask 4.2: Implement `mockFile(overrides?: Partial<File>): File`
+  - Subtask 4.3: Implement `mockFileDto(overrides?: Partial<FileResDto>): FileResDto`
+  - Subtask 4.4: Add JSDoc comments
+  - Subtask 4.5: Export from barrel
+
+- Task 5: Implement Additional Factories (Optional) (AC: 9.6.5)
+  - Subtask 5.1: Identify frequently used entities in existing tests
+  - Subtask 5.2: Create factories for identified entities
+  - Subtask 5.3: Follow same pattern: UUID generation, defaults, overrides
+  - Subtask 5.4: Export from barrel
+
+- Task 6: Refactor Existing Tests to Use Factories (AC: 9.6.6)
+  - Subtask 6.1: Identify tests with duplicate test data definitions
+  - Subtask 6.2: Refactor `users.service.spec.ts` to use `mockUser()`
+  - Subtask 6.3: Refactor integration tests to use factories
+  - Subtask 6.4: Verify all tests still pass: `npm test`
+
+- Task 7: Create Factory Documentation (AC: 9.6.7)
+  - Subtask 7.1: Create `test/factories/README.md`
+  - Subtask 7.2: Add JSDoc to all factory functions
+  - Subtask 7.3: Verify barrel export (`test/factories/index.ts`) exports all factories
+
+- Task 8: Verify Factory Usage and Test Execution (AC: All)
+  - Subtask 8.1: Run all tests: `npm test` (should pass)
+  - Subtask 8.2: Verify factories reduce test code duplication
+  - Subtask 8.3: Check import patterns work
+  - Subtask 8.4: Verify override pattern works correctly
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+### AC-9.6.1: Factory Folder Structure Created
+- `test/factories/` directory mevcut
+- Factory files naming convention: `[entity].factory.ts`
+- Her entity için ayrı factory file
+- Barrel export (`test/factories/index.ts`) ile merkezi import
+
+### AC-9.6.2: User Factory Implemented
+- `mockUser(overrides?: Partial<User>): User` - Database entity mock
+  - Tüm required fields default values ile dolu
+  - UUID generation: `id`, `domainID` için otomatik
+  - Reasonable defaults: `email`, `firstName`, `lastName`, `phone`, `isActive`
+  - `Partial<User>` override pattern
+- `mockUserDto(overrides?: Partial<UserResDto>): UserResDto` - Response DTO mock
+  - Response DTO structure'ını match ediyor
+  - Sensitive fields excluded (passwordHash, deletedAt)
+
+### AC-9.6.3: Permission Factory Implemented
+- `mockPermission(overrides?: Partial<Permission>): Permission`
+  - Default permission structure: `id`, `name`, `key`, `description`, `module`
+  - Reasonable defaults: `key: 'users:read'`, `name: 'Read Users'`
+  - UUID generation: `id` için otomatik
+
+### AC-9.6.4: File Factory Implemented
+- `mockFile(overrides?: Partial<File>): File` - Database entity
+  - Default file structure: `id`, `domainID`, `s3Key`, `fileName`, `mimeType`, `size`
+  - Reasonable defaults: `fileName: 'test.pdf'`, `mimeType: 'application/pdf'`, `size: 1024`
+  - UUID generation: `id`, `domainID` için otomatik
+- `mockFileDto(overrides?: Partial<FileResDto>): FileResDto` - Response DTO
+
+### AC-9.6.5: Additional Factories (Optional)
+- `role.factory.ts` → `mockRole()` (if Role entity exists)
+- `device-token.factory.ts` → `mockDeviceToken()` (notification tests için)
+- `notification.factory.ts` → `mockNotification()` (notification tests için)
+
+### AC-9.6.6: Factory Usage in Tests
+- `src/modules/users/__tests__/users.service.spec.ts` - `mockUser()` kullanıyor
+- Integration tests - `mockUserDto()` expected response'lar için kullanıyor
+- Duplicate test data definitions kaldırılmış
+
+### AC-9.6.7: Factory Documentation and Examples
+- `test/factories/README.md` mevcut (usage examples ile)
+- Her factory file'da JSDoc comments
+- Barrel export (`test/factories/index.ts`) ile import kolay
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic 9 Technical Specification: Testing Infrastructure</title>
+        <section>Data Models and Contracts → Mock Factory Interface</section>
+        <snippet>Mock factory pattern with Partial&lt;T&gt; override, UUID generation for IDs, reasonable defaults, and entity vs DTO factories. Example: mockUser(overrides) returns complete User object with all required fields.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic 9 Technical Specification: Testing Infrastructure</title>
+        <section>System Architecture Alignment → Testing Infrastructure Foundation</section>
+        <snippet>Test directory structure includes test/factories/ for mock generators. Factory pattern ensures DRY principle, consistency across tests, and easy maintenance when entities change.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-9.md</path>
+        <title>Epic 9 Technical Specification: Testing Infrastructure</title>
+        <section>Test Strategy Summary → Mock Strategy</section>
+        <snippet>Factory pattern for reusable mock generators in test/factories/. Entities always mocked in unit tests, real in integration/E2E. Time/dates mocked for deterministic tests.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/testing-strategy.md</path>
+        <title>Testing Strategy</title>
+        <section>Test Utilities → Mock Factories</section>
+        <snippet>Factory functions with Partial&lt;T&gt; overrides pattern. Example: mockUser({ email: 'custom@test.com' }) returns User with custom email and default values for other fields. UUID generation ensures unique IDs per test run.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-9-testing-infrastructure.md</path>
+        <title>Epic 9: Testing Infrastructure</title>
+        <section>Story 9.6: Mock Factories</section>
+        <snippet>Factory functions in test/factories/: mockUser(), mockUserDto(), mockPermission(), mockFile(). Partial&lt;T&gt; override pattern, reasonable defaults, UUID generation. Usage: import { mockUser } from '@/test/factories'.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/9-5-test-coverage-reporting.md</path>
+        <title>Story 9.5: Test Coverage Reporting</title>
+        <section>Learnings from Previous Story → Test Infrastructure Complete</section>
+        <snippet>Coverage baseline established. Mock factories will help improve coverage by making test writing easier. Test execution fast (&lt;1s unit tests). Factories should maintain this performance.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>User model</symbol>
+        <lines>20-40</lines>
+        <reason>User entity structure - fields to mock: id, domainID, email, passwordHash, firstName, lastName, phone, isActive, emailVerified, createdAt, updatedAt, deletedAt</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>Permission model</symbol>
+        <lines>100-120</lines>
+        <reason>Permission entity structure - fields to mock: id, module, action, description, createdAt, updatedAt</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema-postgres.prisma</path>
+        <kind>schema</kind>
+        <symbol>File model</symbol>
+        <lines>188-210</lines>
+        <reason>File entity structure - fields to mock: id, domainID, userID, filename, originalName, mimeType, size, s3Key, createdAt, updatedAt, deletedAt</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/services/users.service.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersService unit tests</symbol>
+        <lines>1-300</lines>
+        <reason>Example test file to refactor with mockUser() factory. Currently has inline user object definitions that should use factory pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>src/modules/users/__tests__/users.controller.integration.spec.ts</path>
+        <kind>test</kind>
+        <symbol>UsersController integration tests</symbol>
+        <lines>1-50</lines>
+        <reason>Integration test with real database. Uses setupTestDatabase pattern. Should use mockUser() for seed data and mockUserDto() for expected responses.</reason>
+      </artifact>
+      <artifact>
+        <path>test/setup.ts</path>
+        <kind>test-utility</kind>
+        <symbol>setupTestDatabase</symbol>
+        <lines>1-50</lines>
+        <reason>Integration test database setup. Factories will be used alongside this for test data seeding.</reason>
+      </artifact>
+      <artifact>
+        <path>test/auth.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>Auth E2E tests</symbol>
+        <lines>1-100</lines>
+        <reason>E2E test suite. May use factories for seed data and expected response validation.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="uuid" version="^13.0.0">UUID generation for mock IDs</package>
+        <package name="@nestjs/testing" version="^11.0.1">TestingModule for test setup</package>
+        <package name="jest" version="^30.0.0">Test framework and assertions</package>
+        <package name="@types/jest" version="^30.0.0">Jest type definitions</package>
+        <package name="@prisma/client" version="^6.18.0">Entity types (User, Permission, File)</package>
+        <package name="class-transformer" version="^0.5.1">DTO transformations in tests</package>
+        <package name="class-validator" version="^0.14.2">DTO validation in tests</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Factory functions must follow Partial&lt;T&gt; override pattern: { ...defaults, ...overrides }</constraint>
+    <constraint>All factories must generate unique UUIDs using uuid() or crypto.randomUUID() for ID fields</constraint>
+    <constraint>Entity factories (mockUser) must include ALL database fields; DTO factories (mockUserDto) must match response structure</constraint>
+    <constraint>Factory files must be in test/factories/ directory with [entity].factory.ts naming convention</constraint>
+    <constraint>Barrel export required in test/factories/index.ts for centralized imports</constraint>
+    <constraint>JSDoc comments required for all factory functions with @param, @returns, and @example tags</constraint>
+    <constraint>Existing tests should be refactored to use factories to eliminate duplicate test data definitions</constraint>
+    <constraint>Factory usage must not impact test execution speed (maintain &lt;1s for unit tests)</constraint>
+    <constraint>Factories must provide reasonable defaults that reflect common test scenarios (e.g., isActive: true)</constraint>
+    <constraint>Path alias @/test/* should be added to tsconfig.json if not present for clean imports</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>mockUser</name>
+      <kind>factory function</kind>
+      <signature>export const mockUser = (overrides?: Partial&lt;User&gt;): User =&gt; ({ id: uuid(), domainID: uuid(), email: 'test@example.com', ...overrides })</signature>
+      <path>test/factories/user.factory.ts</path>
+    </interface>
+    <interface>
+      <name>mockUserDto</name>
+      <kind>factory function</kind>
+      <signature>export const mockUserDto = (overrides?: Partial&lt;UserResDto&gt;): UserResDto =&gt; ({ id: uuid(), email: 'test@example.com', ...overrides })</signature>
+      <path>test/factories/user.factory.ts</path>
+    </interface>
+    <interface>
+      <name>mockPermission</name>
+      <kind>factory function</kind>
+      <signature>export const mockPermission = (overrides?: Partial&lt;Permission&gt;): Permission =&gt; ({ id: uuid(), module: 'users', action: 'read', ...overrides })</signature>
+      <path>test/factories/permission.factory.ts</path>
+    </interface>
+    <interface>
+      <name>mockFile</name>
+      <kind>factory function</kind>
+      <signature>export const mockFile = (overrides?: Partial&lt;File&gt;): File =&gt; ({ id: uuid(), domainID: uuid(), filename: 'test.pdf', mimeType: 'application/pdf', size: 1024, ...overrides })</signature>
+      <path>test/factories/file.factory.ts</path>
+    </interface>
+    <interface>
+      <name>mockFileDto</name>
+      <kind>factory function</kind>
+      <signature>export const mockFileDto = (overrides?: Partial&lt;FileResDto&gt;): FileResDto =&gt; ({ id: uuid(), filename: 'test.pdf', ...overrides })</signature>
+      <path>test/factories/file.factory.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Jest v30.x with TypeScript support via ts-jest. Testing pyramid: Unit tests (services/utils) > Integration tests (API+DB) > E2E tests (user journeys). Arrange-Act-Assert (AAA) pattern mandatory. Mock all external dependencies in unit tests using @nestjs/testing TestingModule. Coverage target: 70% global, 80% services, 100% utilities. Factory pattern for test data generation to ensure DRY principle and consistency. Test execution speed: &lt;1s for unit tests, &lt;5s for integration tests. All tests must be deterministic and idempotent.
+    </standards>
+    <locations>
+      <location>test/factories/*.factory.ts - Factory functions (new files to create)</location>
+      <location>test/factories/index.ts - Barrel export (new file to create)</location>
+      <location>test/factories/README.md - Factory documentation (new file to create)</location>
+      <location>src/modules/*/services/*.spec.ts - Unit tests (refactor to use factories)</location>
+      <location>src/modules/*/__tests__/*.integration.spec.ts - Integration tests (refactor to use factories)</location>
+      <location>test/*.e2e-spec.ts - E2E tests (may use factories for seed data)</location>
+      <location>test/setup.ts - Integration test database setup (existing)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-9.6.1">Test: Verify test/factories/ directory created and barrel export exists</idea>
+      <idea ac="AC-9.6.2">Test: Verify mockUser() returns complete User entity with all fields. Test override pattern: mockUser({ email: 'custom@test.com' }) should override only email field.</idea>
+      <idea ac="AC-9.6.2">Test: Verify mockUserDto() returns UserResDto without sensitive fields (passwordHash, deletedAt)</idea>
+      <idea ac="AC-9.6.3">Test: Verify mockPermission() generates unique IDs and has reasonable defaults (key: 'users:read')</idea>
+      <idea ac="AC-9.6.4">Test: Verify mockFile() and mockFileDto() return correct structures with file metadata</idea>
+      <idea ac="AC-9.6.6">Refactor: Update users.service.spec.ts to use mockUser() instead of inline user objects. Verify all tests still pass.</idea>
+      <idea ac="AC-9.6.6">Refactor: Update integration tests to use mockUser() for seed data and mockUserDto() for expected responses</idea>
+      <idea ac="AC-9.6.7">Verify: Import pattern works: import { mockUser, mockPermission } from '@/test/factories' (barrel export)</idea>
+      <idea ac="ALL">Integration: Run full test suite (npm test) after factory implementation. Verify no regressions and test execution speed maintained (&lt;1s unit tests)</idea>
+    </ideas>
+  </tests>
+</story-context>

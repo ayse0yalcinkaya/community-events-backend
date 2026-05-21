@@ -1,0 +1,243 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>6</storyId>
+    <title>Seed Data Script</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-6-seed-data-script.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>initial seed data script</iWant>
+    <soThat>development ve testing için sample data oluşturabileyim</soThat>
+    <tasks>
+- Task 1: Create seed.ts file structure ve setup (AC: 1)
+  - Subtask 1.1: prisma/seed.ts dosyası oluştur
+  - Subtask 1.2: PrismaClient import ve initialize et
+  - Subtask 1.3: bcrypt ve uuid dependencies import et
+  - Subtask 1.4: Main async seed() function tanımla
+  - Subtask 1.5: Prisma connect/disconnect logic ekle
+  - Subtask 1.6: Error handling ve try-catch wrapper ekle
+- Task 2: Implement sample domain creation (AC: 2)
+  - Subtask 2.1: Domain entity için sabit UUID generate et
+  - Subtask 2.2: Upsert pattern ile domain oluştur
+  - Subtask 2.3: Domain ID'yi variable'da sakla
+  - Subtask 2.4: Console log ekle
+- Task 3: Implement core permissions seeding (AC: 2)
+  - Subtask 3.1: USERS module permissions array tanımla (CREATE, VIEW, UPDATE, DELETE)
+  - Subtask 3.2: Loop ile her permission için upsert yap
+  - Subtask 3.3: Created permission count track et
+  - Subtask 3.4: Console log ekle
+- Task 4: Implement admin user seeding (AC: 2)
+  - Subtask 4.1: Admin password'u bcrypt ile hash'le
+  - Subtask 4.2: Admin user object oluştur
+  - Subtask 4.3: Upsert admin user
+  - Subtask 4.4: Console log ekle
+- Task 5: Implement test user seeding (AC: 2)
+  - Subtask 5.1: Test password'u bcrypt ile hash'le
+  - Subtask 5.2: Test user object oluştur
+  - Subtask 5.3: Upsert test user
+  - Subtask 5.4: Console log ekle
+- Task 6: Add package.json seed command (AC: 3)
+  - Subtask 6.1: package.json dosyasını aç
+  - Subtask 6.2: scripts section'ına prisma:seed ekle
+  - Subtask 6.3: Alternatif prisma.seed key'i ekle
+  - Subtask 6.4: Test npm run prisma:seed
+- Task 7: Implement idempotency ve final success message (AC: 4, 5)
+  - Subtask 7.1: Tüm entity creation'larda upsert pattern kullan
+  - Subtask 7.2: Seed script'i iki kez çalıştır ve test et
+  - Subtask 7.3: Final success message oluştur
+  - Subtask 7.4: Error case message ekle
+- Task 8: Integration testing ve validation (AC: All)
+  - Subtask 8.1: Fresh database ile seed test et
+  - Subtask 8.2: Query admin user verify
+  - Subtask 8.3: Query test user verify
+  - Subtask 8.4: Query permissions verify
+  - Subtask 8.5: Seed'i tekrar çalıştır test
+  - Subtask 8.6: Login test simulation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. AC-1.6.1: prisma/seed.ts oluşturulmuş (async function seed())
+2. AC-1.6.2: Seed script creates:
+   - Admin user (admin@boilerplate.com, password: Admin123!, bcrypt hashed)
+   - Test user (user@boilerplate.com, password: User123!, bcrypt hashed)
+   - Core permissions (USERS.CREATE, USERS.VIEW, USERS.UPDATE, USERS.DELETE)
+   - Sample domain (domainID: uuid(), name: "Default Domain")
+3. AC-1.6.3: package.json'a seed command eklendi: "prisma:seed": "ts-node prisma/seed.ts"
+4. AC-1.6.4: Seed script idempotent (upsert pattern, duplicate hata vermiyor)
+5. AC-1.6.5: Console'a success message: "✅ Seed completed: X users, Y permissions"
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>AC-1.6.1 - AC-1.6.5</section>
+        <snippet>Complete acceptance criteria for seed data script. Admin/test users with bcrypt hashed passwords, core USERS permissions, idempotent upsert pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Data Models and Contracts</section>
+        <snippet>User entity schema: id (UUID), domainID (UUID), email (unique), passwordHash, firstName, lastName, emailVerified, isActive. Permission entity: id, module, action (unique [module, action]), description.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>NFR - Security</section>
+        <snippet>Password hashing: bcrypt with 10+ rounds. No secrets in version control. Multi-tenancy: domainID field on all tables.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>NFR - Reliability</section>
+        <snippet>Seed idempotency: upsert pattern (check if exists before insert). Email uniqueness prevents duplicate users.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.6</section>
+        <snippet>Seed data for development: admin user, test user, core permissions (USERS.CREATE/VIEW/UPDATE/DELETE), sample domain. Dependencies: Story 1.5 (migration system).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security</section>
+        <snippet>Password hashing best practices: bcrypt algorithm, minimum 10 rounds, never store plaintext passwords.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Multi-Tenancy</section>
+        <snippet>domainID pattern: UUID field on all entities, queries must filter by domainID, indexes on domainID for performance.</snippet>
+      </doc>
+      <doc>
+        <path>stories/1-5-database-migration-system-postgresql.md</path>
+        <title>Story 1.5 - Migration System</title>
+        <section>Completion Notes</section>
+        <snippet>Init migration created all 11 core tables. Database empty and ready for seed. Prisma v6.18.0. User table: id, domainID, email (unique), passwordHash, emailVerified, isActive. Permission table: module, action (unique constraint).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>full</lines>
+        <reason>PrismaClient wrapper - seed script will use this service to interact with database</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>User, Permission models</symbol>
+        <lines>full</lines>
+        <reason>Entity definitions for users and permissions that seed script will populate</reason>
+      </artifact>
+      <artifact>
+        <path>prisma/migrations/20251105071641_init/migration.sql</path>
+        <kind>migration</kind>
+        <symbol>users, permissions tables</symbol>
+        <lines>full</lines>
+        <reason>SQL DDL for tables that seed will populate - shows exact column structure and constraints</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="@prisma/client" version="^6.18.0">Prisma ORM client for database operations</package>
+        <package name="prisma" version="^6.18.0">Prisma CLI (devDependency)</package>
+        <package name="bcrypt" version="^5.1.1">Password hashing library (10 rounds)</package>
+        <package name="uuid" version="^9.0.1">UUID generation for domain ID</package>
+        <package name="ts-node" version="^10.9.2">TypeScript execution for seed script</package>
+        <package name="@types/bcrypt" version="^5.0.2">TypeScript types for bcrypt</package>
+        <package name="@types/uuid" version="^9.0.8">TypeScript types for uuid</package>
+      </npm>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Seed script location: prisma/seed.ts (standard Prisma convention)
+- Idempotency required: use upsert pattern (where clause for uniqueness)
+- Password hashing: bcrypt with 10 rounds minimum
+- Domain ID: Predictable UUID for consistency ("default-domain-123e4567-e89b-12d3-a456-426614174000" pattern)
+- Multi-tenancy: domainID field required on User entities
+- Email uniqueness: Enforced by database constraint, handle in upsert
+- Permissions format: Module.Action (e.g., "USERS.CREATE")
+- Unique constraint: [module, action] on permissions table
+- Console output: Success/failure messages for developer feedback
+- Error handling: try-catch with process.exit(1) on failure
+- Database connection: Connect before operations, disconnect in finally block
+- No hardcoded secrets: Passwords are for development only (documented in code comments)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PrismaClient.user.upsert()</name>
+      <kind>Prisma ORM method</kind>
+      <signature>prisma.user.upsert({ where: { email }, create: {...}, update: {...} })</signature>
+      <path>node_modules/@prisma/client</path>
+    </interface>
+    <interface>
+      <name>PrismaClient.permission.upsert()</name>
+      <kind>Prisma ORM method</kind>
+      <signature>prisma.permission.upsert({ where: { module_action }, create: {...}, update: {...} })</signature>
+      <path>node_modules/@prisma/client</path>
+    </interface>
+    <interface>
+      <name>bcrypt.hash()</name>
+      <kind>Function</kind>
+      <signature>async bcrypt.hash(data: string, saltOrRounds: number): Promise&lt;string&gt;</signature>
+      <path>node_modules/bcrypt</path>
+    </interface>
+    <interface>
+      <name>uuid() or crypto.randomUUID()</name>
+      <kind>Function</kind>
+      <signature>uuid(): string or crypto.randomUUID(): string</signature>
+      <path>node_modules/uuid or crypto (Node.js built-in)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Story 1.6 testing follows integration test pattern: actual database operations with fresh database state. Use Prisma queries to verify seed data after execution. Test idempotency by running seed twice and asserting no duplicates or errors.
+    </standards>
+    <locations>
+- prisma/seed.ts (inline validation with console logs)
+- Integration tests: test/ or __tests__/ directory (future - Epic 9)
+- Manual testing: npm run prisma:seed execution and database queries
+    </locations>
+    <ideas>
+**AC-1.6.1 Test:** File existence check (prisma/seed.ts exists, exports async seed function)
+
+**AC-1.6.2 Test:**
+- Query users table: COUNT(*) = 2
+- Verify admin@boilerplate.com exists with correct fields
+- Verify user@boilerplate.com exists with correct fields
+- Query permissions table: COUNT(*) = 4
+- Verify USERS.CREATE, USERS.VIEW, USERS.UPDATE, USERS.DELETE exist
+- Query for domain: name = "Default Domain"
+
+**AC-1.6.3 Test:** package.json contains "prisma:seed" script, npm run prisma:seed executes successfully
+
+**AC-1.6.4 Test:**
+- Fresh database → run seed → verify data
+- Run seed AGAIN → no errors, same data count (no duplicates)
+- Check email uniqueness not violated
+
+**AC-1.6.5 Test:**
+- Capture console output during seed
+- Assert contains "✅ Seed completed"
+- Assert mentions user count and permission count
+
+**Password Hash Validation Test:**
+- Extract passwordHash from admin user
+- Use bcrypt.compare("Admin123!", hash) → should return true
+- Same for test user with "User123!"
+    </ideas>
+  </tests>
+</story-context>

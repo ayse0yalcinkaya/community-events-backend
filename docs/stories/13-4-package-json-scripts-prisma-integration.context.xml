@@ -1,0 +1,96 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>13</epicId>
+    <storyId>13.4</storyId>
+    <title>Package.json Scripts & Prisma Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-11T19:30:00.000Z</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/13-4-package-json-scripts-prisma-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Prisma native seeding commands</iWant>
+    <soThat>npx prisma db seed veya npm run seed komutları çalışsın</soThat>
+    <tasks>7 tasks with 28 subtasks: Add package.json scripts (AC: #1), Verify auto-run after migration (AC: #2), Enable individual seeder execution (AC: #3), Implement seed reset functionality (AC: #4), Environment-specific seeding (AC: #5), Verify progress output (AC: #6), TypeScript support verification (AC: #7)</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. package.json scripts with prisma:seed, seed, seed:reset, seed:dev, seed:test, and prisma.seed configuration
+    2. Auto-run after migration via prisma migrate dev
+    3. Individual seeder execution using ts-node
+    4. Clear and seed functionality via npm run seed:reset
+    5. Environment-specific data volume control via NODE_ENV
+    6. Progress output with console.log and emojis
+    7. TypeScript support via ts-node for .ts seed files
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-13-advanced-seeder-infrastructure.md" title="Epic 13: Advanced Seeder Infrastructure" section="Story 13.4: Package.json Scripts & Prisma Integration" snippet="As a developer, I want Prisma native seeding commands, so that npx prisma db seed veya npm run seed komutları çalışsın." />
+      <doc path="docs/tech-spec-epic-13.md" title="Epic Technical Specification: Advanced Seeder Infrastructure" section="Dependencies and Integrations" snippet="Prisma Integration: Native seeding via prisma.seed in package.json. Auto-runs after prisma migrate dev. TypeScript support via ts-node." />
+      <doc path="docs/stories/13-3-individual-module-seeders-idempotent-transactional.md" title="Story 13.3: Individual Module Seeders" section="Seeder Foundation Established" snippet="Individual seeder classes in prisma/seeders/ directory with static seed() methods, idempotent operations, and transaction support." />
+      <doc path="docs/stories/13-2-model-factory-pattern-faker-integration.md" title="Story 13.2: Model Factory Pattern & Faker Integration" section="Factory Pattern Foundation" snippet="Factory classes in prisma/factories/ directory with generate() and generateMany() methods using Faker.js for Turkish test data." />
+      <doc path="docs/stories/13-1-prisma-native-seeding-entry-point.md" title="Story 13.1: Prisma Native Seeding Entry Point" section="Main Entry Point" snippet="Main prisma/seed.ts entry point with async main() function and organized seeder structure for npx prisma db seed command." />
+      <doc path="docs/architecture/testing-strategy.md" title="Testing Strategy" section="Test Framework" snippet="Jest testing framework with unit, integration, and E2E test patterns. Database setup for testing with cleanup between tests." />
+      <doc path="docs/architecture/project-structure.md" title="Project Structure" section="Prisma ORM Setup" snippet="Prisma directory structure with schema files, migrations, and seed.ts for database initialization and test data management." />
+    </docs>
+
+    <code>
+      <file path="prisma/seed.ts" kind="entry-point" symbol="main()" lines="47-74" reason="Main seeding entry point called by package.json scripts with transaction support and error handling" />
+      <file path="prisma/seeders/role.seeder.ts" kind="seeder" symbol="RoleSeeder.seed()" lines="1-50" reason="Individual seeder class with static seed method for creating roles - called by seed.ts" />
+      <file path="prisma/seeders/permission.seeder.ts" kind="seeder" symbol="PermissionSeeder.seed()" lines="1-100" reason="Individual seeder class with role-permission assignments - called by seed.ts" />
+      <file path="prisma/seeders/user.seeder.ts" kind="seeder" symbol="UserSeeder.seed()" lines="1-120" reason="Individual seeder class with password hashing - called by seed.ts" />
+      <file path="prisma/seeders/file.seeder.ts" kind="seeder" symbol="FileSeeder.seed()" lines="1-80" reason="Individual seeder class for sample files - called by seed.ts" />
+      <file path="prisma/seeders/sms.seeder.ts" kind="seeder" symbol="SmsSeeder.seed()" lines="1-60" reason="Individual seeder class for SMS logs - called by seed.ts" />
+      <file path="prisma/factories/user.factory.ts" kind="factory" symbol="UserFactory.generate()" lines="1-50" reason="Factory class for generating user test data used by seeders" />
+      <file path="prisma/factories/role.factory.ts" kind="factory" symbol="RoleFactory.generate()" lines="1-50" reason="Factory class for generating role test data used by seeders" />
+      <file path="package.json" kind="config" symbol="scripts" lines="1-50" reason="Target file for adding npm scripts and prisma.seed configuration" />
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="@prisma/client" version="^6.16.0">Prisma ORM client for database operations in seeders</package>
+        <package name="@faker-js/faker" version="^8.0.0">Faker.js for generating realistic test data with Turkish locale</package>
+        <package name="bcrypt" version="^5.1.0">Password hashing utility for test user passwords</package>
+        <package name="ts-node" version="^10.9.0">TypeScript execution engine for running .ts seeder files</package>
+        <package name="typescript" version="^5.7.0">TypeScript compiler for strict mode type checking</package>
+        <package name="jest" version="^29.0.0">Testing framework for unit and integration tests</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Prisma v6.16.0+ required for native seeding support
+    - ts-node required for TypeScript .ts file execution
+    - All seeders must use static seed(prisma: PrismaClient) method pattern
+    - Scripts must follow npm naming conventions
+    - Environment variables (NODE_ENV) control seeding behavior
+    - All seeding operations must be idempotent (safe to re-run)
+    - Console logging with emojis (✓, 🎉, ❌) required
+    - Individual seeders must support standalone execution
+    - TypeScript strict mode enabled (Epic 12.4)
+    - Import organization follows 8-category pattern (Epic 12.5)
+  </constraints>
+
+  <interfaces>
+    <interface name="Seeder Interface" kind="class-method-signature" signature="static seed(prisma: PrismaClient): Promise&lt;void&gt;" path="prisma/seeders/*.ts" />
+    <interface name="Factory Interface" kind="class-method-signature" signature="static generate(overrides?: Partial&lt;T&gt;): T; static generateMany(count: number, overrides?: Partial&lt;T&gt;): T[]" path="prisma/factories/*.ts" />
+    <interface name="Prisma Transaction" kind="api-signature" signature="prisma.$transaction(callback: (tx: PrismaClient) =&gt; Promise&lt;any&gt;): Promise&lt;any&gt;" path="prisma/seed.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>Jest testing framework with Arrange-Act-Assert pattern. Unit tests for each seeder class. Integration tests for end-to-end seeding. beforeEach/afterEach cleanup. Mock factories for isolated testing. Test coverage target > 80%.</standards>
+    <locations>test/seeders/ for seeder unit tests. test/ for integration tests. prisma/ directory for seeders and factories.</locations>
+    <ideas>
+      - Test AC1: Verify package.json has all 5 scripts + prisma.seed configuration
+      - Test AC2: Run prisma migrate dev and verify auto-seeding triggers
+      - Test AC3: Execute ts-node prisma/seeders/role.seeder.ts and verify standalone execution
+      - Test AC4: Run npm run seed:reset and verify database reset + reseed
+      - Test AC5: Set NODE_ENV=test and verify reduced data volume
+      - Test AC6: Run npm run seed and verify console.log with emojis
+      - Test AC7: Verify ts-node can compile and execute all .ts seeder files
+    </ideas>
+  </tests>
+</story-context>

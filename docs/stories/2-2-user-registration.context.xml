@@ -1,0 +1,313 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.2</storyId>
+    <title>Kullanıcı Kaydı (Phone-based)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-2-user-registration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>phoneNumber ile kayıt olabilmek (admin için password zorunlu, staff için opsiyonel)</iWant>
+    <soThat>sisteme giriş yapabileyim ve hesap oluşturabileyim</soThat>
+    <tasks>
+      - Task 1: CreateUserDto (RegisterDto) ve UserResDto oluştur (AC: 2, 4, 8)
+      - Task 2: AuthService.register() method implement et (AC: 3, 5, 6, 7, 8, 9)
+      - Task 3: AuthController.register() endpoint oluştur (AC: 1, 8, 9)
+      - Task 4: OTP stub/placeholder oluştur (AC: 7)
+      - Task 5: Password hashing utility kullan (AC: 5)
+      - Task 6: Multi-tenancy (domainID) entegrasyonu (AC: 6)
+      - Task 7: Unit test yaz (AC: All)
+      - Task 8: Integration test yaz (AC: 1, 2, 3, 8, 9)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. AC-2.2.1: POST /auth/register endpoint oluşturulmuş ve çalışıyor
+    2. AC-2.2.2: RegisterDto validation yapılıyor (phoneNumber unique, E.164, firstName/lastName 2-50 chars, role enum, password optional admin-required, email optional)
+    3. AC-2.2.3: phoneNumber uniqueness kontrolü yapılıyor → duplicate ise 409 Conflict
+    4. AC-2.2.4: Password validation (eğer sağlanmışsa): minimum 8 karakter, en az 1 harf ve 1 rakam
+    5. AC-2.2.5: Password (eğer sağlanmışsa) bcrypt ile hash'lenip saklanıyor (10 rounds)
+    6. AC-2.2.6: User veritabanına kaydediliyor (phoneVerified: false, isActive: true)
+    7. AC-2.2.7: SMS OTP gönderiliyor (phone verification için - Epic 5.1 FONIVA integration stub)
+    8. AC-2.2.8: Response döndürülüyor: User bilgileri (passwordHash exclude edilmiş, UserResDto)
+    9. AC-2.2.9: Hata durumları doğru handle ediliyor (409 Conflict duplicate phone, 400 Bad Request validation, 500 SMS error)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication &amp; Session Management (Phone-based)</title>
+        <section>Acceptance Criteria - Story 2.2</section>
+        <snippet>RegisterDto validation yapılıyor: phoneNumber (required, unique, E.164 format), firstName/lastName (required, 2-50 chars), role enum (admin/staff/manager), password (required if admin, optional else), email (optional). Phone uniqueness check, password bcrypt hash (10 rounds), SMS OTP via FONIVA (Epic 5.1).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication &amp; Session Management (Phone-based)</title>
+        <section>Data Models and Contracts - RegisterDto</section>
+        <snippet>@IsPhoneNumber('TR'), @IsEnum(['admin','staff','manager']), @Matches(/^(?=.*[A-Za-z])(?=.*\d)/) for password (min 8 chars, 1 letter + 1 number), @IsEmail() for email. UserResDto uses @Exclude() for passwordHash, deletedAt, domainID. plainToInstance() for sanitization.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication &amp; Session Management (Phone-based)</title>
+        <section>Services and Modules - AuthService</section>
+        <snippet>AuthService.register() checks phone uniqueness (ConflictException if exists), validates admin password requirement (BadRequestException if missing), hashes password with bcrypt (10 rounds), creates user (phoneVerified: false), calls OtpService.generateAndSendOtp() for verification, returns UserResDto (plainToInstance).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Authentication &amp; Session Management (Phone-based)</title>
+        <section>System Architecture Alignment - Module Structure</section>
+        <snippet>Auth module structure: src/modules/auth/ with dto/ (register.dto.ts, user-res.dto.ts), services/ (otp.service.ts), auth.controller.ts (POST /auth/register), auth.service.ts (register logic), auth.module.ts (providers: AuthService, OtpService).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 2: Authentication &amp; Session Management (Phone-based)</title>
+        <section>Story 2.2: User Registration (Phone-based)</section>
+        <snippet>Phone-based registration: phoneNumber unique, admin requires password, staff optional password. CreateUserDto with class-validator (@IsPhoneNumber()), password bcrypt hash (10 rounds), SMS OTP via FONIVA (Epic 5.1). Response: UserResDto (password exclude). Duplicate phone → 409 Conflict.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Project Structure - Auth Module</section>
+        <snippet>src/modules/auth/: dto/ (request/response DTOs), services/ (token.service.ts, otp.service.ts), strategies/ (jwt.strategy.ts), decorators/ (@Public(), @CurrentUser()), guards/ (jwt-auth.guard.ts), auth.controller.ts, auth.service.ts, auth.module.ts.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Boilerplate</title>
+        <section>Decision Summary - Authentication</section>
+        <snippet>Phone-based JWT + DB Refresh Tokens (hrsync-backend pattern). Phone + Password (Admin), Phone + OTP (Staff). Stateless access token (15-60 min), database-stored refresh token (7-30 days). OTP System: database table + 5 min expiry, FONIVA SMS provider.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Boilerplate - Product Requirements Document</title>
+        <section>Authentication &amp; Authorization System</section>
+        <snippet>Phone-based JWT authentication. Admin Authentication: Phone + Password. Staff/Other Roles: Phone + OTP. JWT token generation, access + refresh token pattern, OTP verification (SMS-based only), password reset flow (phone + OTP, admin only), login rate limiting (brute-force protection).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/modules/auth/auth.module.ts</path>
+        <kind>module</kind>
+        <symbol>AuthModule</symbol>
+        <lines>all</lines>
+        <reason>Auth module configuration with PassportModule and JwtModule. NEEDS UPDATE: Add AuthService to providers array and exports. Currently exports JwtStrategy, JwtModule, PassportModule.</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/auth.service.ts</path>
+        <kind>service</kind>
+        <symbol>AuthService</symbol>
+        <lines>all</lines>
+        <reason>Currently empty stub. NEEDS IMPLEMENTATION: Add register() method that checks phone uniqueness, validates admin password requirement, hashes password with bcrypt (10 rounds), creates user via PrismaService, calls OtpService, returns UserResDto.</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/auth.controller.ts</path>
+        <kind>controller</kind>
+        <symbol>AuthController</symbol>
+        <lines>all</lines>
+        <reason>Contains test endpoints (GET /auth/test/public, GET /auth/test/protected). NEEDS ADDITION: POST /auth/register endpoint with @Public() decorator, @Body() RegisterDto, calls AuthService.register(), returns { success, data: UserResDto, message }.</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/decorators/public.decorator.ts</path>
+        <kind>decorator</kind>
+        <symbol>Public</symbol>
+        <lines>all</lines>
+        <reason>READY TO USE: @Public() decorator for bypassing JWT authentication. Use on POST /auth/register endpoint to allow unauthenticated access.</reason>
+      </file>
+      <file>
+        <path>src/modules/auth/interfaces/jwt-payload.interface.ts</path>
+        <kind>interface</kind>
+        <symbol>JwtPayload</symbol>
+        <lines>all</lines>
+        <reason>READY TO USE: Defines JWT payload structure (sub, phoneNumber, domainID, roles, iat, exp). Phone-based authentication already designed. Not directly used in Story 2.2 (no token generation yet), but confirms phone-based approach.</reason>
+      </file>
+      <file>
+        <path>src/database/prisma.service.ts</path>
+        <kind>service</kind>
+        <symbol>PrismaService</symbol>
+        <lines>all</lines>
+        <reason>READY TO USE: Global PrismaService extending PrismaClient with lifecycle hooks. Inject into AuthService for user creation (prisma.user.create()), phone uniqueness check (prisma.user.findUnique()).</reason>
+      </file>
+      <file>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>User model</symbol>
+        <lines>User model definition</lines>
+        <reason>READY TO USE: User model with id (UUID), domainID (UUID), email (unique), passwordHash (nullable), firstName, lastName, phone (optional), role (default: staff), isActive (default: true), emailVerified, phoneVerified, createdAt, updatedAt, deletedAt. Schema matches Story 2.2 requirements (phoneNumber, passwordHash, role, phoneVerified, domainID).</reason>
+      </file>
+      <file>
+        <path>src/common/guards/jwt-auth.guard.ts</path>
+        <kind>guard</kind>
+        <symbol>JwtAuthGuard</symbol>
+        <lines>all</lines>
+        <reason>READY TO USE: JWT authentication guard with @Public() decorator support. Will protect endpoints, but registration endpoint will use @Public() to bypass.</reason>
+      </file>
+      <file>
+        <path>test/auth-guard.e2e-spec.ts</path>
+        <kind>test</kind>
+        <symbol>Auth Guard E2E Tests</symbol>
+        <lines>all</lines>
+        <reason>USE AS TEMPLATE: E2E test pattern with beforeAll user creation, afterAll cleanup, supertest for HTTP requests. Follow this pattern for test/auth-registration.e2e-spec.ts.</reason>
+      </file>
+      <file>
+        <path>test/jest-e2e-setup.ts</path>
+        <kind>setup</kind>
+        <symbol>E2E test environment setup</symbol>
+        <lines>all</lines>
+        <reason>READY TO USE: Sets NODE_ENV, JWT_SECRET, JWT expirations for e2e tests. Configured for validation schema.</reason>
+      </file>
+      <file>
+        <path>src/main.ts</path>
+        <kind>bootstrap</kind>
+        <symbol>Bootstrap function</symbol>
+        <lines>all</lines>
+        <reason>NEEDS UPDATE: Add ValidationPipe globally for class-validator DTO validation. app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })).</reason>
+      </file>
+      <file>
+        <path>src/app.module.ts</path>
+        <kind>module</kind>
+        <symbol>AppModule</symbol>
+        <lines>all</lines>
+        <reason>READY TO USE: Root module with ConfigModule (global), PrismaModule (global), AuthModule imported. Loads appConfig, databaseConfig, jwtConfig with Joi validation. All required modules present.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <installed>
+          <package name="bcrypt" version="^6.0.0" purpose="password hashing (10 rounds)" />
+          <package name="@types/bcrypt" version="^6.0.0" purpose="TypeScript types for bcrypt" />
+          <package name="@nestjs/jwt" version="^11.0.1" purpose="JWT module (not used in Story 2.2, but installed from 2.1)" />
+          <package name="@nestjs/passport" version="^11.0.5" purpose="Passport integration (not used in Story 2.2, but installed from 2.1)" />
+          <package name="passport-jwt" version="^4.0.1" purpose="JWT strategy (not used in Story 2.2, but installed from 2.1)" />
+          <package name="@prisma/client" version="^6.18.0" purpose="Prisma ORM client for database operations" />
+          <package name="joi" version="^18.0.1" purpose="Environment validation schema" />
+          <package name="uuid" version="^13.0.0" purpose="UUID generation (if needed for domainID)" />
+        </installed>
+        <missing>
+          <package name="class-validator" purpose="REQUIRED: DTO validation decorators (@IsPhoneNumber, @IsEnum, @Matches, @IsEmail, @MinLength, @MaxLength, @IsNotEmpty, @IsOptional)" />
+          <package name="class-transformer" purpose="REQUIRED: DTO transformation and exclusion (@Exclude, plainToInstance)" />
+        </missing>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    **Development Constraints from Architecture and Tech-Spec:**
+
+    1. **Phone-based Authentication:** Use phoneNumber as unique identifier (E.164 format: +90XXXXXXXXXX for Turkish). @IsPhoneNumber('TR') decorator for validation.
+
+    2. **Role-based Password Requirement:** Admin role REQUIRES password. Staff/manager roles have OPTIONAL password. Validate in AuthService: `if (role === 'admin' &amp;&amp; !password) throw BadRequestException`.
+
+    3. **Password Security:** Minimum 8 characters, at least 1 letter and 1 number (regex: /^(?=.*[A-Za-z])(?=.*\d)/). Hash with bcrypt, 10 rounds: `bcrypt.hash(password, 10)`.
+
+    4. **Multi-tenancy (domainID):** User entity requires domainID (UUID). Get from ConfigService ('DEFAULT_DOMAIN_ID') or use placeholder: '00000000-0000-0000-0000-000000000001'.
+
+    5. **Phone Verification:** User created with phoneVerified: false. OTP must be sent for verification (Epic 5.1 FONIVA integration - stub for now).
+
+    6. **Response Sanitization:** NEVER return passwordHash, deletedAt, or domainID in API response. Use UserResDto with @Exclude() decorators and plainToInstance().
+
+    7. **Error Handling:** Duplicate phoneNumber → 409 Conflict ("Phone number already exists"). Invalid phone format → 400 Bad Request (class-validator). Admin without password → 400 Bad Request. SMS error → 500 Internal Server Error.
+
+    8. **Module Organization:** DTOs in src/modules/auth/dto/, Services in src/modules/auth/services/, Controller in src/modules/auth/. Follow NestJS best practices.
+
+    9. **Testing Requirements:** Unit tests (AuthService with mocked PrismaService, OtpService). E2E tests (POST /auth/register with various scenarios). Follow test/auth-guard.e2e-spec.ts pattern.
+
+    10. **Import Pattern:** Use RELATIVE imports (../../database/prisma.service) instead of path aliases (@/...) due to tsconfig moduleResolution: nodenext (established in Story 2.1).
+
+    11. **Validation Pipe:** MUST add ValidationPipe globally in main.ts for class-validator to work: `app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))`.
+
+    12. **OTP Integration:** Call OtpService.generateAndSendOtp(userID, phoneNumber) after user creation. Service should LOG OTP for now (development stub). Epic 5.1 will implement FONIVA SMS provider.
+  </constraints>
+
+  <interfaces>
+    **API Endpoints:**
+
+    - POST /auth/register
+      - Method: POST
+      - Path: /auth/register
+      - Decorator: @Public() (no authentication required)
+      - Request Body: RegisterDto { phoneNumber: string (E.164), firstName: string, lastName: string, role: 'admin' | 'staff' | 'manager', password?: string, email?: string }
+      - Response: { success: boolean, data: UserResDto, message: string }
+      - Status Codes: 201 Created (success), 400 Bad Request (validation fail), 409 Conflict (duplicate phone), 500 Internal Server Error (database/SMS error)
+
+    **DTOs (To Be Created):**
+
+    - RegisterDto (src/modules/auth/dto/register.dto.ts)
+      - phoneNumber: string (@IsPhoneNumber('TR'), @IsNotEmpty)
+      - firstName: string (@IsString, @MinLength(2), @MaxLength(50))
+      - lastName: string (@IsString, @MinLength(2), @MaxLength(50))
+      - role: string (@IsEnum(['admin', 'staff', 'manager']))
+      - password?: string (@IsOptional, @IsString, @MinLength(8), @MaxLength(50), @Matches(/^(?=.*[A-Za-z])(?=.*\d)/, { message: 'Password must contain at least 1 letter and 1 number' }))
+      - email?: string (@IsOptional, @IsEmail)
+
+    - UserResDto (src/modules/auth/dto/user-res.dto.ts)
+      - id: string
+      - phoneNumber: string
+      - firstName: string
+      - lastName: string
+      - email?: string
+      - role: string
+      - isActive: boolean
+      - phoneVerified: boolean
+      - createdAt: Date
+      - updatedAt: Date
+      - @Exclude() passwordHash?: string
+      - @Exclude() deletedAt?: Date
+      - @Exclude() domainID: string
+
+    **Service Interfaces:**
+
+    - AuthService.register(registerDto: RegisterDto): Promise&lt;UserResDto&gt;
+      - Checks phoneNumber uniqueness (PrismaService.user.findUnique)
+      - Validates admin password requirement
+      - Hashes password if provided (bcrypt.hash)
+      - Creates user (PrismaService.user.create)
+      - Calls OtpService.generateAndSendOtp
+      - Returns sanitized UserResDto (plainToInstance)
+
+    - OtpService.generateAndSendOtp(userID: string, phoneNumber: string): Promise&lt;void&gt; (To Be Created)
+      - Generates 6-digit OTP (Math.floor(100000 + Math.random() * 900000))
+      - STUB: Logs OTP to console (development only)
+      - TODO: Epic 5.1 will store OTP in OTPVerification table and send via FONIVA SMS provider
+
+    **Prisma Interfaces (Existing):**
+
+    - PrismaService.user.findUnique({ where: { phoneNumber: string } }): Promise&lt;User | null&gt;
+    - PrismaService.user.create({ data: { phoneNumber, firstName, lastName, email, role, passwordHash, phoneVerified, isActive, domainID } }): Promise&lt;User&gt;
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest testing framework (v29.x) configured. Unit tests: src/**/*.spec.ts pattern, mock PrismaService and OtpService using Jest mocks. E2E tests: test/**/*.e2e-spec.ts pattern, use supertest for HTTP requests, create test users in beforeAll, cleanup in afterAll. Test coverage target: 70%+ (unit + integration + e2e). Follow test/auth-guard.e2e-spec.ts pattern for e2e tests: TestingModule with NestApplication, prisma database cleanup, supertest request() calls. ValidationPipe must be enabled in tests for DTO validation to work.
+    </standards>
+    <locations>
+      - Unit tests: src/modules/auth/auth.service.spec.ts (create if not exists)
+      - E2E tests: test/auth-registration.e2e-spec.ts (create new)
+      - Test setup: test/jest-e2e-setup.ts (existing, provides env vars)
+      - Test config: test/jest-e2e.json (existing)
+    </locations>
+    <ideas>
+      **Unit Tests (auth.service.spec.ts):**
+      - AC-2.2.2, AC-2.2.8: Test successful admin registration (with password) returns UserResDto without passwordHash
+      - AC-2.2.2, AC-2.2.8: Test successful staff registration (without password) returns UserResDto
+      - AC-2.2.3, AC-2.2.9: Test duplicate phoneNumber throws ConflictException ("Phone number already exists")
+      - AC-2.2.2, AC-2.2.9: Test admin without password throws BadRequestException ("Password is required for admin role")
+      - AC-2.2.5: Test password hashing applied when provided (verify bcrypt.hash called with 10 rounds)
+      - AC-2.2.7: Test OtpService.generateAndSendOtp called after user creation
+      - AC-2.2.6: Test user created with phoneVerified: false, isActive: true
+
+      **E2E Tests (auth-registration.e2e-spec.ts):**
+      - AC-2.2.1, AC-2.2.8: POST /auth/register with valid admin data (phone + password) → 201 Created, UserResDto without passwordHash
+      - AC-2.2.1, AC-2.2.8: POST /auth/register with valid staff data (phone, no password) → 201 Created
+      - AC-2.2.3, AC-2.2.9: POST /auth/register with duplicate phone → 409 Conflict
+      - AC-2.2.2, AC-2.2.9: POST /auth/register with invalid phone format → 400 Bad Request (class-validator)
+      - AC-2.2.4, AC-2.2.9: POST /auth/register admin without password → 400 Bad Request
+      - AC-2.2.4, AC-2.2.9: POST /auth/register with weak password (no number) → 400 Bad Request
+      - AC-2.2.8: Verify response excludes passwordHash, deletedAt, domainID fields
+      - AC-2.2.6: Verify database record created with correct fields (phoneVerified: false, isActive: true)
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'tr' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Raporu</title>
+</head>
+<body>
+  <div class="report-container">
+    <header class="report-header">
+      <h1>Ticket Raporu</h1>
+      <p class="generated-date">Oluşturulma: <%= new Date(data.generatedAt || Date.now()).toLocaleString('tr-TR') %></p>
+    </header>
+
+    <section class="summary-section">
+      <h2>Özet</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="label">Toplam Ticket</span>
+          <span class="value"><%= data.summary?.totalTickets || 0 %></span>
+        </div>
+        <div class="summary-item pending">
+          <span class="label">Bekleyen</span>
+          <span class="value"><%= data.summary?.pendingCount || 0 %></span>
+        </div>
+        <div class="summary-item in-progress">
+          <span class="label">İşlemde</span>
+          <span class="value"><%= data.summary?.inProgressCount || 0 %></span>
+        </div>
+        <div class="summary-item completed">
+          <span class="label">Tamamlanan</span>
+          <span class="value"><%= data.summary?.completedCount || 0 %></span>
+        </div>
+        <div class="summary-item sla">
+          <span class="label">SLA Uyumu</span>
+          <span class="value"><%= data.summary?.slaComplianceRate || 100 %>%</span>
+        </div>
+      </div>
+    </section>
+
+    <% if (data.filters && Object.keys(data.filters).some(k => data.filters[k])) { %>
+    <section class="filters-section">
+      <h2>Uygulanan Filtreler</h2>
+      <ul class="filter-list">
+        <% if (data.filters.createdFrom) { %>
+          <li><strong>Başlangıç Tarihi:</strong> <%= new Date(data.filters.createdFrom).toLocaleDateString('tr-TR') %></li>
+        <% } %>
+        <% if (data.filters.createdTo) { %>
+          <li><strong>Bitiş Tarihi:</strong> <%= new Date(data.filters.createdTo).toLocaleDateString('tr-TR') %></li>
+        <% } %>
+        <% if (data.filters.severity) { %>
+          <li><strong>Önem:</strong> <%= data.filters.severity %></li>
+        <% } %>
+        <% if (data.filters.status) { %>
+          <li><strong>Durum:</strong> <%= data.filters.status %></li>
+        <% } %>
+        <% if (data.filters.overdueOnly) { %>
+          <li><strong>Sadece SLA Aşanlar:</strong> Evet</li>
+        <% } %>
+      </ul>
+    </section>
+    <% } %>
+
+    <section class="tickets-section">
+      <h2>Ticket Listesi</h2>
+      <% if (data.tickets && data.tickets.length > 0) { %>
+        <table class="tickets-table">
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Konu</th>
+              <th>Önem</th>
+              <th>Durum</th>
+              <th>Kullanıcı</th>
+              <th>Kategori</th>
+              <th>Departman</th>
+              <th>SLA</th>
+              <th>Tarih</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% data.tickets.forEach(ticket => { %>
+              <tr class="<%= ticket.isOverdue ? 'overdue' : '' %>">
+                <td class="code"><%= ticket.code %></td>
+                <td class="subject"><%= ticket.subject %></td>
+                <td class="severity severity-<%= ticket.severity.toLowerCase() %>"><%= getSeverityLabel(ticket.severity) %></td>
+                <td class="status"><%= getStatusLabel(ticket.status) %></td>
+                <td><%= ticket.userName %></td>
+                <td><%= ticket.categoryName %></td>
+                <td><%= ticket.departmentName %></td>
+                <td class="sla-status"><%= ticket.isOverdue ? 'Aşıldı' : 'Normal' %></td>
+                <td class="date"><%= new Date(ticket.createdAt).toLocaleDateString('tr-TR') %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+        <p class="total-count">Toplam: <%= data.tickets.length %> ticket</p>
+      <% } else { %>
+        <p class="no-data">Filtrelere uygun ticket bulunamadı.</p>
+      <% } %>
+    </section>
+
+    <footer class="report-footer">
+      <p>Bu rapor otomatik olarak oluşturulmuştur.</p>
+    </footer>
+  </div>
+
+  <script>
+    function getSeverityLabel(severity) {
+      const labels = {
+        'CRITICAL': 'Kritik',
+        'HIGH': 'Yüksek',
+        'MEDIUM': 'Orta',
+        'LOW': 'Düşük'
+      };
+      return labels[severity] || severity;
+    }
+
+    function getStatusLabel(status) {
+      const labels = {
+        'OPEN': 'Bekliyor',
+        'IN_PROGRESS': 'İşlemde',
+        'REVIEW': 'İncelemede',
+        'CLOSED': 'Tamamlandı'
+      };
+      return labels[status] || status;
+    }
+  </script>
+</body>
+</html>
+<%
+  function getSeverityLabel(severity) {
+    const labels = {
+      'CRITICAL': 'Kritik',
+      'HIGH': 'Yüksek',
+      'MEDIUM': 'Orta',
+      'LOW': 'Düşük'
+    };
+    return labels[severity] || severity;
+  }
+
+  function getStatusLabel(status) {
+    const labels = {
+      'OPEN': 'Bekliyor',
+      'IN_PROGRESS': 'İşlemde',
+      'REVIEW': 'İncelemede',
+      'CLOSED': 'Tamamlandı'
+    };
+    return labels[status] || status;
+  }
+%>
