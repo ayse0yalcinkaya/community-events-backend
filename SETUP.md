@@ -18,8 +18,16 @@ npm run check:extensions
 
 ```bash
 npm install
+npm run docker:up
+npm run prisma:deploy
 npm run prepare
 npm run check:extensions
+```
+
+Test veritabani gerekiyorsa:
+
+```bash
+createdb -h localhost -U postgres community_events_test
 ```
 
 ## Formatting

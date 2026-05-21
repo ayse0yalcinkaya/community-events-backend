@@ -10,6 +10,8 @@ import { LoggerService } from '../common/logger/logger.service';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private shutdownHookEnabled = false;
+
   constructor(private readonly logger: LoggerService) {
     super();
   }
@@ -31,8 +33,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   enableShutdownHooks(app: INestApplication) {
+    if (process.env.NODE_ENV === 'test' || this.shutdownHookEnabled) {
+      return;
+    }
+
+    this.shutdownHookEnabled = true;
+
     // Prisma 5.0+ requires process event listeners instead of $on('beforeExit')
-    process.on('beforeExit', async () => {
+    process.once('beforeExit', async () => {
       await app.close();
     });
   }

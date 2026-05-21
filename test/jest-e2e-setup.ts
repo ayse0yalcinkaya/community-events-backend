@@ -55,5 +55,5 @@ if (!process.env.MAIL_FROM) {
 }
 
 if (!process.env.REDIS_PASSWORD) {
-  process.env.REDIS_PASSWORD = 'test-redis-password';
+  process.env.REDIS_PASSWORD = 'redispassword';
 }
