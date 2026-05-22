@@ -64,6 +64,20 @@ class DiscoverCommunityItemResDto {
 
   @Expose()
   memberCount!: number;
+
+  @Expose()
+  activeEventCount?: number;
+}
+
+class DiscoverStatsResDto {
+  @Expose()
+  totalPublishedEvents!: number;
+
+  @Expose()
+  totalActiveCommunities!: number;
+
+  @Expose()
+  totalRootCategories!: number;
 }
 
 export class DiscoverHomeResDto {
@@ -82,4 +96,16 @@ export class DiscoverHomeResDto {
   @Expose()
   @Type(() => DiscoverCommunityItemResDto)
   featuredCommunities!: DiscoverCommunityItemResDto[];
+
+  @Expose()
+  @Type(() => DiscoverEventItemResDto)
+  recommendedEvents!: DiscoverEventItemResDto[];
+
+  @Expose()
+  @Type(() => DiscoverCommunityItemResDto)
+  trendingCommunities!: DiscoverCommunityItemResDto[];
+
+  @Expose()
+  @Type(() => DiscoverStatsResDto)
+  stats!: DiscoverStatsResDto;
 }

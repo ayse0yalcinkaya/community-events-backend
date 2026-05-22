@@ -15,7 +15,7 @@ export class DiscoverService {
   async getHome() {
     const now = new Date();
 
-    const [featuredEvents, upcomingEvents, popularCategories, featuredCommunities] = await Promise.all([
+    const [featuredEvents, upcomingEvents, popularCategories, featuredCommunities, recommendedEvents, trendingCommunities, publishedEventCount, activeCommunityCount, rootCategoryCount] = await Promise.all([
       this.prisma.event.findMany({
         where: {
           deletedAt: null,
@@ -87,33 +87,95 @@ export class DiscoverService {
         orderBy: [{ members: { _count: 'desc' } }, { createdAt: 'desc' }],
         take: 6,
       }),
+      this.prisma.event.findMany({
+        where: {
+          deletedAt: null,
+          status: EventStatus.PUBLISHED,
+          visibility: 'PUBLIC',
+        },
+        include: {
+          location: true,
+          sessions: {
+            where: { startAt: { gte: now } },
+            orderBy: { startAt: 'asc' },
+            take: 1,
+          },
+          _count: {
+            select: { attendances: true },
+          },
+        },
+        orderBy: [{ attendances: { _count: 'desc' } }, { publishedAt: 'desc' }],
+        take: 6,
+      }),
+      this.prisma.community.findMany({
+        where: {
+          deletedAt: null,
+          status: 'ACTIVE',
+        },
+        include: {
+          _count: {
+            select: {
+              members: true,
+              events: {
+                where: {
+                  deletedAt: null,
+                  status: EventStatus.PUBLISHED,
+                },
+              },
+            },
+          },
+        },
+        orderBy: [{ events: { _count: 'desc' } }, { members: { _count: 'desc' } }, { createdAt: 'desc' }],
+        take: 6,
+      }),
+      this.prisma.event.count({
+        where: {
+          deletedAt: null,
+          status: EventStatus.PUBLISHED,
+          visibility: 'PUBLIC',
+        },
+      }),
+      this.prisma.community.count({
+        where: {
+          deletedAt: null,
+          status: 'ACTIVE',
+        },
+      }),
+      this.prisma.category.count({
+        where: {
+          status: 'ACTIVE',
+          parentID: null,
+        },
+      }),
     ]);
+
+    const mapEvent = (event: (typeof featuredEvents)[number]) => ({
+      id: event.id,
+      title: event.title,
+      slug: event.slug,
+      shortDescription: event.shortDescription,
+      format: event.format,
+      city: event.location?.city ?? null,
+      publishedAt: event.publishedAt,
+      nextSessionStartAt: event.sessions[0]?.startAt ?? null,
+      attendeeCount: event._count.attendances,
+    });
+
+    const mapCommunity = (community: (typeof featuredCommunities)[number] & { _count?: { members: number; events?: number } }) => ({
+      id: community.id,
+      name: community.name,
+      slug: community.slug,
+      shortDescription: community.shortDescription,
+      city: community.city,
+      memberCount: community._count?.members ?? 0,
+      activeEventCount: community._count?.events ?? 0,
+    });
 
     return plainToInstance(
       DiscoverHomeResDto,
       {
-        featuredEvents: featuredEvents.map((event) => ({
-          id: event.id,
-          title: event.title,
-          slug: event.slug,
-          shortDescription: event.shortDescription,
-          format: event.format,
-          city: event.location?.city ?? null,
-          publishedAt: event.publishedAt,
-          nextSessionStartAt: event.sessions[0]?.startAt ?? null,
-          attendeeCount: event._count.attendances,
-        })),
-        upcomingEvents: upcomingEvents.map((event) => ({
-          id: event.id,
-          title: event.title,
-          slug: event.slug,
-          shortDescription: event.shortDescription,
-          format: event.format,
-          city: event.location?.city ?? null,
-          publishedAt: event.publishedAt,
-          nextSessionStartAt: event.sessions[0]?.startAt ?? null,
-          attendeeCount: event._count.attendances,
-        })),
+        featuredEvents: featuredEvents.map(mapEvent),
+        upcomingEvents: upcomingEvents.map(mapEvent),
         popularCategories: popularCategories.map((category) => ({
           id: category.id,
           name: category.name,
@@ -121,14 +183,14 @@ export class DiscoverService {
           icon: category.icon,
           eventCount: category._count.primaryEvents,
         })),
-        featuredCommunities: featuredCommunities.map((community) => ({
-          id: community.id,
-          name: community.name,
-          slug: community.slug,
-          shortDescription: community.shortDescription,
-          city: community.city,
-          memberCount: community._count.members,
-        })),
+        featuredCommunities: featuredCommunities.map(mapCommunity),
+        recommendedEvents: recommendedEvents.map(mapEvent),
+        trendingCommunities: trendingCommunities.map(mapCommunity),
+        stats: {
+          totalPublishedEvents: publishedEventCount,
+          totalActiveCommunities: activeCommunityCount,
+          totalRootCategories: rootCategoryCount,
+        },
       },
       { excludeExtraneousValues: true },
     );

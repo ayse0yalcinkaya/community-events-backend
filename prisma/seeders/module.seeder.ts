@@ -89,6 +89,11 @@ export class ModuleSeeder {
         key: 'EVENTS',
       },
       {
+        nameKey: 'modules.DISCOVER.NAME',
+        descriptionKey: 'modules.DISCOVER.DESCRIPTION',
+        key: 'DISCOVER',
+      },
+      {
         nameKey: 'modules.CHAT.NAME',
         descriptionKey: 'modules.CHAT.DESCRIPTION',
         key: 'CHAT',

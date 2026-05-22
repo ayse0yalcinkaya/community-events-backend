@@ -63,6 +63,10 @@
     "NAME": "Etkinlikler",
     "DESCRIPTION": "Etkinlik oluşturma ve yönetimi"
   },
+  "DISCOVER": {
+    "NAME": "Keşfet",
+    "DESCRIPTION": "Etkinlik ve topluluk keşfi"
+  },
   "LOGS": {
     "NAME": "Loglar",
     "DESCRIPTION": "Tüm modüllerdeki işlemleri görüntüle"

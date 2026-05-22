@@ -3,6 +3,7 @@ import { CommunityMemberStatus, CommunityStatus, EventStatus, Prisma } from '@pr
 import { plainToInstance } from 'class-transformer';
 
 import { PrismaService } from '@/database/prisma.service';
+import { FilesService } from '@/modules/files/services/files.service';
 
 import { CreateCommunityDto } from '../dto/create-community.dto';
 import { QueryCommunitiesDto } from '../dto/query-communities.dto';
@@ -11,7 +12,10 @@ import { UpdateCommunityDto } from '../dto/update-community.dto';
 
 @Injectable()
 export class CommunitiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly filesService: FilesService,
+  ) {}
 
   async create(userId: string, dto: CreateCommunityDto) {
     const created = await this.prisma.community.create({
@@ -73,7 +77,7 @@ export class CommunitiesService {
     ]);
 
     return {
-      items: items.map((item) => this.toCommunityResponse(item)),
+      items: await Promise.all(items.map((item) => this.toCommunityResponse(item))),
       count,
     };
   }
@@ -109,6 +113,38 @@ export class CommunitiesService {
         instagramUrl: dto.instagramUrl,
         linkedinUrl: dto.linkedinUrl,
       },
+      include: this.communityInclude(userId),
+    });
+
+    return this.toCommunityResponse(updated, userId);
+  }
+
+  async updateLogo(id: string, userId: string, file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Logo file is required');
+    }
+
+    await this.ensureManageAccess(id, userId);
+    const uploaded = await this.filesService.uploadFiles([file], userId);
+    const updated = await this.prisma.community.update({
+      where: { id },
+      data: { logoFileID: uploaded[0].id },
+      include: this.communityInclude(userId),
+    });
+
+    return this.toCommunityResponse(updated, userId);
+  }
+
+  async updateCoverImage(id: string, userId: string, file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Cover image file is required');
+    }
+
+    await this.ensureManageAccess(id, userId);
+    const uploaded = await this.filesService.uploadFiles([file], userId);
+    const updated = await this.prisma.community.update({
+      where: { id },
+      data: { coverImageFileID: uploaded[0].id },
       include: this.communityInclude(userId),
     });
 
@@ -325,8 +361,15 @@ export class CommunitiesService {
     return slug;
   }
 
-  private toCommunityResponse(community: any, userId?: string) {
+  private async toCommunityResponse(community: any, userId?: string) {
     const currentMembership = userId ? community.members?.[0] ?? null : null;
+    const logoUrl = community.logoFileID
+      ? (await this.filesService.generateDownloadUrl(community.logoFileID, userId ?? community.createdByUserID, true)).downloadUrl
+      : null;
+    const coverImageUrl = community.coverImageFileID
+      ? (await this.filesService.generateDownloadUrl(community.coverImageFileID, userId ?? community.createdByUserID, true))
+          .downloadUrl
+      : null;
 
     return plainToInstance(
       CommunityResDto,
@@ -336,6 +379,8 @@ export class CommunitiesService {
         activeEventCount: community._count?.events ?? 0,
         currentUserMembershipStatus: currentMembership?.status ?? null,
         currentUserMembershipRole: currentMembership?.role ?? null,
+        logoUrl,
+        coverImageUrl,
       },
       { excludeExtraneousValues: true },
     );

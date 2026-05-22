@@ -36,6 +36,61 @@ describe('Community Events Flow (e2e)', () => {
     const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: 'admin' } });
     const passwordHash = await hashPassword('Admin123!');
 
+    const requiredPermissions = [
+      { moduleKey: 'INTERESTS', action: 'VIEW' },
+      { moduleKey: 'INTERESTS', action: 'UPDATE' },
+      { moduleKey: 'COMMUNITIES', action: 'CREATE' },
+      { moduleKey: 'COMMUNITIES', action: 'VIEW' },
+      { moduleKey: 'COMMUNITIES', action: 'UPDATE' },
+      { moduleKey: 'EVENTS', action: 'CREATE' },
+      { moduleKey: 'EVENTS', action: 'VIEW' },
+      { moduleKey: 'EVENTS', action: 'UPDATE' },
+    ] as const;
+
+    for (const { moduleKey, action } of requiredPermissions) {
+      const moduleRecord = await prisma.module.upsert({
+        where: { nameKey: `modules.${moduleKey}.NAME` },
+        update: {
+          descriptionKey: `modules.${moduleKey}.DESCRIPTION`,
+        },
+        create: {
+          nameKey: `modules.${moduleKey}.NAME`,
+          descriptionKey: `modules.${moduleKey}.DESCRIPTION`,
+        },
+      });
+
+      const permission = await prisma.permission.upsert({
+        where: {
+          moduleID_action: {
+            moduleID: moduleRecord.id,
+            action,
+          },
+        },
+        update: {
+          description: `${moduleKey} ${action}`,
+        },
+        create: {
+          moduleID: moduleRecord.id,
+          action,
+          description: `${moduleKey} ${action}`,
+        },
+      });
+
+      await prisma.rolePermission.upsert({
+        where: {
+          roleID_permissionID: {
+            roleID: adminRole.id,
+            permissionID: permission.id,
+          },
+        },
+        update: {},
+        create: {
+          roleID: adminRole.id,
+          permissionID: permission.id,
+        },
+      });
+    }
+
     const adminUser = await prisma.user.upsert({
       where: { phoneNumber: '+905551111111' },
       update: {

@@ -48,4 +48,16 @@ export class CommunityResDto {
 
   @Expose()
   currentUserMembershipRole?: string | null;
+
+  @Expose()
+  logoFileID?: string | null;
+
+  @Expose()
+  coverImageFileID?: string | null;
+
+  @Expose()
+  logoUrl?: string | null;
+
+  @Expose()
+  coverImageUrl?: string | null;
 }

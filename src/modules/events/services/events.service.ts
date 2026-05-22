@@ -4,6 +4,7 @@ import { plainToInstance } from 'class-transformer';
 
 import { PrismaService } from '@/database/prisma.service';
 import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+import { FilesService } from '@/modules/files/services/files.service';
 
 import { CreateEventDraftDto } from '../dto/create-event-draft.dto';
 import { QueryEventsDto } from '../dto/query-events.dto';
@@ -15,7 +16,10 @@ import { UpdateEventScheduleDto } from '../dto/update-event-schedule.dto';
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly filesService: FilesService,
+  ) {}
 
   async createDraft(user: JwtPayload, dto: CreateEventDraftDto) {
     await this.ensureCategoryExists(dto.primaryCategoryID);
@@ -174,6 +178,22 @@ export class EventsService {
     return this.toEventResponse(published);
   }
 
+  async updateCoverImage(eventId: string, userId: string, file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Cover image file is required');
+    }
+
+    await this.ensureEventManageAccess(eventId, userId);
+    const uploaded = await this.filesService.uploadFiles([file], userId);
+    const updated = await this.prisma.event.update({
+      where: { id: eventId },
+      data: { coverImageFileID: uploaded[0].id },
+      include: this.eventInclude(userId),
+    });
+
+    return this.toEventResponse(updated, userId);
+  }
+
   async findAll(query: QueryEventsDto) {
     const page = Math.max(query.page ?? 1, 1);
     const limit = Math.min(Math.max(query.limit ?? 10, 1), 50);
@@ -218,7 +238,7 @@ export class EventsService {
     ]);
 
     return {
-      items: items.map((item) => this.toEventResponse(item)),
+      items: await Promise.all(items.map((item) => this.toEventResponse(item))),
       count,
     };
   }
@@ -534,9 +554,13 @@ export class EventsService {
     };
   }
 
-  private toEventResponse(event: any, userId?: string) {
+  private async toEventResponse(event: any, userId?: string) {
     const currentAttendance = userId ? event.attendances?.[0] ?? null : null;
     const currentBookmark = userId ? (event.bookmarks?.length ?? 0) > 0 : false;
+    const coverImageUrl = event.coverImageFileID
+      ? (await this.filesService.generateDownloadUrl(event.coverImageFileID, userId ?? event.organizerUserID ?? 'system', true))
+          .downloadUrl
+      : null;
 
     return plainToInstance(
       EventResDto,
@@ -547,6 +571,7 @@ export class EventsService {
         currentUserAttendanceStatus: currentAttendance?.status ?? null,
         currentUserAttendanceVisibility: currentAttendance?.visibility ?? null,
         isBookmarked: currentBookmark,
+        coverImageUrl,
       },
       { excludeExtraneousValues: true },
     );

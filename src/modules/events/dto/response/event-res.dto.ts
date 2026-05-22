@@ -129,4 +129,10 @@ export class EventResDto {
 
   @Expose()
   isBookmarked?: boolean;
+
+  @Expose()
+  coverImageID?: string | null;
+
+  @Expose()
+  coverImageUrl?: string | null;
 }

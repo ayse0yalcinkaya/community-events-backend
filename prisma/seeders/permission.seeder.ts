@@ -128,6 +128,21 @@ export class PermissionSeeder {
       { module: 'CATEGORIES', action: 'VIEW', description: 'View categories' },
       { module: 'CATEGORIES', action: 'UPDATE', description: 'Update categories' },
       { module: 'CATEGORIES', action: 'DELETE', description: 'Delete categories' },
+      // INTERESTS module (2 permissions)
+      { module: 'INTERESTS', action: 'VIEW', description: 'View interests' },
+      { module: 'INTERESTS', action: 'UPDATE', description: 'Update user interests' },
+      // EVENTS module (4 permissions)
+      { module: 'EVENTS', action: 'CREATE', description: 'Create events' },
+      { module: 'EVENTS', action: 'VIEW', description: 'View events' },
+      { module: 'EVENTS', action: 'UPDATE', description: 'Update events' },
+      { module: 'EVENTS', action: 'DELETE', description: 'Delete events' },
+      // COMMUNITIES module (4 permissions)
+      { module: 'COMMUNITIES', action: 'CREATE', description: 'Create communities' },
+      { module: 'COMMUNITIES', action: 'VIEW', description: 'View communities' },
+      { module: 'COMMUNITIES', action: 'UPDATE', description: 'Update communities' },
+      { module: 'COMMUNITIES', action: 'DELETE', description: 'Delete communities' },
+      // DISCOVER module (1 permission)
+      { module: 'DISCOVER', action: 'VIEW', description: 'View discovery data' },
       // SLAS module (4 permissions)
       { module: 'SLAS', action: 'CREATE', description: 'Create SLAs' },
       { module: 'SLAS', action: 'VIEW', description: 'View SLAs' },
@@ -243,6 +258,10 @@ export class PermissionSeeder {
               'FILES',
               'NOTIFICATIONS',
               'CHAT',
+              'INTERESTS',
+              'EVENTS',
+              'COMMUNITIES',
+              'DISCOVER',
               'OTP_VERIFICATIONS',
               'SMS',
               'DEPARTMENTS',
@@ -320,6 +339,19 @@ export class PermissionSeeder {
           }
           // Users can manage their own device tokens
           if (p.module === 'DEVICE_TOKENS' && ['VIEW', 'REGISTER', 'DELETE'].includes(p.action)) {
+            return true;
+          }
+          // Users can use community-events product flows
+          if (p.module === 'INTERESTS' && ['VIEW', 'UPDATE'].includes(p.action)) {
+            return true;
+          }
+          if (p.module === 'EVENTS' && ['VIEW', 'CREATE', 'UPDATE'].includes(p.action)) {
+            return true;
+          }
+          if (p.module === 'COMMUNITIES' && ['VIEW', 'CREATE', 'UPDATE'].includes(p.action)) {
+            return true;
+          }
+          if (p.module === 'DISCOVER' && p.action === 'VIEW') {
             return true;
           }
           return false;
