@@ -24,6 +24,12 @@ model User {
   userType        UserType        @default(USER)
   VKN             String?         @unique @db.VarChar(11)
   legalEntityType LegalEntityType @default(INDIVIDUAL)
+  headline        String?         @db.VarChar(120)
+  bio             String?         @db.Text
+  city            String?         @db.VarChar(120)
+  website         String?         @db.VarChar(255)
+  instagramUrl    String?         @db.VarChar(255)
+  linkedinUrl     String?         @db.VarChar(255)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   deletedAt       DateTime?
@@ -41,6 +47,14 @@ model User {
   notificationPreferences NotificationPreference[]
   deviceTokens            DeviceToken[]
   auditLogs               AuditLog[]
+  interests               UserInterest[]
+  communitiesCreated      Community[]                @relation("CommunityCreator")
+  communityMemberships    CommunityMember[]
+  organizedEvents         Event[]                    @relation("UserOrganizedEvents")
+  eventAttendances        EventAttendance[]
+  eventBookmarks          EventBookmark[]
+  sentConnectionRequests  UserConnection[]           @relation("UserConnectionRequester")
+  receivedConnectionRequests UserConnection[]        @relation("UserConnectionAddressee")
 
   // Chat Relations
   chatMessagesSent      ChatMessage[]      @relation("ChatSender")
@@ -58,5 +72,6 @@ model User {
   @@index([deletedAt])
   @@index([userType])
   @@index([VKN])
+  @@index([city])
   @@map("users")
 }

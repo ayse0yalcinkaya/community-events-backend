@@ -8,6 +8,8 @@ import { plainToInstance } from 'class-transformer';
 import { UpdateProfileDto } from '../dto/request/update-profile.dto';
 import { UserResDto } from '../dto/response/user-res.dto';
 import { UserRolePermissionsResDto } from '../dto/response/user-role-permissions.res.dto';
+import { EventResDto } from '@/modules/events/dto/response/event-res.dto';
+import { CommunityResDto } from '@/modules/communities/dto/response/community-res.dto';
 
 // Services
 import { UsersService } from '../services/users.service';
@@ -23,7 +25,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import type { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 
 @ApiTags('Profile')
-@ApiExtraModels(UserResDto)
+@ApiExtraModels(UserResDto, EventResDto, CommunityResDto)
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
@@ -83,6 +85,27 @@ export class ProfileController {
     return plainToInstance(UserRolePermissionsResDto, summary);
   }
 
+  @ApiEndpoint('Kullanicinin kaydettigi etkinlikleri getir', { type: EventResDto })
+  @Get('me/bookmarks')
+  async getMyBookmarks(@CurrentUser() user: JwtPayload) {
+    const bookmarks = await this.usersService.getMyBookmarkedEvents(user.sub);
+    return bookmarks.map((item) => plainToInstance(EventResDto, item, { excludeExtraneousValues: true }));
+  }
+
+  @ApiEndpoint('Kullanicinin katildigi etkinlikleri getir', { type: EventResDto })
+  @Get('me/attendances')
+  async getMyAttendances(@CurrentUser() user: JwtPayload) {
+    const attendances = await this.usersService.getMyAttendingEvents(user.sub);
+    return attendances.map((item) => plainToInstance(EventResDto, item, { excludeExtraneousValues: true }));
+  }
+
+  @ApiEndpoint('Kullanicinin topluluklarini getir', { type: CommunityResDto })
+  @Get('me/communities')
+  async getMyCommunities(@CurrentUser() user: JwtPayload) {
+    const communities = await this.usersService.getMyCommunities(user.sub);
+    return communities.map((item) => plainToInstance(CommunityResDto, item, { excludeExtraneousValues: true }));
+  }
+
   /**
    * PATCH /users/me
    * Update current authenticated user's profile (including optional profile image)
@@ -107,6 +130,12 @@ export class ProfileController {
         firstName: { type: 'string', nullable: true },
         lastName: { type: 'string', nullable: true },
         phoneNumber: { type: 'string', nullable: true },
+        headline: { type: 'string', nullable: true },
+        bio: { type: 'string', nullable: true },
+        city: { type: 'string', nullable: true },
+        website: { type: 'string', nullable: true },
+        instagramUrl: { type: 'string', nullable: true },
+        linkedinUrl: { type: 'string', nullable: true },
       },
     },
   })

@@ -33,6 +33,7 @@ import { OTPVerificationSeeder } from './seeders/otp-verification.seeder';
 import { RefreshTokenSeeder } from './seeders/refresh-token.seeder';
 import { NotificationSeeder } from './seeders/notification.seeder';
 import { ModuleSeeder } from './seeders/module.seeder';
+import { CategorySeeder } from './seeders/category.seeder';
 
 /**
  * Main seed function
@@ -74,7 +75,7 @@ async function main() {
         // Step 1: Create roles (no dependencies)
         seederStartTime['roles'] = Date.now();
         console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 1/10: Creating Roles');
+        console.log('Step 1/11: Creating Roles');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await RoleSeeder.seed(tx as any);
         seederTimings['roles'] = Date.now() - seederStartTime['roles'];
@@ -83,7 +84,7 @@ async function main() {
         // Step 2: Create modules (no dependencies)
         seederStartTime['modules'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 2/10: Creating Modules');
+        console.log('Step 2/11: Creating Modules');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await ModuleSeeder.seed(tx as any);
         seederTimings['modules'] = Date.now() - seederStartTime['modules'];
@@ -92,70 +93,79 @@ async function main() {
         // Step 3: Create permissions (depends on modules)
         seederStartTime['permissions'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 3/10: Creating Permissions');
+        console.log('Step 3/11: Creating Permissions');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await PermissionSeeder.seed(tx as any);
         seederTimings['permissions'] = Date.now() - seederStartTime['permissions'];
         console.log(`⏱️  Permissions: ${seederTimings['permissions']}ms\n`);
 
-        // Step 4: Create users (depends on roles)
+        // Step 4: Create categories and interests (no dependencies)
+        seederStartTime['categories'] = Date.now();
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('Step 4/11: Creating Categories & Interests');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        await CategorySeeder.seed(tx as any);
+        seederTimings['categories'] = Date.now() - seederStartTime['categories'];
+        console.log(`⏱️  Categories & Interests: ${seederTimings['categories']}ms\n`);
+
+        // Step 5: Create users (depends on roles)
         seederStartTime['users'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 4/10: Creating Users');
+        console.log('Step 5/11: Creating Users');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await UserSeeder.seed(tx as any);
         seederTimings['users'] = Date.now() - seederStartTime['users'];
         console.log(`⏱️  Users: ${seederTimings['users']}ms\n`);
 
-        // Step 5: Create files (depends on users)
+        // Step 6: Create files (depends on users)
         seederStartTime['files'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 5/10: Creating Files');
+        console.log('Step 6/11: Creating Files');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await FileSeeder.seed(tx as any);
         seederTimings['files'] = Date.now() - seederStartTime['files'];
         console.log(`⏱️  Files: ${seederTimings['files']}ms\n`);
 
-        // Step 6: Create SMS logs (no dependencies)
+        // Step 7: Create SMS logs (no dependencies)
         seederStartTime['sms'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 6/10: Creating SMS Logs');
+        console.log('Step 7/11: Creating SMS Logs');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await SmsSeeder.seed(tx as any);
         seederTimings['sms'] = Date.now() - seederStartTime['sms'];
         console.log(`⏱️  SMS: ${seederTimings['sms']}ms\n`);
 
-        // Step 7: Create notification preferences (depends on users)
+        // Step 8: Create notification preferences (depends on users)
         seederStartTime['notificationPreferences'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 7/10: Creating Notification Preferences');
+        console.log('Step 8/11: Creating Notification Preferences');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await NotificationPreferencesSeeder.seed(tx as any);
         seederTimings['notificationPreferences'] = Date.now() - seederStartTime['notificationPreferences'];
         console.log(`⏱️  Notification Preferences: ${seederTimings['notificationPreferences']}ms\n`);
 
-        // Step 8: Create device tokens (depends on users)
+        // Step 9: Create device tokens (depends on users)
         seederStartTime['deviceTokens'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 8/10: Creating Device Tokens');
+        console.log('Step 9/11: Creating Device Tokens');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await DeviceTokenSeeder.seed(tx as any);
         seederTimings['deviceTokens'] = Date.now() - seederStartTime['deviceTokens'];
         console.log(`⏱️  Device Tokens: ${seederTimings['deviceTokens']}ms\n`);
 
-        // Step 9: Create OTP verifications (depends on users)
+        // Step 10: Create OTP verifications (depends on users)
         seederStartTime['otpVerifications'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 9/10: Creating OTP Verifications');
+        console.log('Step 10/11: Creating OTP Verifications');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await OTPVerificationSeeder.seed(tx as any);
         seederTimings['otpVerifications'] = Date.now() - seederStartTime['otpVerifications'];
         console.log(`⏱️  OTP Verifications: ${seederTimings['otpVerifications']}ms\n`);
 
-        // Step 10: Create refresh tokens (depends on users)
+        // Step 11: Create refresh tokens (depends on users)
         seederStartTime['refreshTokens'] = Date.now();
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Step 10/10: Creating Refresh Tokens & Notifications');
+        console.log('Step 11/11: Creating Refresh Tokens & Notifications');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         await RefreshTokenSeeder.seed(tx as any);
         await NotificationSeeder.seed(tx as any);

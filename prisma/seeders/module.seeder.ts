@@ -69,6 +69,26 @@ export class ModuleSeeder {
         key: 'ANNOUNCEMENTS',
       },
       {
+        nameKey: 'modules.CATEGORIES.NAME',
+        descriptionKey: 'modules.CATEGORIES.DESCRIPTION',
+        key: 'CATEGORIES',
+      },
+      {
+        nameKey: 'modules.INTERESTS.NAME',
+        descriptionKey: 'modules.INTERESTS.DESCRIPTION',
+        key: 'INTERESTS',
+      },
+      {
+        nameKey: 'modules.COMMUNITIES.NAME',
+        descriptionKey: 'modules.COMMUNITIES.DESCRIPTION',
+        key: 'COMMUNITIES',
+      },
+      {
+        nameKey: 'modules.EVENTS.NAME',
+        descriptionKey: 'modules.EVENTS.DESCRIPTION',
+        key: 'EVENTS',
+      },
+      {
         nameKey: 'modules.CHAT.NAME',
         descriptionKey: 'modules.CHAT.DESCRIPTION',
         key: 'CHAT',

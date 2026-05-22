@@ -47,6 +47,22 @@
     "NAME": "Announcements",
     "DESCRIPTION": "Organization-wide announcements"
   },
+  "CATEGORIES": {
+    "NAME": "Categories",
+    "DESCRIPTION": "Browse event categories"
+  },
+  "INTERESTS": {
+    "NAME": "Interests",
+    "DESCRIPTION": "Manage user interests"
+  },
+  "COMMUNITIES": {
+    "NAME": "Communities",
+    "DESCRIPTION": "Manage communities and memberships"
+  },
+  "EVENTS": {
+    "NAME": "Events",
+    "DESCRIPTION": "Create and manage events"
+  },
   "LOGS": {
     "NAME": "Audit Logs",
     "DESCRIPTION": "Search system activity across modules"

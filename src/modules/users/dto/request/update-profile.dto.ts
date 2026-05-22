@@ -1,5 +1,5 @@
 // Libraries
-import { IsOptional, IsString, MinLength, MaxLength, IsPhoneNumber } from 'class-validator';
+import { IsOptional, IsString, MinLength, MaxLength, IsPhoneNumber, IsUrl } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { normalizePhoneNumber } from '@/common/utils/phone-normalizer.util';
@@ -23,4 +23,31 @@ export class UpdateProfileDto {
     message: i18nValidationMessage('validation.IS_PHONE_NUMBER'),
   })
   phoneNumber?: string;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage('validation.IS_STRING') })
+  @MaxLength(120, { message: i18nValidationMessage('validation.MAX_LENGTH') })
+  headline?: string;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage('validation.IS_STRING') })
+  @MaxLength(1000, { message: i18nValidationMessage('validation.MAX_LENGTH') })
+  bio?: string;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage('validation.IS_STRING') })
+  @MaxLength(120, { message: i18nValidationMessage('validation.MAX_LENGTH') })
+  city?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: i18nValidationMessage('validation.IS_URL') })
+  website?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: i18nValidationMessage('validation.IS_URL') })
+  instagramUrl?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: i18nValidationMessage('validation.IS_URL') })
+  linkedinUrl?: string;
 }

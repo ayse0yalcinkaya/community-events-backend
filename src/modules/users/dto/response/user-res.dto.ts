@@ -38,6 +38,24 @@ export class UserResDto {
   legalEntityType?: string;
 
   @Expose()
+  headline?: string;
+
+  @Expose()
+  bio?: string;
+
+  @Expose()
+  city?: string;
+
+  @Expose()
+  website?: string;
+
+  @Expose()
+  instagramUrl?: string;
+
+  @Expose()
+  linkedinUrl?: string;
+
+  @Expose()
   createdAt!: Date;
 
   @Expose()

@@ -62,7 +62,7 @@ export class NotificationPreferencesSeeder {
     console.log(`  📊 Creating preferences for ${users.length} users (all 3 channels)\n`);
 
     let createdCount = 0;
-    const channels = ['EMAIL', 'SMS', 'PUSH'];
+    const channels = ['EMAIL', 'SMS', 'PUSH'] as const;
 
     // Create complete preference set for each user
     for (const user of users) {

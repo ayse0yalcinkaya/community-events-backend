@@ -47,6 +47,22 @@
     "NAME": "Duyurular",
     "DESCRIPTION": "Şirket içi duyurular"
   },
+  "CATEGORIES": {
+    "NAME": "Kategoriler",
+    "DESCRIPTION": "Etkinlik kategorilerini yönet"
+  },
+  "INTERESTS": {
+    "NAME": "İlgi Alanları",
+    "DESCRIPTION": "Kullanıcı ilgi alanlarını yönet"
+  },
+  "COMMUNITIES": {
+    "NAME": "Topluluklar",
+    "DESCRIPTION": "Topluluk ve üyelik yönetimi"
+  },
+  "EVENTS": {
+    "NAME": "Etkinlikler",
+    "DESCRIPTION": "Etkinlik oluşturma ve yönetimi"
+  },
   "LOGS": {
     "NAME": "Loglar",
     "DESCRIPTION": "Tüm modüllerdeki işlemleri görüntüle"

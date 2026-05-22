@@ -35,6 +35,11 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { DocsModule } from './modules/docs/docs.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { InterestsModule } from './modules/interests/interests.module';
+import { EventsModule } from './modules/events/events.module';
+import { CommunitiesModule } from './modules/communities/communities.module';
+import { DiscoverModule } from './modules/discover/discover.module';
 
 const translationsPath = path.join(__dirname, 'modules', 'i18n', 'translations');
 const fallbackTranslationsPath = path.join(process.cwd(), 'src', 'modules', 'i18n', 'translations');
@@ -83,6 +88,11 @@ const i18nTranslationsPath = fs.existsSync(translationsPath) ? translationsPath 
     HealthModule,
     ChatModule,
     AnnouncementsModule,
+    CategoriesModule,
+    InterestsModule,
+    EventsModule,
+    CommunitiesModule,
+    DiscoverModule,
   ],
   controllers: [AppController],
   providers: [AppService],

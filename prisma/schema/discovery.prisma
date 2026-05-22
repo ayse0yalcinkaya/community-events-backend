@@ -1,0 +1,326 @@
+// ============================================================================
+// DISCOVERY, COMMUNITIES, EVENTS
+// ============================================================================
+
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CommunityStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+}
+
+enum CommunityMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum CommunityMemberStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  LEFT
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum EventFormat {
+  PHYSICAL
+  ONLINE
+  HYBRID
+}
+
+enum EventVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+enum EventApprovalMode {
+  OPEN
+  APPROVAL_REQUIRED
+  INVITE_ONLY
+}
+
+enum AttendanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLIST
+  CANCELLED
+}
+
+enum AttendanceVisibility {
+  PUBLIC
+  ATTENDEES_ONLY
+  PRIVATE
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+model Category {
+  id          String         @id @default(uuid()) @db.Uuid
+  parentID    String?        @db.Uuid
+  name        String         @db.VarChar(120)
+  slug        String         @unique @db.VarChar(140)
+  description String?        @db.Text
+  icon        String?        @db.VarChar(100)
+  sortOrder   Int            @default(0)
+  status      CategoryStatus @default(ACTIVE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  parent        Category?  @relation("CategoryHierarchy", fields: [parentID], references: [id], onDelete: SetNull)
+  children      Category[] @relation("CategoryHierarchy")
+  interests     Interest[]
+  primaryEvents Event[]    @relation("EventPrimaryCategory")
+
+  @@index([parentID])
+  @@index([status, sortOrder])
+  @@map("categories")
+}
+
+model Interest {
+  id        String   @id @default(uuid()) @db.Uuid
+  categoryID String  @db.Uuid
+  name      String   @db.VarChar(120)
+  slug      String   @unique @db.VarChar(140)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category  Category       @relation(fields: [categoryID], references: [id], onDelete: Cascade)
+  userLinks UserInterest[]
+  eventLinks EventInterest[]
+
+  @@unique([categoryID, name])
+  @@index([categoryID])
+  @@map("interests")
+}
+
+model UserInterest {
+  userID      String   @db.Uuid
+  interestID  String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  user      User     @relation(fields: [userID], references: [id], onDelete: Cascade)
+  interest  Interest @relation(fields: [interestID], references: [id], onDelete: Cascade)
+
+  @@id([userID, interestID])
+  @@index([interestID])
+  @@map("user_interests")
+}
+
+model Community {
+  id                String               @id @default(uuid()) @db.Uuid
+  name              String               @db.VarChar(160)
+  slug              String               @unique @db.VarChar(180)
+  shortDescription  String?              @db.VarChar(280)
+  description       String?              @db.Text
+  city              String?              @db.VarChar(120)
+  website           String?              @db.VarChar(255)
+  instagramUrl      String?              @db.VarChar(255)
+  linkedinUrl       String?              @db.VarChar(255)
+  logoFileID        String?              @db.Uuid
+  coverImageFileID  String?              @db.Uuid
+  createdByUserID   String               @db.Uuid
+  status            CommunityStatus      @default(DRAFT)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  deletedAt         DateTime?
+
+  createdBy   User               @relation("CommunityCreator", fields: [createdByUserID], references: [id], onDelete: Restrict)
+  logoFile    File?              @relation("CommunityLogo", fields: [logoFileID], references: [id], onDelete: SetNull)
+  coverImage  File?              @relation("CommunityCoverImage", fields: [coverImageFileID], references: [id], onDelete: SetNull)
+  members     CommunityMember[]
+  events      Event[]
+
+  @@index([createdByUserID])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("communities")
+}
+
+model CommunityMember {
+  communityID String                @db.Uuid
+  userID      String                @db.Uuid
+  role        CommunityMemberRole   @default(MEMBER)
+  status      CommunityMemberStatus @default(PENDING)
+  joinedAt    DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  community Community @relation(fields: [communityID], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@id([communityID, userID])
+  @@index([userID])
+  @@index([status])
+  @@map("community_members")
+}
+
+model Event {
+  id                       String            @id @default(uuid()) @db.Uuid
+  title                    String            @db.VarChar(180)
+  slug                     String            @unique @db.VarChar(200)
+  shortDescription         String?           @db.VarChar(320)
+  description              String?           @db.Text
+  organizerUserID          String?           @db.Uuid
+  organizerCommunityID     String?           @db.Uuid
+  primaryCategoryID        String            @db.Uuid
+  format                   EventFormat       @default(PHYSICAL)
+  visibility               EventVisibility   @default(PUBLIC)
+  approvalMode             EventApprovalMode @default(OPEN)
+  language                 String?           @db.VarChar(10)
+  capacity                 Int?
+  isPaid                   Boolean           @default(false)
+  externalRegistrationUrl  String?           @db.VarChar(255)
+  coverImageFileID         String?           @db.Uuid
+  publishedAt              DateTime?
+  status                   EventStatus       @default(DRAFT)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  deletedAt                DateTime?
+
+  organizerUser      User?            @relation("UserOrganizedEvents", fields: [organizerUserID], references: [id], onDelete: SetNull)
+  organizerCommunity Community?       @relation(fields: [organizerCommunityID], references: [id], onDelete: SetNull)
+  primaryCategory    Category         @relation("EventPrimaryCategory", fields: [primaryCategoryID], references: [id], onDelete: Restrict)
+  coverImage         File?            @relation("EventCoverImage", fields: [coverImageFileID], references: [id], onDelete: SetNull)
+  sessions           EventSession[]
+  location           EventLocation?
+  tags               EventTag[]
+  attendances        EventAttendance[]
+  bookmarks          EventBookmark[]
+  interests          EventInterest[]
+
+  @@index([organizerUserID])
+  @@index([organizerCommunityID])
+  @@index([primaryCategoryID])
+  @@index([status, visibility, publishedAt])
+  @@index([deletedAt])
+  @@map("events")
+}
+
+model EventSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventID    String   @db.Uuid
+  startAt   DateTime
+  endAt     DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+
+  @@index([eventID])
+  @@index([startAt])
+  @@map("event_sessions")
+}
+
+model EventLocation {
+  id          String   @id @default(uuid()) @db.Uuid
+  eventID      String   @unique @db.Uuid
+  venueName   String?  @db.VarChar(180)
+  address     String?  @db.VarChar(255)
+  city        String?  @db.VarChar(120)
+  district    String?  @db.VarChar(120)
+  latitude    Decimal? @db.Decimal(10, 7)
+  longitude   Decimal? @db.Decimal(10, 7)
+  meetingUrl  String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+
+  @@index([city])
+  @@map("event_locations")
+}
+
+model EventTag {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventID    String   @db.Uuid
+  name      String   @db.VarChar(60)
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+
+  @@unique([eventID, name])
+  @@index([name])
+  @@map("event_tags")
+}
+
+model EventInterest {
+  eventID     String   @db.Uuid
+  interestID  String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  event    Event    @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  interest Interest @relation(fields: [interestID], references: [id], onDelete: Cascade)
+
+  @@id([eventID, interestID])
+  @@index([interestID])
+  @@map("event_interests")
+}
+
+model EventAttendance {
+  id          String               @id @default(uuid()) @db.Uuid
+  eventID      String               @db.Uuid
+  userID       String               @db.Uuid
+  status      AttendanceStatus     @default(PENDING)
+  visibility  AttendanceVisibility @default(PUBLIC)
+  registeredAt DateTime            @default(now())
+  approvedAt  DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  event Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@unique([eventID, userID])
+  @@index([userID, status])
+  @@index([eventID, status])
+  @@map("event_attendances")
+}
+
+model EventBookmark {
+  eventID    String   @db.Uuid
+  userID     String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  event Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@id([eventID, userID])
+  @@index([userID])
+  @@map("event_bookmarks")
+}
+
+model UserConnection {
+  id               String           @id @default(uuid()) @db.Uuid
+  requesterUserID  String           @db.Uuid
+  addresseeUserID  String           @db.Uuid
+  status           ConnectionStatus @default(PENDING)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  requester User @relation("UserConnectionRequester", fields: [requesterUserID], references: [id], onDelete: Cascade)
+  addressee User @relation("UserConnectionAddressee", fields: [addresseeUserID], references: [id], onDelete: Cascade)
+
+  @@unique([requesterUserID, addresseeUserID])
+  @@index([addresseeUserID, status])
+  @@index([requesterUserID, status])
+  @@map("user_connections")
+}

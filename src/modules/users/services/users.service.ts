@@ -86,6 +86,12 @@ export class UsersService {
         firstName: updateProfileDto.firstName ?? existingUser.firstName,
         lastName: updateProfileDto.lastName ?? existingUser.lastName,
         phoneNumber: updateProfileDto.phoneNumber ?? existingUser.phoneNumber,
+        headline: updateProfileDto.headline ?? existingUser.headline,
+        bio: updateProfileDto.bio ?? existingUser.bio,
+        city: updateProfileDto.city ?? existingUser.city,
+        website: updateProfileDto.website ?? existingUser.website,
+        instagramUrl: updateProfileDto.instagramUrl ?? existingUser.instagramUrl,
+        linkedinUrl: updateProfileDto.linkedinUrl ?? existingUser.linkedinUrl,
       },
     });
 
@@ -227,6 +233,123 @@ export class UsersService {
 
     this.logger.log(`Found ${users.length} users`);
     return users;
+  }
+
+  async getMyBookmarkedEvents(userId: string) {
+    const bookmarks = await this.prisma.eventBookmark.findMany({
+      where: { userID: userId },
+      include: {
+        event: {
+          include: {
+            primaryCategory: true,
+            organizerCommunity: true,
+            location: true,
+            sessions: {
+              orderBy: { startAt: 'asc' },
+            },
+            _count: {
+              select: {
+                attendances: true,
+                bookmarks: true,
+              },
+            },
+            attendances: {
+              where: { userID: userId },
+              take: 1,
+            },
+            bookmarks: {
+              where: { userID: userId },
+              take: 1,
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return bookmarks.map(({ event }) => ({
+      ...event,
+      attendeeCount: event._count.attendances,
+      bookmarkCount: event._count.bookmarks,
+      currentUserAttendanceStatus: event.attendances[0]?.status ?? null,
+      currentUserAttendanceVisibility: event.attendances[0]?.visibility ?? null,
+      isBookmarked: event.bookmarks.length > 0,
+    }));
+  }
+
+  async getMyAttendingEvents(userId: string) {
+    const attendances = await this.prisma.eventAttendance.findMany({
+      where: {
+        userID: userId,
+        status: { in: ['APPROVED', 'PENDING', 'WAITLIST'] },
+      },
+      include: {
+        event: {
+          include: {
+            primaryCategory: true,
+            organizerCommunity: true,
+            location: true,
+            sessions: {
+              orderBy: { startAt: 'asc' },
+            },
+            _count: {
+              select: {
+                attendances: true,
+                bookmarks: true,
+              },
+            },
+            bookmarks: {
+              where: { userID: userId },
+              take: 1,
+            },
+          },
+        },
+      },
+      orderBy: { registeredAt: 'desc' },
+    });
+
+    return attendances.map(({ event, status, visibility }) => ({
+      ...event,
+      attendeeCount: event._count.attendances,
+      bookmarkCount: event._count.bookmarks,
+      currentUserAttendanceStatus: status,
+      currentUserAttendanceVisibility: visibility,
+      isBookmarked: event.bookmarks.length > 0,
+    }));
+  }
+
+  async getMyCommunities(userId: string) {
+    const memberships = await this.prisma.communityMember.findMany({
+      where: {
+        userID: userId,
+        status: 'ACTIVE',
+      },
+      include: {
+        community: {
+          include: {
+            _count: {
+              select: {
+                members: {
+                  where: { status: 'ACTIVE' },
+                },
+                events: {
+                  where: { deletedAt: null, status: 'PUBLISHED' },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return memberships.map(({ community, role, status }) => ({
+      ...community,
+      memberCount: community._count.members,
+      activeEventCount: community._count.events,
+      currentUserMembershipStatus: status,
+      currentUserMembershipRole: role,
+    }));
   }
 
   /**

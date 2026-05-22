@@ -21,6 +21,9 @@ model File {
   announcements Announcement[]
   // Chat Group Photo
   chatGroups    ChatGroup[]
+  communityLogos       Community[] @relation("CommunityLogo")
+  communityCoverImages Community[] @relation("CommunityCoverImage")
+  eventCoverImages     Event[]     @relation("EventCoverImage")
 
   @@index([userID])
   @@index([s3Key])
