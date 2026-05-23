@@ -61,6 +61,7 @@ model NotificationLog {
 model NotificationPreference {
   id        String   @id @default(uuid()) @db.Uuid
   userID    String   @db.Uuid
+  type      Int      @default(3) // NotificationType enum value
   channel   Int // 0: EMAIL, 1: SMS, 2: PUSH
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -69,8 +70,9 @@ model NotificationPreference {
   // Relations
   user User @relation(fields: [userID], references: [id])
 
-  @@unique([userID, channel])
+  @@unique([userID, type, channel])
   @@index([userID])
+  @@index([userID, type])
   @@map("notification_preferences")
 }
 

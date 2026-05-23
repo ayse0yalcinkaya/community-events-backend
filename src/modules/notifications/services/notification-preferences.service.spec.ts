@@ -7,6 +7,7 @@ import { UpdateNotificationPreferenceDto } from '../dto/update-notification-pref
 
 // Enums
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import { NotificationType } from '../enums/notification-type.enum';
 
 // Services
 import { PrismaService } from '../../../database/prisma.service';
@@ -25,6 +26,7 @@ describe('NotificationPreferencesService', () => {
       id: 'pref-1',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.EMAIL,
       enabled: true,
       createdAt: new Date('2024-01-01'),
@@ -34,6 +36,7 @@ describe('NotificationPreferencesService', () => {
       id: 'pref-2',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.SMS,
       enabled: true,
       createdAt: new Date('2024-01-01'),
@@ -43,6 +46,7 @@ describe('NotificationPreferencesService', () => {
       id: 'pref-3',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.PUSH,
       enabled: false,
       createdAt: new Date('2024-01-01'),
@@ -86,11 +90,13 @@ describe('NotificationPreferencesService', () => {
 
   describe('getPreferences', () => {
     it('should return existing preferences when found', async () => {
-      (prismaService.notificationPreference.findMany as jest.Mock).mockResolvedValue(mockPreferences);
+      (prismaService.notificationPreference.findMany as jest.Mock)
+        .mockResolvedValueOnce(mockPreferences)
+        .mockResolvedValueOnce(mockPreferences);
 
       const result = await service.getPreferences(mockUserID);
 
-      expect(prismaService.notificationPreference.findMany).toHaveBeenCalledWith({
+      expect(prismaService.notificationPreference.findMany).toHaveBeenNthCalledWith(1, {
         where: {
           userID: mockUserID,
         },
@@ -98,8 +104,16 @@ describe('NotificationPreferencesService', () => {
           channel: 'asc',
         },
       });
+      expect(prismaService.notificationPreference.findMany).toHaveBeenNthCalledWith(2, {
+        where: {
+          userID: mockUserID,
+        },
+        orderBy: {
+          type: 'asc',
+        },
+      });
       expect(result).toEqual(mockPreferences);
-      expect(prismaService.notificationPreference.create).not.toHaveBeenCalled();
+      expect(prismaService.notificationPreference.create).toHaveBeenCalledTimes(30);
     });
 
     it('should create default preferences when none exist', async () => {
@@ -126,10 +140,7 @@ describe('NotificationPreferencesService', () => {
 
       expect(prismaService.notificationPreference.findMany).toHaveBeenCalled();
       expect(prismaService.$transaction).toHaveBeenCalled();
-      expect(result).toHaveLength(3);
-      expect(result[0].channel).toBe(NotificationChannel.EMAIL);
-      expect(result[1].channel).toBe(NotificationChannel.SMS);
-      expect(result[2].channel).toBe(NotificationChannel.PUSH);
+      expect(result).toHaveLength(33);
       expect(result.every((p) => p.enabled)).toBe(true);
     });
   });
@@ -137,8 +148,8 @@ describe('NotificationPreferencesService', () => {
   describe('updatePreferences', () => {
     it('should bulk update preferences with upsert pattern', async () => {
       const updateDto: UpdateNotificationPreferenceDto[] = [
-        { channel: NotificationChannel.EMAIL, enabled: false },
-        { channel: NotificationChannel.SMS, enabled: true },
+        { type: NotificationType.EVENT_REMINDER, channel: NotificationChannel.EMAIL, enabled: false },
+        { type: NotificationType.CONNECTION_REQUEST, channel: NotificationChannel.SMS, enabled: true },
       ];
 
       const updatedPreferences = [
@@ -162,9 +173,10 @@ describe('NotificationPreferencesService', () => {
       });
       (prismaService.notificationPreference.upsert as jest.Mock).mockImplementation((args: any) =>
         Promise.resolve({
-          id: `pref-${args.where.userID_channel.channel}`,
-          userID: args.where.userID_channel.userID,
-          channel: args.where.userID_channel.channel,
+          id: `pref-${args.where.userID_type_channel.type}-${args.where.userID_type_channel.channel}`,
+          userID: args.where.userID_type_channel.userID,
+          type: args.where.userID_type_channel.type,
+          channel: args.where.userID_type_channel.channel,
           enabled: args.update.enabled,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -181,6 +193,7 @@ describe('NotificationPreferencesService', () => {
           userID: mockUserID,
         },
         orderBy: {
+          type: 'asc',
           channel: 'asc',
         },
       });
@@ -188,12 +201,15 @@ describe('NotificationPreferencesService', () => {
     });
 
     it('should create preferences if not exist during update', async () => {
-      const updateDto: UpdateNotificationPreferenceDto[] = [{ channel: NotificationChannel.EMAIL, enabled: true }];
+      const updateDto: UpdateNotificationPreferenceDto[] = [
+        { type: NotificationType.EVENT_REMINDER, channel: NotificationChannel.EMAIL, enabled: true },
+      ];
 
       const createdPreference = {
         id: 'pref-new',
 
         userID: mockUserID,
+        type: NotificationType.EVENT_REMINDER,
         channel: NotificationChannel.EMAIL,
         enabled: true,
         createdAt: new Date(),
@@ -213,15 +229,17 @@ describe('NotificationPreferencesService', () => {
 
       expect(prismaService.notificationPreference.upsert).toHaveBeenCalledWith({
         where: {
-          userID_channel: {
-            userID: mockUserID,
-            channel: NotificationChannel.EMAIL,
+            userID_type_channel: {
+              userID: mockUserID,
+              type: NotificationType.EVENT_REMINDER,
+              channel: NotificationChannel.EMAIL,
+            },
           },
-        },
-        create: {
-          userID: mockUserID,
-          channel: NotificationChannel.EMAIL,
-          enabled: true,
+          create: {
+            userID: mockUserID,
+            type: NotificationType.EVENT_REMINDER,
+            channel: NotificationChannel.EMAIL,
+            enabled: true,
         },
         update: {
           enabled: true,
@@ -229,6 +247,7 @@ describe('NotificationPreferencesService', () => {
       });
       expect(result).toHaveLength(1);
       expect(result[0].channel).toBe(NotificationChannel.EMAIL);
+      expect(result[0].type).toBe(NotificationType.EVENT_REMINDER);
     });
   });
 
@@ -255,11 +274,8 @@ describe('NotificationPreferencesService', () => {
       const result = await service.createDefaultPreferences(mockUserID);
 
       expect(prismaService.$transaction).toHaveBeenCalled();
-      expect(prismaService.notificationPreference.create).toHaveBeenCalledTimes(3);
-      expect(result).toHaveLength(3);
-      expect(result[0].channel).toBe(NotificationChannel.EMAIL);
-      expect(result[1].channel).toBe(NotificationChannel.SMS);
-      expect(result[2].channel).toBe(NotificationChannel.PUSH);
+      expect(prismaService.notificationPreference.create).toHaveBeenCalledTimes(33);
+      expect(result).toHaveLength(33);
       expect(result.every((p) => p.enabled)).toBe(true);
     });
 

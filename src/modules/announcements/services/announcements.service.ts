@@ -10,6 +10,7 @@ import { UpdateAnnouncementDto } from '../dto/request/update-announcement.dto';
 
 // Interfaces
 import { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+import { NotificationType } from '@/modules/notifications/enums/notification-type.enum';
 
 // Enums
 import { AnnouncementStatus } from '../enums/announcement.enum';
@@ -17,12 +18,14 @@ import { AnnouncementStatus } from '../enums/announcement.enum';
 // Services
 import { PrismaService } from '@/database/prisma.service';
 import { FilesService } from '@/modules/files/services/files.service';
+import { NotificationService } from '@/modules/notifications/services/notification.service';
 
 @Injectable()
 export class AnnouncementsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly filesService: FilesService,
+    private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
     private readonly i18n: I18nService,
   ) {}
@@ -123,6 +126,70 @@ export class AnnouncementsService {
         this.i18n.t('announcement.FETCH_FAILED', { defaultValue: 'announcement.FETCH_FAILED' }),
       );
     }
+  }
+
+  async findByCommunity(communityID: string, page = 1, limit = 10) {
+    const now = new Date();
+    const skip = (page - 1) * limit;
+    const where = {
+      communityID,
+      deletedAt: null,
+      status: AnnouncementStatus.ACTIVE,
+      AND: [{ OR: [{ start_date: null }, { start_date: { lte: now } }] }, { OR: [{ end_date: null }, { end_date: { gte: now } }] }],
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.announcement.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [{ start_date: 'desc' }, { createdAt: 'desc' }],
+        include: { imageFile: true },
+      }),
+      this.prisma.announcement.count({ where }),
+    ]);
+
+    return { items: data.map((a) => this.mapAnnouncement(a)), count: total };
+  }
+
+  async createCommunityAnnouncement(dto: { communityID: string; title: string; type: number; content?: string | null; start_date?: Date | null; end_date?: Date | null; scope?: number; status?: number }, createdBy: string) {
+    this.validateDateRange(dto.start_date, dto.end_date);
+
+    const created = await this.prisma.announcement.create({
+      data: {
+        communityID: dto.communityID,
+        title: dto.title,
+        type: dto.type,
+        content: dto.content,
+        start_date: dto.start_date,
+        end_date: dto.end_date,
+        scope: dto.scope ?? 0,
+        status: dto.status ?? AnnouncementStatus.ACTIVE,
+        createdBy,
+      },
+      include: { imageFile: true },
+    });
+
+    const members = await this.prisma.communityMember.findMany({
+      where: { communityID: dto.communityID, status: 'ACTIVE' },
+      select: { userID: true },
+    });
+
+    await Promise.allSettled(
+      members
+        .filter((member) => member.userID !== createdBy)
+        .map((member) =>
+          this.notificationService.send(
+            member.userID,
+            NotificationType.COMMUNITY_ANNOUNCEMENT,
+            dto.title,
+            dto.content ?? dto.title,
+            { communityID: dto.communityID },
+          ),
+        ),
+    );
+
+    return this.mapAnnouncement(created);
   }
 
   async update(id: string, dto: UpdateAnnouncementDto, currentUser: JwtPayload, file?: Express.Multer.File) {

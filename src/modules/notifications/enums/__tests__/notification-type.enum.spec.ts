@@ -8,13 +8,18 @@ describe('NotificationType Enum', () => {
     expect(NotificationType.GENERAL).toBe(3);
     expect(NotificationType.ALERT).toBe(4);
     expect(NotificationType.MARKETING).toBe(5);
+    expect(NotificationType.EVENT_REMINDER).toBe(6);
+    expect(NotificationType.EVENT_RECOMMENDATION).toBe(7);
+    expect(NotificationType.COMMUNITY_ANNOUNCEMENT).toBe(8);
+    expect(NotificationType.CONNECTION_REQUEST).toBe(9);
+    expect(NotificationType.CONNECTION_ACCEPTED).toBe(10);
   });
 
-  it('should have exactly 6 enum values', () => {
+  it('should have exactly 11 enum values', () => {
     const enumValues = Object.keys(NotificationType).filter(
       (key) => !isNaN(Number(NotificationType[key as keyof typeof NotificationType])),
     );
-    expect(enumValues.length).toBe(6);
+    expect(enumValues.length).toBe(11);
   });
 
   it('should have unique values for all enum members', () => {

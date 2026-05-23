@@ -4,6 +4,7 @@
 
 model Announcement {
   id          String    @id @default(uuid()) @db.Uuid
+  communityID String?   @db.Uuid
   title       String    @db.VarChar(255)
   type        Int       @default(1) // 0: WARNING, 1: INFO, 2: CONGRATULATION, 3: EMERGENCY
   content     String?   @db.Text
@@ -18,6 +19,9 @@ model Announcement {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
+  community   Community? @relation(fields: [communityID], references: [id], onDelete: SetNull)
+
+  @@index([communityID])
   @@index([scope])
   @@index([status])
   @@index([start_date])

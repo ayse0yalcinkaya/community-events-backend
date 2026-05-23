@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CommunityMemberStatus, CommunityStatus, EventStatus, Prisma } from '@prisma/client';
+import { CommunityMemberRole, CommunityMemberStatus, CommunityStatus, EventStatus, Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 
 import { PrismaService } from '@/database/prisma.service';
 import { FilesService } from '@/modules/files/services/files.service';
+import { AnnouncementsService } from '@/modules/announcements/services/announcements.service';
+import { CreateCommunityAnnouncementDto } from '../dto/request/create-community-announcement.dto';
 
 import { CreateCommunityDto } from '../dto/create-community.dto';
 import { QueryCommunitiesDto } from '../dto/query-communities.dto';
@@ -15,6 +17,7 @@ export class CommunitiesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly filesService: FilesService,
+    private readonly announcementsService: AnnouncementsService,
   ) {}
 
   async create(userId: string, dto: CreateCommunityDto) {
@@ -234,6 +237,93 @@ export class CommunitiesService {
     });
   }
 
+  async updateMemberRole(id: string, memberId: string, currentUserId: string, role: CommunityMemberRole) {
+    const manager = await this.ensureManageMembershipAccess(id, currentUserId);
+    const membership = await this.ensureActiveMembership(id, memberId);
+
+    if (membership.userID === currentUserId && role !== CommunityMemberRole.OWNER) {
+      throw new BadRequestException('You cannot change your own role unless transferring ownership');
+    }
+
+    if (role === CommunityMemberRole.OWNER) {
+      if (manager.role !== CommunityMemberRole.OWNER && manager.community.createdByUserID !== currentUserId) {
+        throw new BadRequestException('Only the current owner can transfer ownership');
+      }
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.communityMember.update({
+          where: {
+            communityID_userID: {
+              communityID: id,
+              userID: currentUserId,
+            },
+          },
+          data: { role: CommunityMemberRole.ADMIN },
+        });
+
+        await tx.communityMember.update({
+          where: {
+            communityID_userID: {
+              communityID: id,
+              userID: memberId,
+            },
+          },
+          data: { role: CommunityMemberRole.OWNER },
+        });
+
+        await tx.community.update({
+          where: { id },
+          data: { createdByUserID: memberId },
+        });
+      });
+
+      return this.findOneById(id, currentUserId);
+    }
+
+    if (membership.role === CommunityMemberRole.OWNER) {
+      throw new BadRequestException('Owner role can only be changed through ownership transfer');
+    }
+
+    await this.prisma.communityMember.update({
+      where: {
+        communityID_userID: {
+          communityID: id,
+          userID: memberId,
+        },
+      },
+      data: { role },
+    });
+
+    return this.findOneById(id, currentUserId);
+  }
+
+  async removeMember(id: string, memberId: string, currentUserId: string) {
+    const manager = await this.ensureManageMembershipAccess(id, currentUserId);
+    const membership = await this.ensureActiveMembership(id, memberId);
+
+    if (membership.role === CommunityMemberRole.OWNER) {
+      throw new BadRequestException('Owner cannot be removed from the community');
+    }
+
+    if (manager.role === CommunityMemberRole.ADMIN && membership.role === CommunityMemberRole.ADMIN) {
+      throw new BadRequestException('Admins cannot remove another admin');
+    }
+
+    await this.prisma.communityMember.update({
+      where: {
+        communityID_userID: {
+          communityID: id,
+          userID: memberId,
+        },
+      },
+      data: {
+        status: CommunityMemberStatus.LEFT,
+      },
+    });
+
+    return this.findOneById(id, currentUserId);
+  }
+
   async getEvents(id: string) {
     await this.ensureActiveCommunity(id);
 
@@ -260,6 +350,21 @@ export class CommunitiesService {
     });
   }
 
+  async getAnnouncements(id: string, page = 1, limit = 10) {
+    await this.ensureActiveCommunity(id);
+    return this.announcementsService.findByCommunity(id, page, limit);
+  }
+
+  async createAnnouncement(id: string, userId: string, dto: CreateCommunityAnnouncementDto) {
+    await this.ensureManageAccess(id, userId);
+
+    if (dto.communityID !== id) {
+      throw new BadRequestException('Community id mismatch');
+    }
+
+    return this.announcementsService.createCommunityAnnouncement(dto, userId);
+  }
+
   private async findOneById(id: string, userId?: string) {
     const community = await this.prisma.community.findUniqueOrThrow({
       where: { id },
@@ -283,6 +388,28 @@ export class CommunitiesService {
     }
 
     return community;
+  }
+
+  private async ensureActiveMembership(communityId: string, userId: string) {
+    const membership = await this.prisma.communityMember.findFirst({
+      where: {
+        communityID: communityId,
+        userID: userId,
+        status: CommunityMemberStatus.ACTIVE,
+      },
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Community membership not found');
+    }
+
+    return membership;
+  }
+
+  private async ensureManageMembershipAccess(communityId: string, userId: string) {
+    const community = await this.ensureManageAccess(communityId, userId);
+    const membership = await this.ensureActiveMembership(communityId, userId);
+    return { community, role: membership.role };
   }
 
   private async ensureManageAccess(id: string, userId: string) {

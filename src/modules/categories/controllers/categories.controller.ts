@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 
 import { Public } from '@/common/decorators/public.decorator';
 
+import { CategoryOverviewResDto } from '../dto/response/category-overview-res.dto';
 import { CategoriesService } from '../services/categories.service';
 
 @ApiTags('Categories')
@@ -19,5 +20,10 @@ export class CategoriesController {
   @Get(':slug')
   getBySlug(@Param('slug') slug: string) {
     return this.categoriesService.getBySlug(slug);
+  }
+
+  @Get(':slug/overview')
+  getOverview(@Param('slug') slug: string) {
+    return this.categoriesService.getOverview(slug);
   }
 }

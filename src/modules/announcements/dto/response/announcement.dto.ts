@@ -24,6 +24,10 @@ export class AnnouncementResDto {
   @Expose()
   imageFileID?: string | null;
 
+  @ApiPropertyOptional({ format: 'uuid' })
+  @Expose()
+  communityID?: string | null;
+
   @ApiPropertyOptional({ type: () => FileResDto })
   @Expose()
   @Type(() => FileResDto)

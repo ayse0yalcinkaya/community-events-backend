@@ -72,6 +72,19 @@ enum ConnectionStatus {
   BLOCKED
 }
 
+enum TicketType {
+  FREE
+  PAID
+  DONATION
+}
+
+enum TicketPurchaseStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
 model Category {
   id          String         @id @default(uuid()) @db.Uuid
   parentID    String?        @db.Uuid
@@ -147,6 +160,7 @@ model Community {
   coverImage  File?              @relation("CommunityCoverImage", fields: [coverImageFileID], references: [id], onDelete: SetNull)
   members     CommunityMember[]
   events      Event[]
+  announcements Announcement[]
 
   @@index([createdByUserID])
   @@index([status])
@@ -205,6 +219,10 @@ model Event {
   attendances        EventAttendance[]
   bookmarks          EventBookmark[]
   interests          EventInterest[]
+  speakers           EventSpeaker[]
+  sponsors           EventSponsor[]
+  gallery            EventGallery[]
+  tickets            EventTicket[]
 
   @@index([organizerUserID])
   @@index([organizerCommunityID])
@@ -217,15 +235,20 @@ model Event {
 model EventSession {
   id        String   @id @default(uuid()) @db.Uuid
   eventID    String   @db.Uuid
+  title     String?  @db.VarChar(180)
+  description String? @db.Text
+  speakerID  String?  @db.Uuid
   startAt   DateTime
   endAt     DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   event Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  speaker EventSpeaker? @relation("EventSessionSpeaker", fields: [speakerID], references: [id], onDelete: SetNull)
 
   @@index([eventID])
   @@index([startAt])
+  @@index([speakerID])
   @@map("event_sessions")
 }
 
@@ -323,4 +346,97 @@ model UserConnection {
   @@index([addresseeUserID, status])
   @@index([requesterUserID, status])
   @@map("user_connections")
+}
+
+model EventSpeaker {
+  id          String   @id @default(uuid()) @db.Uuid
+  eventID     String   @db.Uuid
+  name        String   @db.VarChar(180)
+  title       String?  @db.VarChar(180)
+  bio         String?  @db.Text
+  photoFileID String?  @db.Uuid
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event     Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  photoFile File?  @relation("EventSpeakerPhoto", fields: [photoFileID], references: [id], onDelete: SetNull)
+  sessions  EventSession[] @relation("EventSessionSpeaker")
+
+  @@index([eventID])
+  @@map("event_speakers")
+}
+
+model EventSponsor {
+  id          String   @id @default(uuid()) @db.Uuid
+  eventID     String   @db.Uuid
+  name        String   @db.VarChar(180)
+  logoFileID  String?  @db.Uuid
+  websiteUrl  String?  @db.VarChar(255)
+  tier        String?  @db.VarChar(50)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event     Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  logoFile  File?  @relation("EventSponsorLogo", fields: [logoFileID], references: [id], onDelete: SetNull)
+
+  @@index([eventID])
+  @@map("event_sponsors")
+}
+
+model EventGallery {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventID   String   @db.Uuid
+  fileID    String   @db.Uuid
+  caption   String?  @db.VarChar(280)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  file  File  @relation("EventGallery", fields: [fileID], references: [id], onDelete: Cascade)
+
+  @@index([eventID])
+  @@map("event_gallery")
+}
+
+model EventTicket {
+  id          String     @id @default(uuid()) @db.Uuid
+  eventID     String     @db.Uuid
+  name        String     @db.VarChar(180)
+  type        TicketType @default(FREE)
+  price       Decimal?   @db.Decimal(10, 2)
+  currency    String?    @default("TRY") @db.VarChar(3)
+  quota       Int?
+  available   Int        @default(0)
+  salesStart  DateTime?
+  salesEnd    DateTime?
+  description String?    @db.Text
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  event     Event                @relation(fields: [eventID], references: [id], onDelete: Cascade)
+  purchases EventTicketPurchase[]
+
+  @@index([eventID])
+  @@map("event_tickets")
+}
+
+model EventTicketPurchase {
+  id          String             @id @default(uuid()) @db.Uuid
+  ticketID    String             @db.Uuid
+  userID      String             @db.Uuid
+  quantity    Int                @default(1)
+  totalPrice  Decimal            @db.Decimal(10, 2)
+  currency    String             @default("TRY") @db.VarChar(3)
+  status      TicketPurchaseStatus @default(PENDING)
+  purchasedAt DateTime           @default(now())
+
+  ticket EventTicket @relation(fields: [ticketID], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([ticketID])
+  @@index([userID])
+  @@map("event_ticket_purchases")
 }

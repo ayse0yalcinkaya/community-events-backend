@@ -1,11 +1,26 @@
 // Libraries
-import { Body, Controller, Get, Logger, Patch, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Patch,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+  ValidationPipe,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody, ApiExtraModels } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 
 // DTOs
+import { QueryUpcomingEventsDto } from '../dto/request/query-upcoming-events.dto';
 import { UpdateProfileDto } from '../dto/request/update-profile.dto';
+import { PublicProfileResDto } from '../dto/response/public-profile-res.dto';
+import { UserDashboardResDto } from '../dto/response/user-dashboard-res.dto';
 import { UserResDto } from '../dto/response/user-res.dto';
 import { UserRolePermissionsResDto } from '../dto/response/user-role-permissions.res.dto';
 import { EventResDto } from '@/modules/events/dto/response/event-res.dto';
@@ -15,11 +30,12 @@ import { CommunityResDto } from '@/modules/communities/dto/response/community-re
 import { UsersService } from '../services/users.service';
 import { FilesService } from '../../files/services/files.service';
 import { PermissionsService } from '../../permissions/services/permissions.service';
-
 // Guards/Decorators
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 import { ApiEndpoint, ApiGetOne, ApiUpdate } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@/common/guards/optional-jwt-auth.guard';
 
 // Interfaces/Types
 import type { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
@@ -85,6 +101,12 @@ export class ProfileController {
     return plainToInstance(UserRolePermissionsResDto, summary);
   }
 
+  @ApiEndpoint('Kullanicinin dashboard ozetini getir', { type: UserDashboardResDto })
+  @Get('me/dashboard')
+  async getMyDashboard(@CurrentUser() user: JwtPayload) {
+    return this.usersService.getMyDashboard(user.sub);
+  }
+
   @ApiEndpoint('Kullanicinin kaydettigi etkinlikleri getir', { type: EventResDto })
   @Get('me/bookmarks')
   async getMyBookmarks(@CurrentUser() user: JwtPayload) {
@@ -97,6 +119,16 @@ export class ProfileController {
   async getMyAttendances(@CurrentUser() user: JwtPayload) {
     const attendances = await this.usersService.getMyAttendingEvents(user.sub);
     return attendances.map((item) => plainToInstance(EventResDto, item, { excludeExtraneousValues: true }));
+  }
+
+  @ApiEndpoint('Kullanicinin yaklasan etkinliklerini getir', { type: EventResDto })
+  @Get('me/upcoming-events')
+  async getMyUpcomingEvents(
+    @CurrentUser() user: JwtPayload,
+    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryUpcomingEventsDto,
+  ) {
+    const events = await this.usersService.getMyUpcomingEvents(user.sub, query.limit);
+    return events.map((item) => plainToInstance(EventResDto, item, { excludeExtraneousValues: true }));
   }
 
   @ApiEndpoint('Kullanicinin topluluklarini getir', { type: CommunityResDto })
@@ -176,5 +208,24 @@ export class ProfileController {
     }
 
     return userDto;
+  }
+
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
+  @Get(':id/profile')
+  @ApiEndpoint('Kullanicinin public profilini getir', { type: PublicProfileResDto, params: [{ name: 'id' }] })
+  async getPublicProfile(@Param('id') id: string, @CurrentUser() user?: JwtPayload) {
+    const profile = await this.usersService.getPublicProfile(id, user?.sub);
+
+    if (profile.profileImageID) {
+      try {
+        const downloadRes = await this.filesService.generateDownloadUrl(profile.profileImageID, 'system', true);
+        profile.profileImageUrl = downloadRes.downloadUrl;
+      } catch (error) {
+        this.logger.warn(`Failed to generate profile image URL: ${error}`);
+      }
+    }
+
+    return plainToInstance(PublicProfileResDto, profile, { excludeExtraneousValues: true });
   }
 }

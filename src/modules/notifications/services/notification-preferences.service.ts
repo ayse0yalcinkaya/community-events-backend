@@ -8,6 +8,7 @@ import { UpdateNotificationPreferenceDto } from '../dto/update-notification-pref
 
 // Enums
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import { NotificationType } from '../enums/notification-type.enum';
 
 // Services
 import { PrismaService } from '../../../database/prisma.service';
@@ -40,10 +41,10 @@ export class NotificationPreferencesService {
       },
     });
 
-    // If preferences exist, return them
+    // If preferences exist, ensure newly added notification types are also present.
     if (preferences.length > 0) {
       this.logger.log(`Found ${preferences.length} existing preferences`);
-      return preferences;
+      return await this.ensurePreferenceMatrix(userID, preferences);
     }
 
     // If no preferences exist, create default preferences (all channels enabled)
@@ -69,13 +70,15 @@ export class NotificationPreferencesService {
       preferences.map((pref) =>
         this.prisma.notificationPreference.upsert({
           where: {
-            userID_channel: {
+            userID_type_channel: {
               userID,
+              type: pref.type,
               channel: pref.channel,
             },
           },
           create: {
             userID,
+            type: pref.type,
             channel: pref.channel,
             enabled: pref.enabled,
           },
@@ -94,6 +97,7 @@ export class NotificationPreferencesService {
         userID,
       },
       orderBy: {
+        type: 'asc',
         channel: 'asc',
       },
     });
@@ -109,22 +113,74 @@ export class NotificationPreferencesService {
     this.logger.log(`Creating default preferences for user: ${userID}`);
 
     const channels = [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH];
+    const types = this.getDomainNotificationTypes();
 
     // Create all default preferences in a transaction
     const createdPreferences = await this.prisma.$transaction(
-      channels.map((channel) =>
+      types.flatMap((type) =>
+        channels.map((channel) =>
         this.prisma.notificationPreference.create({
           data: {
             userID,
+            type,
             channel,
             enabled: true, // All channels enabled by default
           },
         }),
+        ),
       ),
     );
 
     this.logger.log(`Created ${createdPreferences.length} default preferences (all enabled)`);
 
     return createdPreferences;
+  }
+
+  private async ensurePreferenceMatrix(userID: string, existingPreferences: NotificationPreference[]) {
+    const existingKeys = new Set(existingPreferences.map((pref) => `${pref.type}:${pref.channel}`));
+    const channels = [NotificationChannel.EMAIL, NotificationChannel.SMS, NotificationChannel.PUSH];
+    const missing = this.getDomainNotificationTypes().flatMap((type) =>
+      channels
+        .filter((channel) => !existingKeys.has(`${type}:${channel}`))
+        .map((channel) => ({ type, channel })),
+    );
+
+    if (missing.length === 0) {
+      return existingPreferences;
+    }
+
+    await this.prisma.$transaction(
+      missing.map(({ type, channel }) =>
+        this.prisma.notificationPreference.create({
+          data: {
+            userID,
+            type,
+            channel,
+            enabled: true,
+          },
+        }),
+      ),
+    );
+
+    return this.prisma.notificationPreference.findMany({
+      where: { userID },
+      orderBy: { type: 'asc' },
+    });
+  }
+
+  private getDomainNotificationTypes() {
+    return [
+      NotificationType.VERIFICATION,
+      NotificationType.PASSWORD_RESET,
+      NotificationType.OTP,
+      NotificationType.GENERAL,
+      NotificationType.ALERT,
+      NotificationType.MARKETING,
+      NotificationType.EVENT_REMINDER,
+      NotificationType.EVENT_RECOMMENDATION,
+      NotificationType.COMMUNITY_ANNOUNCEMENT,
+      NotificationType.CONNECTION_REQUEST,
+      NotificationType.CONNECTION_ACCEPTED,
+    ];
   }
 }

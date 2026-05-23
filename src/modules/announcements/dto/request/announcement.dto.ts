@@ -1,10 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { AnnouncementScope, AnnouncementStatus, AnnouncementType } from '../../enums/announcement.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AnnouncementReqDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID('4')
+  communityID?: string | null;
+
   @ApiProperty({ maxLength: 255 })
   @IsString({ message: i18nValidationMessage('validation.IS_STRING') })
   @IsNotEmpty({ message: i18nValidationMessage('validation.IS_NOT_EMPTY') })

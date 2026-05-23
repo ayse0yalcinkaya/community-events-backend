@@ -16,4 +16,14 @@ export enum NotificationType {
   ALERT = 4,
   /** Marketing notifications */
   MARKETING = 5,
+  /** Event reminder notifications */
+  EVENT_REMINDER = 6,
+  /** Event recommendation notifications */
+  EVENT_RECOMMENDATION = 7,
+  /** Community announcement notifications */
+  COMMUNITY_ANNOUNCEMENT = 8,
+  /** Connection request notifications */
+  CONNECTION_REQUEST = 9,
+  /** Connection accepted notifications */
+  CONNECTION_ACCEPTED = 10,
 }

@@ -50,6 +50,7 @@ describe('NotificationService', () => {
       id: 'pref-1',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.EMAIL,
       enabled: true,
       createdAt: new Date('2024-01-01'),
@@ -59,6 +60,7 @@ describe('NotificationService', () => {
       id: 'pref-2',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.SMS,
       enabled: true,
       createdAt: new Date('2024-01-01'),
@@ -68,6 +70,7 @@ describe('NotificationService', () => {
       id: 'pref-3',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.PUSH,
       enabled: false,
       createdAt: new Date('2024-01-01'),
@@ -80,6 +83,7 @@ describe('NotificationService', () => {
       id: 'pref-1',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.EMAIL,
       enabled: true,
       createdAt: new Date('2024-01-01'),
@@ -89,6 +93,7 @@ describe('NotificationService', () => {
       id: 'pref-2',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.SMS,
       enabled: false,
       createdAt: new Date('2024-01-01'),
@@ -98,6 +103,7 @@ describe('NotificationService', () => {
       id: 'pref-3',
 
       userID: mockUserID,
+      type: NotificationType.GENERAL,
       channel: NotificationChannel.PUSH,
       enabled: false,
       createdAt: new Date('2024-01-01'),
@@ -497,6 +503,7 @@ describe('NotificationService', () => {
           id: 'pref-3',
 
           userID: mockUserID,
+          type: NotificationType.GENERAL,
           channel: NotificationChannel.PUSH,
           enabled: true,
           createdAt: new Date('2024-01-01'),
@@ -557,6 +564,7 @@ describe('NotificationService', () => {
           id: 'pref-3',
 
           userID: mockUserID,
+          type: NotificationType.GENERAL,
           channel: NotificationChannel.PUSH,
           enabled: true,
           createdAt: new Date('2024-01-01'),
@@ -617,6 +625,7 @@ describe('NotificationService', () => {
           id: 'pref-3',
 
           userID: mockUserID,
+          type: NotificationType.GENERAL,
           channel: NotificationChannel.PUSH,
           enabled: true,
           createdAt: new Date('2024-01-01'),

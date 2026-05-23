@@ -39,8 +39,11 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { InterestsModule } from './modules/interests/interests.module';
 import { EventsModule } from './modules/events/events.module';
 import { CommunitiesModule } from './modules/communities/communities.module';
+import { ConnectionsModule } from './modules/connections/connections.module';
 import { DiscoverModule } from './modules/discover/discover.module';
-
+import { SpeakersModule } from './modules/speakers/speakers.module';
+import { SponsorsModule } from './modules/sponsors/sponsors.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
 const translationsPath = path.join(__dirname, 'modules', 'i18n', 'translations');
 const fallbackTranslationsPath = path.join(process.cwd(), 'src', 'modules', 'i18n', 'translations');
 const i18nTranslationsPath = fs.existsSync(translationsPath) ? translationsPath : fallbackTranslationsPath;
@@ -92,7 +95,11 @@ const i18nTranslationsPath = fs.existsSync(translationsPath) ? translationsPath 
     InterestsModule,
     EventsModule,
     CommunitiesModule,
+    ConnectionsModule,
     DiscoverModule,
+    SpeakersModule,
+    SponsorsModule,
+    TicketsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

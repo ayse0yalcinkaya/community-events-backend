@@ -16,7 +16,7 @@ import { NotificationChannel } from '../../notifications/enums/notification-chan
 import { PrismaService } from '../../../database/prisma.service';
 import { UserProviderService } from '../../auth/services/user-provider.service';
 // Interfaces/Types
-import { Prisma, User } from '@prisma/client';
+import { AttendanceStatus, EventStatus, Prisma, User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { deriveLegalEntityType } from '../utils/legal-entity.util';
 
@@ -318,6 +318,60 @@ export class UsersService {
     }));
   }
 
+  async getMyUpcomingEvents(userId: string, limit: number = 10) {
+    const now = new Date();
+
+    const attendances = await this.prisma.eventAttendance.findMany({
+      where: {
+        userID: userId,
+        status: { in: [AttendanceStatus.APPROVED, AttendanceStatus.PENDING, AttendanceStatus.WAITLIST] },
+        event: {
+          deletedAt: null,
+          status: EventStatus.PUBLISHED,
+          sessions: {
+            some: { startAt: { gte: now } },
+          },
+        },
+      },
+      include: {
+        event: {
+          include: {
+            primaryCategory: true,
+            organizerCommunity: true,
+            location: true,
+            sessions: {
+              where: { startAt: { gte: now } },
+              orderBy: { startAt: 'asc' },
+            },
+            _count: {
+              select: {
+                attendances: true,
+                bookmarks: true,
+              },
+            },
+            bookmarks: {
+              where: { userID: userId },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+
+    return attendances
+      .filter(({ event }) => event.sessions.length > 0)
+      .sort((a, b) => a.event.sessions[0].startAt.getTime() - b.event.sessions[0].startAt.getTime())
+      .slice(0, limit)
+      .map(({ event, status, visibility }) => ({
+        ...event,
+        attendeeCount: event._count.attendances,
+        bookmarkCount: event._count.bookmarks,
+        currentUserAttendanceStatus: status,
+        currentUserAttendanceVisibility: visibility,
+        isBookmarked: event.bookmarks.length > 0,
+      }));
+  }
+
   async getMyCommunities(userId: string) {
     const memberships = await this.prisma.communityMember.findMany({
       where: {
@@ -350,6 +404,224 @@ export class UsersService {
       currentUserMembershipStatus: status,
       currentUserMembershipRole: role,
     }));
+  }
+
+  async getMyDashboard(userId: string) {
+    const now = new Date();
+
+    const [
+      upcomingAttendances,
+      bookmarks,
+      communityMemberships,
+      connectionCounts,
+      totalAttended,
+      totalBookmarks,
+      totalCommunities,
+    ] = await Promise.all([
+      this.prisma.eventAttendance.findMany({
+        where: {
+          userID: userId,
+          status: { in: [AttendanceStatus.APPROVED, AttendanceStatus.PENDING] },
+          event: {
+            deletedAt: null,
+            status: EventStatus.PUBLISHED,
+            sessions: { some: { startAt: { gte: now } } },
+          },
+        },
+        include: {
+          event: {
+            include: {
+              location: true,
+              sessions: {
+                where: { startAt: { gte: now } },
+                orderBy: { startAt: 'asc' },
+                take: 1,
+              },
+              _count: { select: { attendances: true } },
+            },
+          },
+        },
+        orderBy: { registeredAt: 'asc' },
+        take: 5,
+      }),
+      this.prisma.eventBookmark.findMany({
+        where: {
+          userID: userId,
+          event: {
+            deletedAt: null,
+            status: EventStatus.PUBLISHED,
+          },
+        },
+        include: {
+          event: {
+            include: {
+              location: true,
+              sessions: {
+                orderBy: { startAt: 'asc' },
+                take: 1,
+              },
+              _count: { select: { attendances: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.communityMember.findMany({
+        where: { userID: userId, status: 'ACTIVE' },
+        include: {
+          community: {
+            include: { _count: { select: { members: { where: { status: 'ACTIVE' } } } } },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.userConnection.groupBy({
+        by: ['status'],
+        where: {
+          OR: [{ requesterUserID: userId }, { addresseeUserID: userId }],
+        },
+        _count: true,
+      }),
+      this.prisma.eventAttendance.count({
+        where: {
+          userID: userId,
+          status: AttendanceStatus.APPROVED,
+        },
+      }),
+      this.prisma.eventBookmark.count({ where: { userID: userId } }),
+      this.prisma.communityMember.count({ where: { userID: userId, status: 'ACTIVE' } }),
+    ]);
+
+    const pendingReceivedCount = await this.prisma.userConnection.count({
+      where: { addresseeUserID: userId, status: 'PENDING' },
+    });
+
+    const acceptedCount = connectionCounts.find((c) => c.status === 'ACCEPTED')?._count ?? 0;
+
+    return {
+      upcomingEvents: upcomingAttendances.map(({ event }) => ({
+        id: event.id,
+        title: event.title,
+        slug: event.slug,
+        format: event.format,
+        city: event.location?.city ?? null,
+        nextSessionStartAt: event.sessions[0]?.startAt ?? null,
+        attendeeCount: event._count.attendances,
+      })),
+      bookmarkedEvents: bookmarks.map(({ event }) => ({
+        id: event.id,
+        title: event.title,
+        slug: event.slug,
+        format: event.format,
+        city: event.location?.city ?? null,
+        nextSessionStartAt: event.sessions[0]?.startAt ?? null,
+        attendeeCount: event._count.attendances,
+      })),
+      communities: communityMemberships.map(({ community }) => ({
+        id: community.id,
+        name: community.name,
+        slug: community.slug,
+        city: community.city,
+        memberCount: community._count.members,
+      })),
+      connections: {
+        totalAccepted: acceptedCount,
+        pendingReceived: pendingReceivedCount,
+      },
+      totalAttendedEvents: totalAttended,
+      totalBookmarks,
+      totalCommunities,
+    };
+  }
+
+  async getPublicProfile(targetUserId: string, currentUserId?: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: targetUserId, deletedAt: null, isActive: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        headline: true,
+        bio: true,
+        city: true,
+        website: true,
+        instagramUrl: true,
+        linkedinUrl: true,
+        profileImageID: true,
+        interests: {
+          include: { interest: true },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const [communities, recentAttendances, totalConnections, connectionWithCurrentUser] = await Promise.all([
+      this.prisma.communityMember.findMany({
+        where: { userID: targetUserId, status: 'ACTIVE' },
+        include: {
+          community: { select: { id: true, name: true, slug: true, city: true } },
+        },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.eventAttendance.findMany({
+        where: {
+          userID: targetUserId,
+          status: AttendanceStatus.APPROVED,
+          visibility: { in: ['PUBLIC', 'ATTENDEES_ONLY'] },
+          event: { deletedAt: null, status: EventStatus.PUBLISHED },
+        },
+        include: {
+          event: { select: { id: true, title: true, slug: true, format: true } },
+        },
+        take: 5,
+        orderBy: { registeredAt: 'desc' },
+      }),
+      this.prisma.userConnection.count({
+        where: {
+          OR: [{ requesterUserID: targetUserId }, { addresseeUserID: targetUserId }],
+          status: 'ACCEPTED',
+        },
+      }),
+      currentUserId && currentUserId !== targetUserId
+        ? this.prisma.userConnection.findFirst({
+            where: {
+              OR: [
+                { requesterUserID: currentUserId, addresseeUserID: targetUserId },
+                { requesterUserID: targetUserId, addresseeUserID: currentUserId },
+              ],
+            },
+            select: { status: true },
+          })
+        : null,
+    ]);
+
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      headline: user.headline,
+      bio: user.bio,
+      city: user.city,
+      website: user.website,
+      instagramUrl: user.instagramUrl,
+      linkedinUrl: user.linkedinUrl,
+      profileImageUrl: null as string | null, // will be set in controller
+      profileImageID: user.profileImageID,
+      interests: user.interests.map((ui) => ({
+        id: ui.interest.id,
+        name: ui.interest.name,
+      })),
+      communities: communities.map((m) => m.community),
+      recentEvents: recentAttendances.map((a) => a.event),
+      connectionStatus: connectionWithCurrentUser?.status ?? null,
+      totalConnections,
+    };
   }
 
   /**

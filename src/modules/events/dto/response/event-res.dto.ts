@@ -1,5 +1,5 @@
+// Libraries
 import { Expose, Type } from 'class-transformer';
-
 class EventCategoryResDto {
   @Expose()
   id!: string;
@@ -44,10 +44,114 @@ class EventSessionResDto {
   id!: string;
 
   @Expose()
+  title?: string | null;
+
+  @Expose()
+  description?: string | null;
+
+  @Expose()
+  speakerID?: string | null;
+
+  @Expose()
+  speakerName?: string | null;
+
+  @Expose()
   startAt!: Date;
 
   @Expose()
   endAt!: Date;
+}
+
+class EventSpeakerResDto {
+  @Expose()
+  id!: string;
+
+  @Expose()
+  name!: string;
+
+  @Expose()
+  title?: string | null;
+
+  @Expose()
+  bio?: string | null;
+
+  @Expose()
+  photoUrl?: string | null;
+
+  @Expose()
+  order!: number;
+}
+
+class EventSponsorResDto {
+  @Expose()
+  id!: string;
+
+  @Expose()
+  name!: string;
+
+  @Expose()
+  logoUrl?: string | null;
+
+  @Expose()
+  websiteUrl?: string | null;
+
+  @Expose()
+  tier?: string | null;
+
+  @Expose()
+  order!: number;
+}
+
+class EventGalleryResDto {
+  @Expose()
+  id!: string;
+
+  @Expose()
+  fileID!: string;
+
+  @Expose()
+  fileUrl!: string;
+
+  @Expose()
+  caption?: string | null;
+
+  @Expose()
+  order!: number;
+}
+
+class EventTicketResDto {
+  @Expose()
+  id!: string;
+
+  @Expose()
+  name!: string;
+
+  @Expose()
+  type!: string;
+
+  @Expose()
+  price?: number;
+
+  @Expose()
+  currency?: string;
+
+  @Expose()
+  quota?: number;
+
+  @Expose()
+  available!: number;
+
+  @Expose()
+  salesStart?: Date;
+
+  @Expose()
+  salesEnd?: Date;
+
+  @Expose()
+  description?: string;
+
+  @Expose()
+  order!: number;
 }
 
 export class EventResDto {
@@ -114,6 +218,22 @@ export class EventResDto {
   @Expose()
   @Type(() => EventSessionResDto)
   sessions?: EventSessionResDto[];
+
+  @Expose()
+  @Type(() => EventSpeakerResDto)
+  speakers?: EventSpeakerResDto[];
+
+  @Expose()
+  @Type(() => EventSponsorResDto)
+  sponsors?: EventSponsorResDto[];
+
+  @Expose()
+  @Type(() => EventGalleryResDto)
+  gallery?: EventGalleryResDto[];
+
+  @Expose()
+  @Type(() => EventTicketResDto)
+  tickets?: EventTicketResDto[];
 
   @Expose()
   attendeeCount?: number;

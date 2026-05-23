@@ -55,6 +55,7 @@ model User {
   eventBookmarks          EventBookmark[]
   sentConnectionRequests  UserConnection[]           @relation("UserConnectionRequester")
   receivedConnectionRequests UserConnection[]        @relation("UserConnectionAddressee")
+  ticketPurchases         EventTicketPurchase[]
 
   // Chat Relations
   chatMessagesSent      ChatMessage[]      @relation("ChatSender")

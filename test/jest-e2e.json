@@ -10,6 +10,7 @@
   "moduleNameMapper": {
     "^@/(.*)$": "<rootDir>/../src/$1"
   },
+  "globalSetup": "<rootDir>/jest-e2e-global-setup.ts",
   "setupFiles": ["<rootDir>/jest-e2e-setup.ts"],
   "maxWorkers": 4,
   "testTimeout": 30000

@@ -1,5 +1,5 @@
+// Libraries
 import { Expose, Type } from 'class-transformer';
-
 class DiscoverEventItemResDto {
   @Expose()
   id!: string;
@@ -104,6 +104,10 @@ export class DiscoverHomeResDto {
   @Expose()
   @Type(() => DiscoverCommunityItemResDto)
   trendingCommunities!: DiscoverCommunityItemResDto[];
+
+  @Expose()
+  @Type(() => DiscoverEventItemResDto)
+  communityEvents?: DiscoverEventItemResDto[];
 
   @Expose()
   @Type(() => DiscoverStatsResDto)

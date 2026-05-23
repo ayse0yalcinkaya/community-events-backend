@@ -1,26 +1,63 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
+// Libraries
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  ParseArrayPipe,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-
 import { ApiEndpoint } from '@/common/decorators';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Permission } from '@/common/decorators/permission.decorator';
-import { Public } from '@/common/decorators/public.decorator';
-import { ActionEnum } from '@/common/enums/action.enum';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { PermissionsGuard } from '@/common/guards/permissions.guard';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 
+// DTOs
+import { AddEventGalleryItemDto } from '../dto/add-event-gallery-item.dto';
 import { CreateEventDraftDto } from '../dto/create-event-draft.dto';
+import { QueryMyCalendarDto } from '../dto/query-my-calendar.dto';
+import { QueryEventAttendancesDto } from '../dto/query-event-attendances.dto';
 import { QueryEventsDto } from '../dto/query-events.dto';
+import { CalendarEventResDto } from '../dto/response/calendar-event-res.dto';
+import { ReorderEventGalleryItemDto } from '../dto/reorder-event-gallery-item.dto';
+import { EventAttendanceResDto } from '../dto/response/event-attendance-res.dto';
+import { EventNetworkRecommendationResDto } from '../dto/response/event-network-recommendation-res.dto';
 import { EventResDto } from '../dto/response/event-res.dto';
+import { EventSocialAttendeeResDto } from '../dto/response/event-social-attendee-res.dto';
+import { OrganizerDashboardResDto } from '../dto/response/organizer-dashboard-res.dto';
 import { UpdateAttendanceDto } from '../dto/update-attendance.dto';
 import { UpdateEventBasicDto } from '../dto/update-event-basic.dto';
 import { UpdateEventDetailsDto } from '../dto/update-event-details.dto';
 import { UpdateEventLocationDto } from '../dto/update-event-location.dto';
 import { UpdateEventScheduleDto } from '../dto/update-event-schedule.dto';
-import { EventsService } from '../services/events.service';
 
+// Interfaces
+import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+import type { Response } from 'express';
+
+// Enums
+import { ActionEnum } from '@/common/enums/action.enum';
+
+// Guards
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@/common/guards/permissions.guard';
+
+// Decorators
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Permission } from '@/common/decorators/permission.decorator';
+import { Public } from '@/common/decorators/public.decorator';
+
+// Services
+import { EventsService } from '../services/events.service';
 @ApiTags('Events')
 @Controller('events')
 export class EventsController {
@@ -115,6 +152,33 @@ export class EventsController {
     return this.eventsService.updateCoverImage(id, user.sub, file);
   }
 
+  @Get('me/list')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.VIEW)
+  @ApiEndpoint('Kullanicinin yonettigi etkinlikleri listele', { type: EventResDto })
+  getMyEvents(@CurrentUser() user: JwtPayload) {
+    return this.eventsService.getMyEvents(user.sub);
+  }
+
+  @Get('organizer/dashboard')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.VIEW)
+  @ApiEndpoint('Organizer dashboard ozetini getir', { type: OrganizerDashboardResDto })
+  getOrganizerDashboard(@CurrentUser() user: JwtPayload) {
+    return this.eventsService.getOrganizerDashboard(user.sub);
+  }
+
+  @Get('me/calendar')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.VIEW)
+  @ApiEndpoint('Kullanicinin etkinlik takvimini getir', { type: CalendarEventResDto })
+  getMyCalendar(
+    @CurrentUser() user: JwtPayload,
+    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryMyCalendarDto,
+  ) {
+    return this.eventsService.getMyCalendar(user.sub, query);
+  }
+
   @Public()
   @Get()
   @ApiEndpoint('Etkinlikleri listele', {
@@ -124,6 +188,26 @@ export class EventsController {
   })
   findAll(@Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryEventsDto) {
     return this.eventsService.findAll(query);
+  }
+
+  @Public()
+  @Get(':id/calendar.ics')
+  @Header('Content-Type', 'text/calendar; charset=utf-8')
+  @ApiEndpoint('Etkinligi takvime eklemek icin ICS dosyasini getir', {
+    isPublic: true,
+    params: [{ name: 'id' }],
+  })
+  async downloadCalendarInvite(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
+    const invite = await this.eventsService.generateCalendarInvite(id);
+    res.setHeader('Content-Disposition', `attachment; filename="${invite.filename}"`);
+    return invite.content;
+  }
+
+  @Public()
+  @Get(':slug/similar')
+  @ApiEndpoint('Benzer etkinlikleri getir', { type: EventResDto, isPublic: true, params: [{ name: 'slug' }] })
+  findSimilar(@Param('slug') slug: string) {
+    return this.eventsService.findSimilarBySlug(slug);
   }
 
   @Public()
@@ -153,6 +237,60 @@ export class EventsController {
     return this.eventsService.updateAttendance(id, user.sub, dto.visibility);
   }
 
+  @Get(':id/attendances')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.UPDATE)
+  @ApiEndpoint('Etkinlik katilimcilarini getir', { type: EventAttendanceResDto, params: [{ name: 'id' }] })
+  getAttendances(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryEventAttendancesDto,
+  ) {
+    return this.eventsService.getAttendances(id, user.sub, query.status);
+  }
+
+  @Get(':id/people')
+  @UseGuards(JwtAuthGuard)
+  @ApiEndpoint('Etkinlikteki kisileri sosyal gorunumle getir', {
+    type: EventSocialAttendeeResDto,
+    params: [{ name: 'id' }],
+  })
+  getSocialAttendees(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.getSocialAttendees(id, user.sub);
+  }
+
+  @Get(':id/network/recommendations')
+  @UseGuards(JwtAuthGuard)
+  @ApiEndpoint('Etkinlik icin tanisman gereken kisileri getir', {
+    type: EventNetworkRecommendationResDto,
+    params: [{ name: 'id' }],
+  })
+  getNetworkRecommendations(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.getNetworkRecommendations(id, user.sub);
+  }
+
+  @Patch(':id/attendances/:attendanceId/approve')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.UPDATE)
+  @ApiEndpoint('Etkinlik katilimcisini onayla', {
+    type: EventAttendanceResDto,
+    params: [{ name: 'id' }, { name: 'attendanceId' }],
+  })
+  approveAttendance(@Param('id') id: string, @Param('attendanceId') attendanceId: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.approveAttendance(id, attendanceId, user.sub);
+  }
+
+  @Patch(':id/attendances/:attendanceId/reject')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.UPDATE)
+  @ApiEndpoint('Etkinlik katilimcisini reddet', {
+    type: EventAttendanceResDto,
+    params: [{ name: 'id' }, { name: 'attendanceId' }],
+  })
+  rejectAttendance(@Param('id') id: string, @Param('attendanceId') attendanceId: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.rejectAttendance(id, attendanceId, user.sub);
+  }
+
   @Post(':id/bookmark')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permission('EVENTS', ActionEnum.VIEW)
@@ -175,5 +313,40 @@ export class EventsController {
   @ApiEndpoint('Etkinlikten ayril', { type: EventResDto, params: [{ name: 'id' }] })
   leave(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.eventsService.leave(id, user.sub);
+  }
+
+  @Post(':id/gallery')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.UPDATE)
+  @ApiEndpoint('Etkinlik galerisine fotoğraf ekle', { type: EventResDto, params: [{ name: 'id' }] })
+  addGalleryItem(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Body(new ValidationPipe({ transform: true, whitelist: true })) body: AddEventGalleryItemDto,
+  ) {
+    return this.eventsService.addGalleryItem(id, user.sub, body.fileID, body.caption, body.order);
+  }
+
+  @Delete(':id/gallery/:galleryId')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.UPDATE)
+  @ApiEndpoint('Etkinlik galerisinden fotoğraf sil', {
+    type: EventResDto,
+    params: [{ name: 'id' }, { name: 'galleryId' }],
+  })
+  removeGalleryItem(@Param('id') id: string, @Param('galleryId') galleryId: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.removeGalleryItem(id, user.sub, galleryId);
+  }
+
+  @Put(':id/gallery/reorder')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.UPDATE)
+  @ApiEndpoint('Etkinlik galerisi sıralamasını güncelle', { type: EventResDto, params: [{ name: 'id' }] })
+  reorderGallery(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Body(new ParseArrayPipe({ items: ReorderEventGalleryItemDto })) galleryOrders: ReorderEventGalleryItemDto[],
+  ) {
+    return this.eventsService.reorderGallery(id, user.sub, galleryOrders);
   }
 }

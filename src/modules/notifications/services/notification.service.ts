@@ -83,9 +83,17 @@ export class NotificationService {
       const preferences = await this.notificationPreferencesService.getPreferences(userID);
 
       // Filter enabled channels
-      const enabledChannels = preferences.filter((pref) => pref.enabled).map((pref) => pref.channel);
+      const enabledChannels = preferences.filter((pref) => pref.type === type && pref.enabled).map((pref) => pref.channel);
 
       this.logger.log(`Enabled channels for user ${userID}: ${enabledChannels.join(', ')}`);
+
+      // Avoid external email/SMS/push retries during Jest runs.
+      if (process.env.SKIP_EXTERNAL_NOTIFICATION_DELIVERY === 'true') {
+        await Promise.all(
+          enabledChannels.map((channel) => this.createNotificationRecord(user.id, type, channel, title, message, data, true)),
+        );
+        return;
+      }
 
       // Send to each enabled channel (async fire-and-forget pattern)
       // Don't await - let each channel send independently

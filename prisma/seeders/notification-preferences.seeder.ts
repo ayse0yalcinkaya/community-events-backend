@@ -59,7 +59,7 @@ export class NotificationPreferencesSeeder {
 
     console.log(`  📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`  📊 Target: ${targetPreferenceCount} preferences`);
-    console.log(`  📊 Creating preferences for ${users.length} users (all 3 channels)\n`);
+    console.log(`  📊 Creating preferences for ${users.length} users (all domain types x 3 channels)\n`);
 
     let createdCount = 0;
     const channels = ['EMAIL', 'SMS', 'PUSH'] as const;
@@ -72,13 +72,15 @@ export class NotificationPreferencesSeeder {
         try {
           await prisma.notificationPreference.upsert({
             where: {
-              userID_channel: {
+              userID_type_channel: {
                 userID: prefData.userID,
+                type: prefData.type,
                 channel: prefData.channel,
               },
             },
             create: {
               userID: prefData.userID,
+              type: prefData.type,
               channel: prefData.channel,
               enabled: prefData.enabled,
             },

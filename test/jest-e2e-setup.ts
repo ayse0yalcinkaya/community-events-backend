@@ -57,3 +57,5 @@ if (!process.env.MAIL_FROM) {
 if (!process.env.REDIS_PASSWORD) {
   process.env.REDIS_PASSWORD = 'redispassword';
 }
+
+process.env.SKIP_EXTERNAL_NOTIFICATION_DELIVERY = 'true';
