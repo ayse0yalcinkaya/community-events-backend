@@ -161,6 +161,7 @@ model Community {
   members     CommunityMember[]
   events      Event[]
   announcements Announcement[]
+  gallery     CommunityGallery[]
 
   @@index([createdByUserID])
   @@index([status])
@@ -398,6 +399,21 @@ model EventGallery {
 
   @@index([eventID])
   @@map("event_gallery")
+}
+
+model CommunityGallery {
+  id          String   @id @default(uuid()) @db.Uuid
+  communityID String   @db.Uuid
+  fileID      String   @db.Uuid
+  caption     String?  @db.VarChar(280)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityID], references: [id], onDelete: Cascade)
+  file      File      @relation("CommunityGallery", fields: [fileID], references: [id], onDelete: Cascade)
+
+  @@index([communityID])
+  @@map("community_gallery")
 }
 
 model EventTicket {

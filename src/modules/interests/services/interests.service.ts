@@ -1,7 +1,8 @@
+// Libraries
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+// Services
 import { PrismaService } from '@/database/prisma.service';
-
 @Injectable()
 export class InterestsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -28,6 +29,18 @@ export class InterestsService {
       },
       orderBy: { interest: { name: 'asc' } },
     });
+  }
+
+  async getOnboardingStatus(userId: string) {
+    const count = await this.prisma.userInterest.count({
+      where: { userID: userId },
+    });
+
+    return {
+      interestCount: count,
+      isComplete: count >= 3,
+      minRequired: 3,
+    };
   }
 
   async setUserInterests(userId: string, interestIds: string[]) {

@@ -20,6 +20,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiEndpoint } from '@/common/decorators';
+import type { Response } from 'express';
 
 // DTOs
 import { AddEventGalleryItemDto } from '../dto/add-event-gallery-item.dto';
@@ -42,7 +43,6 @@ import { UpdateEventScheduleDto } from '../dto/update-event-schedule.dto';
 
 // Interfaces
 import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
-import type { Response } from 'express';
 
 // Enums
 import { ActionEnum } from '@/common/enums/action.enum';
@@ -130,6 +130,14 @@ export class EventsController {
     return this.eventsService.publish(id, user);
   }
 
+  @Get(':id/completeness')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.VIEW)
+  @ApiEndpoint('Etkinlik wizard tamamlanma durumunu getir', { params: [{ name: 'id' }] })
+  getCompleteness(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.getEventCompleteness(id, user.sub);
+  }
+
   @Patch(':id/media')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permission('EVENTS', ActionEnum.UPDATE)
@@ -166,6 +174,14 @@ export class EventsController {
   @ApiEndpoint('Organizer dashboard ozetini getir', { type: OrganizerDashboardResDto })
   getOrganizerDashboard(@CurrentUser() user: JwtPayload) {
     return this.eventsService.getOrganizerDashboard(user.sub);
+  }
+
+  @Get(':id/sales-report')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.VIEW)
+  @ApiEndpoint('Etkinlik bilet satis raporunu getir', { params: [{ name: 'id' }] })
+  getSalesReport(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.eventsService.getEventSalesReport(id, user.sub);
   }
 
   @Get('me/calendar')
@@ -276,7 +292,11 @@ export class EventsController {
     type: EventAttendanceResDto,
     params: [{ name: 'id' }, { name: 'attendanceId' }],
   })
-  approveAttendance(@Param('id') id: string, @Param('attendanceId') attendanceId: string, @CurrentUser() user: JwtPayload) {
+  approveAttendance(
+    @Param('id') id: string,
+    @Param('attendanceId') attendanceId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
     return this.eventsService.approveAttendance(id, attendanceId, user.sub);
   }
 
@@ -287,7 +307,11 @@ export class EventsController {
     type: EventAttendanceResDto,
     params: [{ name: 'id' }, { name: 'attendanceId' }],
   })
-  rejectAttendance(@Param('id') id: string, @Param('attendanceId') attendanceId: string, @CurrentUser() user: JwtPayload) {
+  rejectAttendance(
+    @Param('id') id: string,
+    @Param('attendanceId') attendanceId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
     return this.eventsService.rejectAttendance(id, attendanceId, user.sub);
   }
 

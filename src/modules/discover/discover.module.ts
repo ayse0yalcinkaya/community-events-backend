@@ -1,11 +1,15 @@
+// Libraries
 import { Module } from '@nestjs/common';
 
-import { DiscoverController } from './controllers/discover.controller';
+// Services
 import { DiscoverService } from './services/discover.service';
+import { TrendingService } from './services/trending.service';
 
+// Controllers
+import { DiscoverController } from './controllers/discover.controller';
 @Module({
   controllers: [DiscoverController],
-  providers: [DiscoverService],
-  exports: [DiscoverService],
+  providers: [DiscoverService, TrendingService],
+  exports: [DiscoverService, TrendingService],
 })
 export class DiscoverModule {}

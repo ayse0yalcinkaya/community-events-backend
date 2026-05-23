@@ -1,19 +1,26 @@
+// Libraries
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConnectionStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
+import { ChatConversationTypeEnum } from '@/common/enums';
 
-import { PrismaService } from '@/database/prisma.service';
-import { NotificationType } from '@/modules/notifications/enums/notification-type.enum';
-import { NotificationService } from '@/modules/notifications/services/notification.service';
-
+// DTOs
 import { QueryConnectionsDto } from '../dto/query-connections.dto';
 import { ConnectionResDto } from '../dto/response/connection-res.dto';
 
+// Enums
+import { NotificationType } from '@/modules/notifications/enums/notification-type.enum';
+
+// Services
+import { PrismaService } from '@/database/prisma.service';
+import { NotificationService } from '@/modules/notifications/services/notification.service';
+import { ChatService } from '@/modules/chat/services/chat.service';
 @Injectable()
 export class ConnectionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    private readonly chatService: ChatService,
   ) {}
 
   async requestConnection(currentUserId: string, targetUserId: string) {
@@ -40,6 +47,8 @@ export class ConnectionsService {
           data: { status: ConnectionStatus.ACCEPTED },
           include: this.connectionInclude(),
         });
+
+        this.initiateDmConversation(currentUserId, existing.requesterUserID).catch(() => {});
 
         return this.toConnectionResponse(accepted, currentUserId);
       }
@@ -83,6 +92,8 @@ export class ConnectionsService {
       'Baglanti isteginiz kabul edildi.',
       { addresseeUserID: currentUserId },
     );
+
+    this.initiateDmConversation(currentUserId, updated.requesterUserID).catch(() => {});
 
     return this.toConnectionResponse(updated, currentUserId);
   }
@@ -201,6 +212,17 @@ export class ConnectionsService {
         otherUser,
       },
       { excludeExtraneousValues: true },
+    );
+  }
+
+  private async initiateDmConversation(acceptorUserId: string, requesterUserId: string) {
+    await this.chatService.sendMessage(
+      { sub: acceptorUserId } as any,
+      {
+        receiverID: requesterUserId,
+        conversationType: ChatConversationTypeEnum.DIRECT,
+        content: '👋 Bağlantı kabul edildi! Artık mesajlaşabilirsiniz.',
+      } as any,
     );
   }
 }

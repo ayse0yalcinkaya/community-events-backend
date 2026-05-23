@@ -27,6 +27,7 @@ model File {
   eventSpeakerPhotos   EventSpeaker[] @relation("EventSpeakerPhoto")
   eventSponsorLogos    EventSponsor[] @relation("EventSponsorLogo")
   eventGalleryFiles    EventGallery[] @relation("EventGallery")
+  communityGalleryFiles CommunityGallery[] @relation("CommunityGallery")
 
   @@index([userID])
   @@index([s3Key])

@@ -6,12 +6,12 @@ import { NotificationPreferencesService } from './services/notification-preferen
 import { NotificationService } from './services/notification.service';
 import { FirebaseService } from './services/firebase.service';
 import { DeviceTokenService } from './services/device-token.service';
+import { EventReminderService } from './services/event-reminder.service';
 
 // Controllers
 import { NotificationPreferencesController } from './controllers/notification-preferences.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { DeviceTokenController } from './controllers/device-token.controller';
-
 // Database
 import { PrismaModule } from '../../database/prisma.module';
 
@@ -37,7 +37,13 @@ import { SmsModule } from '../sms/sms.module';
     SmsModule, // For SmsService (SMS channel)
   ],
   controllers: [NotificationPreferencesController, NotificationController, DeviceTokenController],
-  providers: [NotificationPreferencesService, NotificationService, FirebaseService, DeviceTokenService],
+  providers: [
+    NotificationPreferencesService,
+    NotificationService,
+    FirebaseService,
+    DeviceTokenService,
+    EventReminderService,
+  ],
   exports: [
     NotificationPreferencesService, // Export for use in UsersModule (default preferences creation)
     NotificationService, // Export for use in other modules (e.g., Auth, Chat modules)

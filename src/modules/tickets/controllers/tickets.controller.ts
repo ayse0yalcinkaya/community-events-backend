@@ -1,21 +1,31 @@
+// Libraries
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-
 import { ApiEndpoint } from '@/common/decorators';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Permission } from '@/common/decorators/permission.decorator';
-import { ActionEnum } from '@/common/enums/action.enum';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { PermissionsGuard } from '@/common/guards/permissions.guard';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 
+// DTOs
 import { CreateTicketDto } from '../dto/request/create-ticket.dto';
 import { PurchaseTicketDto } from '../dto/request/purchase-ticket.dto';
 import { UpdateTicketDto } from '../dto/request/update-ticket.dto';
 import { TicketPurchaseResDto } from '../dto/response/ticket-purchase-res.dto';
 import { TicketResDto } from '../dto/response/ticket-res.dto';
-import { TicketsService } from '../services/tickets.service';
 
+// Interfaces
+import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+
+// Enums
+import { ActionEnum } from '@/common/enums/action.enum';
+
+// Guards
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@/common/guards/permissions.guard';
+
+// Decorators
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Permission } from '@/common/decorators/permission.decorator';
+
+// Services
+import { TicketsService } from '../services/tickets.service';
 @ApiTags('Tickets')
 @Controller('events/:eventId/tickets')
 export class TicketsController {
@@ -52,7 +62,11 @@ export class TicketsController {
   @Post(':id/purchase')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permission('EVENTS', ActionEnum.VIEW)
-  @ApiEndpoint('Bilet satin al', { type: TicketPurchaseResDto, params: [{ name: 'eventId' }, { name: 'id' }], status: 201 })
+  @ApiEndpoint('Bilet satin al', {
+    type: TicketPurchaseResDto,
+    params: [{ name: 'eventId' }, { name: 'id' }],
+    status: 201,
+  })
   purchase(
     @Param('eventId') eventId: string,
     @Param('id') id: string,
@@ -60,6 +74,32 @@ export class TicketsController {
     @Body(new ValidationPipe({ transform: true, whitelist: true })) dto: PurchaseTicketDto,
   ) {
     return this.ticketsService.purchase(eventId, id, user.sub, dto.quantity);
+  }
+
+  @Post('purchases/:purchaseId/cancel')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.VIEW)
+  @ApiEndpoint('Bilet satın alımını iptal et', {
+    type: TicketPurchaseResDto,
+    params: [{ name: 'eventId' }, { name: 'purchaseId' }],
+  })
+  cancelPurchase(
+    @Param('eventId') eventId: string,
+    @Param('purchaseId') purchaseId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.ticketsService.cancelPurchase(eventId, purchaseId, user.sub);
+  }
+
+  @Get('purchases/me')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('EVENTS', ActionEnum.VIEW)
+  @ApiEndpoint('Kullanıcının bu etkinlikteki bilet satın alımlarını listele', {
+    type: TicketPurchaseResDto,
+    params: [{ name: 'eventId' }],
+  })
+  getMyPurchases(@Param('eventId') eventId: string, @CurrentUser() user: JwtPayload) {
+    return this.ticketsService.getMyPurchases(eventId, user.sub);
   }
 
   @Patch(':id')

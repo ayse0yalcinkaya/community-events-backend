@@ -359,6 +359,55 @@ export class EventsService {
     );
   }
 
+  async getEventSalesReport(eventId: string, userId: string) {
+    await this.ensureEventManageAccess(eventId, userId);
+
+    const tickets = await this.prisma.eventTicket.findMany({
+      where: { eventID: eventId },
+      include: {
+        purchases: {
+          select: {
+            id: true,
+            quantity: true,
+            totalPrice: true,
+            currency: true,
+            status: true,
+            purchasedAt: true,
+          },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+
+    const ticketSummaries = tickets.map((ticket) => {
+      const completedPurchases = ticket.purchases.filter((p) => p.status === 'COMPLETED');
+      const cancelledPurchases = ticket.purchases.filter((p) => p.status === 'CANCELLED' || p.status === 'REFUNDED');
+
+      return {
+        ticketId: ticket.id,
+        ticketName: ticket.name,
+        type: ticket.type,
+        price: ticket.price ? Number(ticket.price) : 0,
+        currency: ticket.currency,
+        quota: ticket.quota,
+        available: ticket.available,
+        totalSold: completedPurchases.reduce((sum, p) => sum + p.quantity, 0),
+        totalCancelled: cancelledPurchases.reduce((sum, p) => sum + p.quantity, 0),
+        totalRevenue: completedPurchases.reduce((sum, p) => sum + Number(p.totalPrice), 0),
+        purchaseCount: completedPurchases.length,
+      };
+    });
+
+    return {
+      eventId,
+      totalRevenue: ticketSummaries.reduce((sum, t) => sum + t.totalRevenue, 0),
+      totalTicketsSold: ticketSummaries.reduce((sum, t) => sum + t.totalSold, 0),
+      totalTicketsCancelled: ticketSummaries.reduce((sum, t) => sum + t.totalCancelled, 0),
+      currency: ticketSummaries[0]?.currency ?? 'TRY',
+      tickets: ticketSummaries,
+    };
+  }
+
   async getMyCalendar(userId: string, query: QueryMyCalendarDto) {
     const attendances = await this.prisma.eventAttendance.findMany({
       where: {
@@ -375,14 +424,14 @@ export class EventsService {
             location: true,
             sessions: {
               where: {
-                ...(query.dateFrom || query.dateTo)
+                ...(query.dateFrom || query.dateTo
                   ? {
                       startAt: {
                         ...(query.dateFrom ? { gte: query.dateFrom } : {}),
                         ...(query.dateTo ? { lte: query.dateTo } : {}),
                       },
                     }
-                  : {},
+                  : {}),
               },
               orderBy: { startAt: 'asc' },
             },
@@ -641,7 +690,9 @@ export class EventsService {
     ]);
 
     const currentInterestIds = new Set(currentUserInterests.map((item) => item.interestID));
-    const candidateUserIds = attendances.filter((attendance) => attendance.userID !== userId).map((attendance) => attendance.userID);
+    const candidateUserIds = attendances
+      .filter((attendance) => attendance.userID !== userId)
+      .map((attendance) => attendance.userID);
     const connections = candidateUserIds.length
       ? await this.prisma.userConnection.findMany({
           where: {
@@ -655,7 +706,8 @@ export class EventsService {
 
     const connectionMap = new Map<string, string>();
     for (const connection of connections) {
-      const otherUserId = connection.requesterUserID === userId ? connection.addresseeUserID : connection.requesterUserID;
+      const otherUserId =
+        connection.requesterUserID === userId ? connection.addresseeUserID : connection.requesterUserID;
       connectionMap.set(otherUserId, connection.status);
     }
 
@@ -741,7 +793,8 @@ export class EventsService {
 
     const connectionMap = new Map<string, string>();
     for (const connection of connections) {
-      const otherUserId = connection.requesterUserID === userId ? connection.addresseeUserID : connection.requesterUserID;
+      const otherUserId =
+        connection.requesterUserID === userId ? connection.addresseeUserID : connection.requesterUserID;
       connectionMap.set(otherUserId, connection.status);
     }
 
@@ -1149,6 +1202,7 @@ export class EventsService {
       include: {
         sessions: true,
         location: true,
+        tickets: true,
       },
     });
 
@@ -1156,25 +1210,152 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
+    const errors: string[] = [];
+
     if (!event.title || !event.primaryCategoryID) {
-      throw new BadRequestException('Event basic information is incomplete');
+      errors.push('Event basic information (title, category) is incomplete');
     }
 
     if (!event.description || event.description.trim().length < 10) {
-      throw new BadRequestException('Event description is required before publish');
+      errors.push('Event description is required (min 10 characters)');
     }
 
     if (!event.sessions.length) {
-      throw new BadRequestException('At least one session is required before publish');
+      errors.push('At least one session is required');
+    }
+
+    const now = new Date();
+    const futureSessions = event.sessions.filter((s) => s.startAt > now);
+    if (event.sessions.length > 0 && futureSessions.length === 0) {
+      errors.push('At least one session must be in the future');
     }
 
     if (event.format === 'ONLINE' && !event.location?.meetingUrl) {
-      throw new BadRequestException('Online events require a meeting URL');
+      errors.push('Online events require a meeting URL');
     }
 
     if ((event.format === 'PHYSICAL' || event.format === 'HYBRID') && !event.location?.city) {
-      throw new BadRequestException('Physical or hybrid events require city information');
+      errors.push('Physical or hybrid events require city information');
     }
+
+    if (event.isPaid && event.tickets.length === 0) {
+      errors.push('Paid events require at least one ticket type');
+    }
+
+    if (event.tickets.length > 0) {
+      const hasAvailable = event.tickets.some((t) => t.available > 0 || t.quota === null);
+      if (!hasAvailable) {
+        errors.push('At least one ticket must have available quota');
+      }
+    }
+
+    if (event.capacity != null && event.capacity <= 0) {
+      errors.push('Event capacity must be a positive number');
+    }
+
+    if (errors.length > 0) {
+      throw new BadRequestException({ message: 'Event cannot be published', errors });
+    }
+  }
+
+  async getEventCompleteness(eventId: string, userId: string) {
+    await this.ensureEventManageAccess(eventId, userId);
+
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        sessions: true,
+        location: true,
+        speakers: true,
+        sponsors: true,
+        gallery: true,
+        tickets: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const now = new Date();
+
+    const steps = {
+      basicInfo: {
+        complete: !!(event.title && event.primaryCategoryID && event.shortDescription),
+        fields: {
+          title: !!event.title,
+          category: !!event.primaryCategoryID,
+          shortDescription: !!event.shortDescription,
+          format: !!event.format,
+        },
+      },
+      schedule: {
+        complete: event.sessions.length > 0 && event.sessions.some((s) => s.startAt > now),
+        fields: {
+          hasSessions: event.sessions.length > 0,
+          hasFutureSessions: event.sessions.some((s) => s.startAt > now),
+          sessionCount: event.sessions.length,
+        },
+      },
+      location: {
+        complete:
+          event.format === 'ONLINE'
+            ? !!event.location?.meetingUrl
+            : event.format === 'HYBRID'
+              ? !!(event.location?.city && event.location?.meetingUrl)
+              : !!event.location?.city,
+        fields: {
+          hasLocation: !!event.location,
+          city: event.location?.city ?? null,
+          meetingUrl: !!event.location?.meetingUrl,
+        },
+      },
+      details: {
+        complete: !!(event.description && event.description.trim().length >= 10),
+        fields: {
+          description: !!(event.description && event.description.trim().length >= 10),
+          coverImage: !!event.coverImageFileID,
+        },
+      },
+      speakers: {
+        complete: true,
+        fields: {
+          count: event.speakers.length,
+        },
+      },
+      sponsors: {
+        complete: true,
+        fields: {
+          count: event.sponsors.length,
+        },
+      },
+      tickets: {
+        complete: event.isPaid ? event.tickets.length > 0 : true,
+        fields: {
+          isPaid: event.isPaid,
+          count: event.tickets.length,
+          hasAvailable: event.tickets.some((t) => t.available > 0 || t.quota === null),
+        },
+      },
+      gallery: {
+        complete: true,
+        fields: {
+          count: event.gallery.length,
+        },
+      },
+    };
+
+    const requiredSteps = ['basicInfo', 'schedule', 'location', 'details', 'tickets'] as const;
+    const completedRequired = requiredSteps.filter((s) => steps[s].complete).length;
+    const allStepsComplete = requiredSteps.every((s) => steps[s].complete);
+
+    return {
+      eventId: event.id,
+      status: event.status,
+      canPublish: allStepsComplete,
+      completionPercentage: Math.round((completedRequired / requiredSteps.length) * 100),
+      steps,
+    };
   }
 
   private async ensureJoinableEvent(eventId: string) {
@@ -1238,7 +1419,10 @@ export class EventsService {
   }
 
   private toIcsDate(date: Date) {
-    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    return date
+      .toISOString()
+      .replace(/[-:]/g, '')
+      .replace(/\.\d{3}Z$/, 'Z');
   }
 
   private escapeIcsText(value: string) {

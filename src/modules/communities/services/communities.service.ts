@@ -1,23 +1,30 @@
+// Libraries
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CommunityMemberRole, CommunityMemberStatus, CommunityStatus, EventStatus, Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 
-import { PrismaService } from '@/database/prisma.service';
-import { FilesService } from '@/modules/files/services/files.service';
-import { AnnouncementsService } from '@/modules/announcements/services/announcements.service';
+// DTOs
 import { CreateCommunityAnnouncementDto } from '../dto/request/create-community-announcement.dto';
-
 import { CreateCommunityDto } from '../dto/create-community.dto';
 import { QueryCommunitiesDto } from '../dto/query-communities.dto';
 import { CommunityResDto } from '../dto/response/community-res.dto';
 import { UpdateCommunityDto } from '../dto/update-community.dto';
 
+// Enums
+import { NotificationType } from '@/modules/notifications/enums/notification-type.enum';
+
+// Services
+import { PrismaService } from '@/database/prisma.service';
+import { FilesService } from '@/modules/files/services/files.service';
+import { AnnouncementsService } from '@/modules/announcements/services/announcements.service';
+import { NotificationService } from '@/modules/notifications/services/notification.service';
 @Injectable()
 export class CommunitiesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly filesService: FilesService,
     private readonly announcementsService: AnnouncementsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(userId: string, dto: CreateCommunityDto) {
@@ -350,6 +357,124 @@ export class CommunitiesService {
     });
   }
 
+  async getGallery(id: string) {
+    await this.ensureActiveCommunity(id);
+
+    const items = await this.prisma.communityGallery.findMany({
+      where: { communityID: id },
+      include: { file: { select: { id: true, mimeType: true, originalName: true, size: true } } },
+      orderBy: { order: 'asc' },
+    });
+
+    const gallery = await Promise.all(
+      items.map(async (item) => {
+        const { downloadUrl } = await this.filesService.generateDownloadUrl(item.fileID, '', true);
+        return {
+          id: item.id,
+          fileId: item.fileID,
+          caption: item.caption,
+          order: item.order,
+          url: downloadUrl,
+          file: item.file,
+          createdAt: item.createdAt,
+        };
+      }),
+    );
+
+    return gallery;
+  }
+
+  async addGalleryItem(id: string, userId: string, file: Express.Multer.File, caption?: string) {
+    await this.ensureManageAccess(id, userId);
+
+    const uploaded = await this.filesService.uploadFiles([file], userId);
+    const maxOrder = await this.prisma.communityGallery.aggregate({
+      where: { communityID: id },
+      _max: { order: true },
+    });
+
+    const item = await this.prisma.communityGallery.create({
+      data: {
+        communityID: id,
+        fileID: uploaded[0].id,
+        caption: caption ?? null,
+        order: (maxOrder._max.order ?? -1) + 1,
+      },
+    });
+
+    return {
+      id: item.id,
+      fileId: item.fileID,
+      caption: item.caption,
+      order: item.order,
+      createdAt: item.createdAt,
+    };
+  }
+
+  async removeGalleryItem(id: string, galleryId: string, userId: string) {
+    await this.ensureManageAccess(id, userId);
+
+    const item = await this.prisma.communityGallery.findFirst({
+      where: { id: galleryId, communityID: id },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Gallery item not found');
+    }
+
+    await this.prisma.communityGallery.delete({
+      where: { id: galleryId },
+    });
+
+    return { deleted: true };
+  }
+
+  async getSummary(id: string, userId?: string) {
+    const community = await this.prisma.community.findFirst({
+      where: { id, deletedAt: null, status: CommunityStatus.ACTIVE },
+      include: {
+        ...this.communityInclude(userId),
+        gallery: { orderBy: { order: 'asc' }, take: 6 },
+      },
+    });
+
+    if (!community) {
+      throw new NotFoundException('Community not found');
+    }
+
+    const [upcomingEvents, recentAnnouncements, memberCount, galleryCount] = await Promise.all([
+      this.prisma.event.count({
+        where: {
+          organizerCommunityID: id,
+          deletedAt: null,
+          status: EventStatus.PUBLISHED,
+          sessions: { some: { startAt: { gte: new Date() } } },
+        },
+      }),
+      this.prisma.announcement.count({
+        where: { communityID: id },
+      }),
+      this.prisma.communityMember.count({
+        where: { communityID: id, status: CommunityMemberStatus.ACTIVE },
+      }),
+      this.prisma.communityGallery.count({
+        where: { communityID: id },
+      }),
+    ]);
+
+    const communityRes = await this.toCommunityResponse(community, userId);
+
+    return {
+      community: communityRes,
+      tabs: {
+        events: { count: community._count?.events ?? 0, upcomingCount: upcomingEvents },
+        members: { count: memberCount },
+        announcements: { count: recentAnnouncements },
+        gallery: { count: galleryCount, previewCount: community.gallery.length },
+      },
+    };
+  }
+
   async getAnnouncements(id: string, page = 1, limit = 10) {
     await this.ensureActiveCommunity(id);
     return this.announcementsService.findByCommunity(id, page, limit);
@@ -362,7 +487,41 @@ export class CommunitiesService {
       throw new BadRequestException('Community id mismatch');
     }
 
-    return this.announcementsService.createCommunityAnnouncement(dto, userId);
+    const announcement = await this.announcementsService.createCommunityAnnouncement(dto, userId);
+
+    this.broadcastAnnouncementNotification(id, dto.title, userId).catch(() => {});
+
+    return announcement;
+  }
+
+  private async broadcastAnnouncementNotification(communityId: string, title: string, excludeUserId: string) {
+    const members = await this.prisma.communityMember.findMany({
+      where: {
+        communityID: communityId,
+        status: CommunityMemberStatus.ACTIVE,
+        userID: { not: excludeUserId },
+      },
+      select: { userID: true },
+    });
+
+    const community = await this.prisma.community.findUnique({
+      where: { id: communityId },
+      select: { name: true },
+    });
+
+    for (const member of members) {
+      try {
+        await this.notificationService.send(
+          member.userID,
+          NotificationType.COMMUNITY_ANNOUNCEMENT,
+          `${community?.name ?? 'Topluluk'} - Yeni Duyuru`,
+          title,
+          { communityId },
+        );
+      } catch {
+        // fire-and-forget
+      }
+    }
   }
 
   private async findOneById(id: string, userId?: string) {
@@ -489,13 +648,19 @@ export class CommunitiesService {
   }
 
   private async toCommunityResponse(community: any, userId?: string) {
-    const currentMembership = userId ? community.members?.[0] ?? null : null;
+    const currentMembership = userId ? (community.members?.[0] ?? null) : null;
     const logoUrl = community.logoFileID
-      ? (await this.filesService.generateDownloadUrl(community.logoFileID, userId ?? community.createdByUserID, true)).downloadUrl
+      ? (await this.filesService.generateDownloadUrl(community.logoFileID, userId ?? community.createdByUserID, true))
+          .downloadUrl
       : null;
     const coverImageUrl = community.coverImageFileID
-      ? (await this.filesService.generateDownloadUrl(community.coverImageFileID, userId ?? community.createdByUserID, true))
-          .downloadUrl
+      ? (
+          await this.filesService.generateDownloadUrl(
+            community.coverImageFileID,
+            userId ?? community.createdByUserID,
+            true,
+          )
+        ).downloadUrl
       : null;
 
     return plainToInstance(

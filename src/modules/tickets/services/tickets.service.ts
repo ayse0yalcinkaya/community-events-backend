@@ -1,14 +1,16 @@
+// Libraries
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { AttendanceStatus, AttendanceVisibility, EventStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 
-import { PrismaService } from '@/database/prisma.service';
-
+// DTOs
 import { CreateTicketDto } from '../dto/request/create-ticket.dto';
 import { TicketPurchaseResDto } from '../dto/response/ticket-purchase-res.dto';
 import { UpdateTicketDto } from '../dto/request/update-ticket.dto';
 import { TicketResDto } from '../dto/response/ticket-res.dto';
 
+// Services
+import { PrismaService } from '@/database/prisma.service';
 @Injectable()
 export class TicketsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -168,6 +170,56 @@ export class TicketsService {
     });
 
     return this.toTicketPurchaseResponse(purchase);
+  }
+
+  async cancelPurchase(eventId: string, purchaseId: string, userId: string) {
+    const purchase = await this.prisma.eventTicketPurchase.findFirst({
+      where: {
+        id: purchaseId,
+        userID: userId,
+        ticket: { eventID: eventId },
+      },
+      include: { ticket: true },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException('Purchase not found');
+    }
+
+    if (purchase.status === 'CANCELLED' || purchase.status === 'REFUNDED') {
+      throw new BadRequestException('Purchase is already cancelled or refunded');
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const cancelled = await tx.eventTicketPurchase.update({
+        where: { id: purchaseId },
+        data: { status: 'CANCELLED' },
+      });
+
+      await tx.eventTicket.update({
+        where: { id: purchase.ticketID },
+        data: { available: { increment: purchase.quantity } },
+      });
+
+      return cancelled;
+    });
+
+    return this.toTicketPurchaseResponse(updated);
+  }
+
+  async getMyPurchases(eventId: string, userId: string) {
+    const purchases = await this.prisma.eventTicketPurchase.findMany({
+      where: {
+        userID: userId,
+        ticket: { eventID: eventId },
+      },
+      include: {
+        ticket: { select: { id: true, name: true, type: true } },
+      },
+      orderBy: { purchasedAt: 'desc' },
+    });
+
+    return purchases.map((p) => this.toTicketPurchaseResponse(p));
   }
 
   async remove(eventId: string, id: string, userId: string) {

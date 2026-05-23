@@ -1,16 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
+// Libraries
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-
 import { ApiEndpoint } from '@/common/decorators';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Permission } from '@/common/decorators/permission.decorator';
-import { Public } from '@/common/decorators/public.decorator';
-import { ActionEnum } from '@/common/enums/action.enum';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { PermissionsGuard } from '@/common/guards/permissions.guard';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 
+// DTOs
 import { CreateCommunityDto } from '../dto/create-community.dto';
 import { CreateCommunityAnnouncementDto } from '../dto/request/create-community-announcement.dto';
 import { QueryCommunityAnnouncementsDto } from '../dto/request/query-community-announcements.dto';
@@ -19,8 +26,25 @@ import { QueryCommunitiesDto } from '../dto/query-communities.dto';
 import { CommunityResDto } from '../dto/response/community-res.dto';
 import { UpdateCommunityDto } from '../dto/update-community.dto';
 import { AnnouncementResDto } from '@/modules/announcements/dto/response/announcement.dto';
-import { CommunitiesService } from '../services/communities.service';
 
+// Interfaces
+import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+
+// Enums
+import { ActionEnum } from '@/common/enums/action.enum';
+
+// Guards
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@/common/guards/optional-jwt-auth.guard';
+import { PermissionsGuard } from '@/common/guards/permissions.guard';
+
+// Decorators
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Permission } from '@/common/decorators/permission.decorator';
+import { Public } from '@/common/decorators/public.decorator';
+
+// Services
+import { CommunitiesService } from '../services/communities.service';
 @ApiTags('Communities')
 @Controller('communities')
 export class CommunitiesController {
@@ -133,7 +157,10 @@ export class CommunitiesController {
   @Patch(':id/members/:memberId/role')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permission('COMMUNITIES', ActionEnum.UPDATE)
-  @ApiEndpoint('Topluluk uyesinin rolunu guncelle', { type: CommunityResDto, params: [{ name: 'id' }, { name: 'memberId' }] })
+  @ApiEndpoint('Topluluk uyesinin rolunu guncelle', {
+    type: CommunityResDto,
+    params: [{ name: 'id' }, { name: 'memberId' }],
+  })
   updateMemberRole(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
@@ -156,6 +183,53 @@ export class CommunitiesController {
   @ApiEndpoint('Toplulugun etkinliklerini getir', { type: CommunityResDto, isPublic: true, params: [{ name: 'id' }] })
   getEvents(@Param('id') id: string) {
     return this.communitiesService.getEvents(id);
+  }
+
+  @Get(':id/summary')
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiEndpoint('Topluluk tab ozet bilgisini getir', { params: [{ name: 'id' }] })
+  getSummary(@Param('id') id: string, @CurrentUser() user?: JwtPayload) {
+    return this.communitiesService.getSummary(id, user?.sub);
+  }
+
+  @Public()
+  @Get(':id/gallery')
+  @ApiEndpoint('Topluluk galerisini getir', { isPublic: true, params: [{ name: 'id' }] })
+  getGallery(@Param('id') id: string) {
+    return this.communitiesService.getGallery(id);
+  }
+
+  @Post(':id/gallery')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('COMMUNITIES', ActionEnum.UPDATE)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiEndpoint('Topluluk galerisine gorsel ekle', {
+    params: [{ name: 'id' }],
+    status: 201,
+    consumes: 'multipart/form-data',
+    bodySchema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        caption: { type: 'string' },
+      },
+    },
+  })
+  addGalleryItem(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('caption') caption?: string,
+  ) {
+    return this.communitiesService.addGalleryItem(id, user.sub, file, caption);
+  }
+
+  @Delete(':id/gallery/:galleryId')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permission('COMMUNITIES', ActionEnum.UPDATE)
+  @ApiEndpoint('Topluluk galerisinden gorsel sil', { params: [{ name: 'id' }, { name: 'galleryId' }] })
+  removeGalleryItem(@Param('id') id: string, @Param('galleryId') galleryId: string, @CurrentUser() user: JwtPayload) {
+    return this.communitiesService.removeGalleryItem(id, galleryId, user.sub);
   }
 
   @Public()

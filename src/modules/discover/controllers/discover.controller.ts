@@ -20,11 +20,15 @@ import { Public } from '@/common/decorators/public.decorator';
 
 // Services
 import { DiscoverService } from '../services/discover.service';
+import { TrendingService } from '../services/trending.service';
 @ApiTags('Discover')
 @Public()
 @Controller('discover')
 export class DiscoverController {
-  constructor(private readonly discoverService: DiscoverService) {}
+  constructor(
+    private readonly discoverService: DiscoverService,
+    private readonly trendingService: TrendingService,
+  ) {}
 
   @Get('home')
   @ApiEndpoint('Ana sayfa kesif verilerini getir', {
@@ -60,5 +64,15 @@ export class DiscoverController {
   })
   unifiedSearch(@Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryDiscoverSearchDto) {
     return this.discoverService.unifiedSearch(query);
+  }
+
+  @Get('trending')
+  @ApiEndpoint('Trending etkinlik ve topluluklar', { isPublic: true })
+  getTrending() {
+    return {
+      events: this.trendingService.getTrendingEvents(),
+      communities: this.trendingService.getTrendingCommunities(),
+      computedAt: this.trendingService.getLastComputedAt(),
+    };
   }
 }

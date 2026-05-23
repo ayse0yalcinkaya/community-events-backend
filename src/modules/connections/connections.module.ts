@@ -1,11 +1,17 @@
+// Libraries
 import { Module } from '@nestjs/common';
 
-import { NotificationsModule } from '../notifications/notifications.module';
-import { ConnectionsController } from './controllers/connections.controller';
+// Services
 import { ConnectionsService } from './services/connections.service';
 
+// Controllers
+import { ConnectionsController } from './controllers/connections.controller';
+
+// Modules
+import { ChatModule } from '../chat/chat.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, ChatModule],
   controllers: [ConnectionsController],
   providers: [ConnectionsService],
   exports: [ConnectionsService],

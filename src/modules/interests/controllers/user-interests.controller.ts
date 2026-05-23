@@ -1,17 +1,26 @@
+// Libraries
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Permission } from '@/common/decorators/permission.decorator';
+// DTOs
+import { SetUserInterestsDto } from '../dto/set-user-interests.dto';
+
+// Interfaces
+import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+
+// Enums
 import { ActionEnum } from '@/common/enums/action.enum';
+
+// Guards
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '@/common/guards/permissions.guard';
 
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+// Decorators
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Permission } from '@/common/decorators/permission.decorator';
 
-import { SetUserInterestsDto } from '../dto/set-user-interests.dto';
+// Services
 import { InterestsService } from '../services/interests.service';
-
 @ApiTags('User Interests')
 @Controller('users/me/interests')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -22,6 +31,12 @@ export class UserInterestsController {
   @Permission('INTERESTS', ActionEnum.VIEW)
   getMyInterests(@CurrentUser() user: JwtPayload) {
     return this.interestsService.getUserInterests(user.sub);
+  }
+
+  @Get('onboarding')
+  @Permission('INTERESTS', ActionEnum.VIEW)
+  getOnboardingStatus(@CurrentUser() user: JwtPayload) {
+    return this.interestsService.getOnboardingStatus(user.sub);
   }
 
   @Post()

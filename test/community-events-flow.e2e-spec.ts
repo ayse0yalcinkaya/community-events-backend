@@ -1,11 +1,12 @@
+// Libraries
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
-
-import { AppModule } from '../src/app.module';
 import { hashPassword } from '../src/common/utils/hash.util';
 
+// Modules
+import { AppModule } from '../src/app.module';
 describe('Community Events Flow (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
@@ -459,16 +460,18 @@ describe('Community Events Flow (e2e)', () => {
     expect(unifiedCommunitySearchResponse.body.communities).toBeDefined();
     expect(unifiedCommunitySearchResponse.body.users).toBeDefined();
     expect(unifiedCommunitySearchResponse.body.categories).toBeDefined();
-    expect(unifiedCommunitySearchResponse.body.communities.items.some((item: { id: string }) => item.id === communityId)).toBe(true);
+    expect(
+      unifiedCommunitySearchResponse.body.communities.items.some((item: { id: string }) => item.id === communityId),
+    ).toBe(true);
 
     const unifiedCategorySearchResponse = await request(app.getHttpServer())
       .get('/discover/search/all')
       .query({ q: 'Teknoloji', limit: 20 })
       .expect(200);
 
-    expect(unifiedCategorySearchResponse.body.categories.items.some((item: { id: string }) => item.id === primaryCategoryId)).toBe(
-      true,
-    );
+    expect(
+      unifiedCategorySearchResponse.body.categories.items.some((item: { id: string }) => item.id === primaryCategoryId),
+    ).toBe(true);
 
     const similarEventCreate = await request(app.getHttpServer())
       .post('/events')
@@ -521,7 +524,9 @@ describe('Community Events Flow (e2e)', () => {
       .expect(201);
 
     const similarEventsResponse = await request(app.getHttpServer()).get(`/events/${eventSlug}/similar`).expect(200);
-    expect(similarEventsResponse.body.some((item: { id: string }) => item.id === similarEventCreate.body.id)).toBe(true);
+    expect(similarEventsResponse.body.some((item: { id: string }) => item.id === similarEventCreate.body.id)).toBe(
+      true,
+    );
 
     const categoryOverview = await request(app.getHttpServer()).get('/categories/teknoloji-test/overview').expect(200);
     expect(categoryOverview.body.id).toBe(primaryCategoryId);
@@ -589,7 +594,10 @@ describe('Community Events Flow (e2e)', () => {
     await request(app.getHttpServer())
       .put(`/events/${eventId}/gallery/reorder`)
       .set('Authorization', `Bearer ${accessToken}`)
-      .send([{ id: galleryId, order: 0 }, { id: galleryId, order: 1 }])
+      .send([
+        { id: galleryId, order: 0 },
+        { id: galleryId, order: 1 },
+      ])
       .expect(400);
 
     const removeResponse = await request(app.getHttpServer())
@@ -746,7 +754,9 @@ describe('Community Events Flow (e2e)', () => {
 
     expect(pendingAttendances.body).toHaveLength(2);
 
-    const attendeeOneAttendance = pendingAttendances.body.find((item: { userID: string }) => item.userID === otherUserId);
+    const attendeeOneAttendance = pendingAttendances.body.find(
+      (item: { userID: string }) => item.userID === otherUserId,
+    );
     const attendeeTwoAttendance = pendingAttendances.body.find(
       (item: { userID: string }) => item.userID === attendeeTwoUserId,
     );
@@ -858,7 +868,11 @@ describe('Community Events Flow (e2e)', () => {
       .set('Authorization', `Bearer ${attendeeOneToken}`)
       .expect(200);
 
-    expect(attendeePeople.body.some((item: { userID: string; isCurrentUser: boolean }) => item.userID === otherUserId && item.isCurrentUser)).toBe(true);
+    expect(
+      attendeePeople.body.some(
+        (item: { userID: string; isCurrentUser: boolean }) => item.userID === otherUserId && item.isCurrentUser,
+      ),
+    ).toBe(true);
     expect(attendeePeople.body.some((item: { userID: string }) => item.userID === attendeeTwoUserId)).toBe(false);
 
     const organizerPeople = await request(app.getHttpServer())
@@ -867,7 +881,12 @@ describe('Community Events Flow (e2e)', () => {
       .expect(200);
 
     expect(organizerPeople.body.some((item: { userID: string }) => item.userID === otherUserId)).toBe(true);
-    expect(organizerPeople.body.some((item: { userID: string; attendanceVisibility: string }) => item.userID === attendeeTwoUserId && item.attendanceVisibility === 'PRIVATE')).toBe(true);
+    expect(
+      organizerPeople.body.some(
+        (item: { userID: string; attendanceVisibility: string }) =>
+          item.userID === attendeeTwoUserId && item.attendanceVisibility === 'PRIVATE',
+      ),
+    ).toBe(true);
 
     const recommendations = await request(app.getHttpServer())
       .get(`/events/${networkingEventId}/network/recommendations`)
@@ -875,7 +894,12 @@ describe('Community Events Flow (e2e)', () => {
       .expect(200);
 
     expect(Array.isArray(recommendations.body)).toBe(true);
-    expect(recommendations.body.some((item: { userID: string; sharedInterestCount: number }) => item.userID === otherUserId && item.sharedInterestCount >= 1)).toBe(true);
+    expect(
+      recommendations.body.some(
+        (item: { userID: string; sharedInterestCount: number }) =>
+          item.userID === otherUserId && item.sharedInterestCount >= 1,
+      ),
+    ).toBe(true);
     expect(recommendations.body.some((item: { userID: string }) => item.userID === attendeeTwoUserId)).toBe(false);
   });
 
@@ -906,7 +930,9 @@ describe('Community Events Flow (e2e)', () => {
       .query({ direction: 'received', status: 'PENDING' })
       .expect(200);
 
-    const pendingIncoming = receivedConnections.body.find((item: { otherUser: { id: string } }) => item.otherUser.id === otherUserId);
+    const pendingIncoming = receivedConnections.body.find(
+      (item: { otherUser: { id: string } }) => item.otherUser.id === otherUserId,
+    );
     expect(pendingIncoming).toBeDefined();
 
     const acceptedConnection = await request(app.getHttpServer())
@@ -948,7 +974,9 @@ describe('Community Events Flow (e2e)', () => {
       .query({ status: 'ACCEPTED' })
       .expect(200);
 
-    expect(acceptedList.body.some((item: { otherUser: { id: string } }) => item.otherUser.id === otherUserId)).toBe(true);
+    expect(acceptedList.body.some((item: { otherUser: { id: string } }) => item.otherUser.id === otherUserId)).toBe(
+      true,
+    );
 
     const rejectedList = await request(app.getHttpServer())
       .get('/connections')
@@ -956,7 +984,18 @@ describe('Community Events Flow (e2e)', () => {
       .query({ status: 'REJECTED' })
       .expect(200);
 
-    expect(rejectedList.body.some((item: { otherUser: { id: string } }) => item.otherUser.id === attendeeTwoUserId)).toBe(true);
+    expect(
+      rejectedList.body.some((item: { otherUser: { id: string } }) => item.otherUser.id === attendeeTwoUserId),
+    ).toBe(true);
+  });
+
+  it('supports trending endpoint', async () => {
+    const response = await request(app.getHttpServer()).get('/discover/trending').expect(200);
+
+    expect(response.body.events).toBeDefined();
+    expect(response.body.communities).toBeDefined();
+    expect(Array.isArray(response.body.events)).toBe(true);
+    expect(Array.isArray(response.body.communities)).toBe(true);
   });
 
   it('supports community announcement creation and listing', async () => {
@@ -1003,8 +1042,14 @@ describe('Community Events Flow (e2e)', () => {
 
     expect(promoteResponse.body.currentUserMembershipRole).toBe('OWNER');
 
-    const membersAfterPromote = await request(app.getHttpServer()).get(`/communities/${communityId}/members`).expect(200);
-    expect(membersAfterPromote.body.some((item: { userID: string; role: string }) => item.userID === otherUserId && item.role === 'ADMIN')).toBe(true);
+    const membersAfterPromote = await request(app.getHttpServer())
+      .get(`/communities/${communityId}/members`)
+      .expect(200);
+    expect(
+      membersAfterPromote.body.some(
+        (item: { userID: string; role: string }) => item.userID === otherUserId && item.role === 'ADMIN',
+      ),
+    ).toBe(true);
 
     await request(app.getHttpServer())
       .patch(`/communities/${communityId}/members/${attendeeTwoUserId}/role`)
@@ -1012,9 +1057,19 @@ describe('Community Events Flow (e2e)', () => {
       .send({ role: 'OWNER' })
       .expect(200);
 
-    const membersAfterTransfer = await request(app.getHttpServer()).get(`/communities/${communityId}/members`).expect(200);
-    expect(membersAfterTransfer.body.some((item: { userID: string; role: string }) => item.userID === attendeeTwoUserId && item.role === 'OWNER')).toBe(true);
-    expect(membersAfterTransfer.body.some((item: { userID: string; role: string }) => item.userID === adminUserId && item.role === 'ADMIN')).toBe(true);
+    const membersAfterTransfer = await request(app.getHttpServer())
+      .get(`/communities/${communityId}/members`)
+      .expect(200);
+    expect(
+      membersAfterTransfer.body.some(
+        (item: { userID: string; role: string }) => item.userID === attendeeTwoUserId && item.role === 'OWNER',
+      ),
+    ).toBe(true);
+    expect(
+      membersAfterTransfer.body.some(
+        (item: { userID: string; role: string }) => item.userID === adminUserId && item.role === 'ADMIN',
+      ),
+    ).toBe(true);
 
     const removeMemberResponse = await request(app.getHttpServer())
       .delete(`/communities/${communityId}/members/${otherUserId}`)
@@ -1023,8 +1078,102 @@ describe('Community Events Flow (e2e)', () => {
 
     expect(removeMemberResponse.body.currentUserMembershipRole).toBe('OWNER');
 
-    const membersAfterRemoval = await request(app.getHttpServer()).get(`/communities/${communityId}/members`).expect(200);
+    const membersAfterRemoval = await request(app.getHttpServer())
+      .get(`/communities/${communityId}/members`)
+      .expect(200);
     expect(membersAfterRemoval.body.some((item: { userID: string }) => item.userID === otherUserId)).toBe(false);
+  });
+
+  it('supports speaker CRUD on event', async () => {
+    const createResponse = await request(app.getHttpServer())
+      .post(`/events/${eventId}/speakers`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ name: 'Dr. Ahmet Yılmaz', title: 'AI Researcher', bio: 'Expert in LLMs' })
+      .expect(201);
+
+    expect(createResponse.body.name).toBe('Dr. Ahmet Yılmaz');
+    const speakerId = createResponse.body.id;
+
+    const listResponse = await request(app.getHttpServer()).get(`/events/${eventId}/speakers`).expect(200);
+    expect(listResponse.body.some((s: { id: string }) => s.id === speakerId)).toBe(true);
+
+    await request(app.getHttpServer())
+      .patch(`/events/${eventId}/speakers/${speakerId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ title: 'Senior AI Researcher' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`/events/${eventId}/speakers/${speakerId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    const afterDelete = await request(app.getHttpServer()).get(`/events/${eventId}/speakers`).expect(200);
+    expect(afterDelete.body.some((s: { id: string }) => s.id === speakerId)).toBe(false);
+  });
+
+  it('supports sponsor CRUD on event', async () => {
+    const createResponse = await request(app.getHttpServer())
+      .post(`/events/${eventId}/sponsors`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ name: 'Tech Corp', tier: 'PLATINUM', websiteUrl: 'https://techcorp.com' })
+      .expect(201);
+
+    expect(createResponse.body.name).toBe('Tech Corp');
+    const sponsorId = createResponse.body.id;
+
+    const listResponse = await request(app.getHttpServer()).get(`/events/${eventId}/sponsors`).expect(200);
+    expect(listResponse.body.some((s: { id: string }) => s.id === sponsorId)).toBe(true);
+
+    await request(app.getHttpServer())
+      .patch(`/events/${eventId}/sponsors/${sponsorId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ tier: 'GOLD' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`/events/${eventId}/sponsors/${sponsorId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    const afterDelete = await request(app.getHttpServer()).get(`/events/${eventId}/sponsors`).expect(200);
+    expect(afterDelete.body.some((s: { id: string }) => s.id === sponsorId)).toBe(false);
+  });
+
+  it('supports event completeness endpoint', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/events/${eventId}/completeness`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(response.body.eventId).toBe(eventId);
+    expect(response.body.overallComplete).toBeDefined();
+    expect(response.body.steps).toBeDefined();
+    expect(response.body.steps.basicInfo).toBeDefined();
+    expect(response.body.steps.schedule).toBeDefined();
+    expect(response.body.steps.location).toBeDefined();
+  });
+
+  it('supports community gallery CRUD', async () => {
+    const galleryListResponse = await request(app.getHttpServer())
+      .get(`/communities/${communityId}/gallery`)
+      .expect(200);
+
+    expect(Array.isArray(galleryListResponse.body)).toBe(true);
+  });
+
+  it('supports community summary endpoint', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/communities/${communityId}/summary`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(response.body.community).toBeDefined();
+    expect(response.body.tabs).toBeDefined();
+    expect(response.body.tabs.events).toBeDefined();
+    expect(response.body.tabs.members).toBeDefined();
+    expect(response.body.tabs.announcements).toBeDefined();
+    expect(response.body.tabs.gallery).toBeDefined();
   });
 
   it('supports ticket purchase flow with stock decrement and attendance link', async () => {
@@ -1060,5 +1209,45 @@ describe('Community Events Flow (e2e)', () => {
       .expect(200);
 
     expect(attendeeEventResponse.body.some((item: { id: string }) => item.id === eventId)).toBe(true);
+  });
+
+  it('supports ticket cancel/refund and my purchases', async () => {
+    const ticketsResponse = await request(app.getHttpServer()).get(`/events/${eventId}/tickets`).expect(200);
+    const ticket = ticketsResponse.body[0];
+
+    const purchaseResponse = await request(app.getHttpServer())
+      .post(`/events/${eventId}/tickets/${ticket.id}/purchase`)
+      .set('Authorization', `Bearer ${attendeeOneToken}`)
+      .send({ quantity: 1 })
+      .expect(201);
+
+    const purchaseId = purchaseResponse.body.id;
+
+    const myPurchases = await request(app.getHttpServer())
+      .get(`/events/${eventId}/tickets/purchases/me`)
+      .set('Authorization', `Bearer ${attendeeOneToken}`)
+      .expect(200);
+
+    expect(myPurchases.body.some((p: { id: string }) => p.id === purchaseId)).toBe(true);
+
+    const cancelResponse = await request(app.getHttpServer())
+      .post(`/events/${eventId}/tickets/purchases/${purchaseId}/cancel`)
+      .set('Authorization', `Bearer ${attendeeOneToken}`)
+      .expect(201);
+
+    expect(cancelResponse.body.status).toBe('CANCELLED');
+  });
+
+  it('supports organizer sales report', async () => {
+    const salesReport = await request(app.getHttpServer())
+      .get(`/events/${eventId}/sales-report`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(salesReport.body.eventId).toBe(eventId);
+    expect(salesReport.body.totalRevenue).toBeDefined();
+    expect(salesReport.body.totalTicketsSold).toBeDefined();
+    expect(salesReport.body.totalTicketsCancelled).toBeDefined();
+    expect(Array.isArray(salesReport.body.tickets)).toBe(true);
   });
 });
