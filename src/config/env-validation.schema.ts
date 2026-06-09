@@ -41,6 +41,16 @@ export const envSchema = Joi.object({
   FONIVA_API_KEY: Joi.string().required(),
   FONIVA_SENDER: Joi.string().optional(),
 
+  // Meta WhatsApp Cloud API Configuration
+  WHATSAPP_ENABLED: Joi.string().valid('true', 'false').default('false'),
+  WHATSAPP_API_URL: Joi.string().uri().optional(),
+  WHATSAPP_API_VERSION: Joi.string().optional(),
+  WHATSAPP_ACCESS_TOKEN: Joi.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: Joi.string().optional(),
+  WHATSAPP_OTP_TEMPLATE_NAME: Joi.string().optional(),
+  WHATSAPP_OTP_TEMPLATE_LANGUAGE_CODE: Joi.string().optional(),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: Joi.string().optional(),
+
   // SendGrid Email Configuration (Epic 5: Communication Infrastructure)
   MAIL_PROVIDER: Joi.string().valid('sendgrid').default('sendgrid'),
   SENDGRID_API_KEY: Joi.string().required(),

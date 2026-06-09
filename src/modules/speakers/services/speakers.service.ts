@@ -50,7 +50,7 @@ export class SpeakersService {
     });
 
     if (!speaker) {
-      throw new NotFoundException('Speaker not found');
+      throw new NotFoundException('speakers.NOT_FOUND');
     }
 
     return this.toSpeakerResponse(speaker);
@@ -64,7 +64,7 @@ export class SpeakersService {
     });
 
     if (!speaker) {
-      throw new NotFoundException('Speaker not found');
+      throw new NotFoundException('speakers.NOT_FOUND');
     }
 
     const updated = await this.prisma.eventSpeaker.update({
@@ -89,7 +89,7 @@ export class SpeakersService {
     });
 
     if (!speaker) {
-      throw new NotFoundException('Speaker not found');
+      throw new NotFoundException('speakers.NOT_FOUND');
     }
 
     await this.prisma.eventSpeaker.delete({
@@ -108,7 +108,7 @@ export class SpeakersService {
     });
 
     if (existingSpeakers.length !== speakerOrders.length) {
-      throw new BadRequestException('One or more speakers do not belong to this event');
+      throw new BadRequestException('speakers.MISMATCH');
     }
 
     await this.prisma.$transaction(
@@ -129,7 +129,7 @@ export class SpeakersService {
     });
 
     if (!event) {
-      throw new BadRequestException('Event not found');
+      throw new BadRequestException('speakers.EVENT_NOT_FOUND');
     }
   }
 
@@ -161,7 +161,7 @@ export class SpeakersService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found or not manageable by current user');
+      throw new NotFoundException('speakers.MANAGE_NOT_FOUND');
     }
   }
 

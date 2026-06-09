@@ -10,6 +10,7 @@ import {
   UseGuards,
   Query,
   Headers,
+  Logger,
 } from '@nestjs/common';
 
 import { ApiTags, ApiHeader } from '@nestjs/swagger';
@@ -44,6 +45,8 @@ import type { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 @ApiTags('SMS')
 @Controller('sms')
 export class SmsController {
+  private readonly logger = new Logger(SmsController.name);
+
   constructor(
     private readonly smsService: SmsService,
     private readonly prisma: PrismaService,
@@ -148,6 +151,38 @@ export class SmsController {
       success: true,
       message: this.i18n.t('success.OPERATION_SUCCESSFUL'),
     };
+  }
+
+  @Public()
+  @ApiEndpoint('Meta WhatsApp webhook doğrulama', { isPublic: true })
+  @Get('whatsapp/webhook')
+  @HttpCode(HttpStatus.OK)
+  verifyWhatsAppWebhook(
+    @Query('hub.mode') mode?: string,
+    @Query('hub.verify_token') verifyToken?: string,
+    @Query('hub.challenge') challenge?: string,
+  ) {
+    const whatsappConfig = this.configService.get('whatsapp');
+    const expectedVerifyToken = whatsappConfig?.webhookVerifyToken;
+
+    if (!expectedVerifyToken) {
+      throw new UnauthorizedException('sms.WHATSAPP_WEBHOOK_TOKEN_NOT_CONFIGURED');
+    }
+
+    if (mode !== 'subscribe' || verifyToken !== expectedVerifyToken) {
+      throw new UnauthorizedException('sms.WHATSAPP_WEBHOOK_VERIFICATION_FAILED');
+    }
+
+    return challenge ?? '';
+  }
+
+  @Public()
+  @ApiEndpoint('Meta WhatsApp webhook callback', { isPublic: true })
+  @Post('whatsapp/webhook')
+  @HttpCode(HttpStatus.OK)
+  handleWhatsAppWebhook(@Body() body: Record<string, unknown>) {
+    this.logger.log(`WhatsApp webhook received: ${JSON.stringify(body)}`);
+    return { received: true };
   }
 
   /**

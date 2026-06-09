@@ -23,6 +23,7 @@ export class SentryExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
+    const lang = (request as any).i18nLang || 'tr';
 
     // Extract status code
     const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
@@ -31,9 +32,10 @@ export class SentryExceptionFilter implements ExceptionFilter {
     const rawErrorResponse = exception instanceof HttpException ? exception.getResponse() : 'Internal server error';
     const normalizedErrorResponse =
       typeof rawErrorResponse === 'string' ? { message: rawErrorResponse } : (rawErrorResponse as Record<string, any>);
-    const message =
+    const rawMessage =
       normalizedErrorResponse?.message ||
       (exception instanceof HttpException ? exception.message : 'Internal server error');
+    const message = typeof rawMessage === 'string' ? this.i18n.t(rawMessage, { lang, defaultValue: rawMessage }) : rawMessage;
 
     // Log error with stack trace
     this.logger.error(
@@ -91,9 +93,12 @@ export class SentryExceptionFilter implements ExceptionFilter {
 
     // Add validation errors array if present (from class-validator)
     if (normalizedErrorResponse?.errors || Array.isArray(normalizedErrorResponse?.message)) {
-      errorResponse.errors = Array.isArray(normalizedErrorResponse.message)
+      const rawErrors = Array.isArray(normalizedErrorResponse.message)
         ? normalizedErrorResponse.message
         : normalizedErrorResponse.errors;
+      errorResponse.errors = Array.isArray(rawErrors)
+        ? rawErrors.map((item) => (typeof item === 'string' ? this.i18n.t(item, { lang, defaultValue: item }) : item))
+        : rawErrors;
     }
 
     // Add metadata for debugging (not part of standard format, but useful)

@@ -1,0 +1,11 @@
+{
+  "WHATSAPP_DISABLED": "WhatsApp OTP sending is disabled",
+  "WHATSAPP_CONFIG_INCOMPLETE": "WhatsApp Cloud configuration is incomplete",
+  "WHATSAPP_INVALID_RESPONSE": "Invalid WhatsApp API response",
+  "WHATSAPP_NETWORK_ERROR": "WhatsApp network error",
+  "WHATSAPP_AUTH_FAILED": "WhatsApp authentication failed",
+  "WHATSAPP_API_ERROR": "WhatsApp API error",
+  "WHATSAPP_SEND_FAILED": "WhatsApp send failed",
+  "WHATSAPP_WEBHOOK_TOKEN_NOT_CONFIGURED": "WhatsApp webhook verify token is not configured",
+  "WHATSAPP_WEBHOOK_VERIFICATION_FAILED": "WhatsApp webhook verification failed"
+}

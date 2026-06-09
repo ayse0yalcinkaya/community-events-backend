@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 // Services
 import { SmsService } from './services/sms.service';
 import { FonivaService } from './services/foniva.service';
+import { WhatsAppCloudService } from './services/whatsapp-cloud.service';
 
 // Controllers
 import { SmsController } from './controllers/sms.controller';
@@ -25,7 +26,7 @@ import { PermissionsModule } from '../permissions/permissions.module';
     PermissionsModule, // Import PermissionsModule for AuthorizationService (used by PermissionsGuard)
   ],
   controllers: [SmsController],
-  providers: [SmsService, FonivaService],
-  exports: [SmsService], // Export for use in Auth module (OTP sending)
+  providers: [SmsService, FonivaService, WhatsAppCloudService],
+  exports: [SmsService, WhatsAppCloudService], // Export for use in Auth module (OTP sending)
 })
 export class SmsModule {}

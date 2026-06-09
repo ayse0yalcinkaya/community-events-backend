@@ -1,0 +1,13 @@
+{
+  "NOT_FOUND": "Community not found",
+  "LOGO_REQUIRED": "Logo file is required",
+  "COVER_IMAGE_REQUIRED": "Cover image is required",
+  "MEMBERSHIP_NOT_FOUND": "Community membership not found",
+  "OWNER_CANNOT_LEAVE": "Community owner cannot leave the community",
+  "SELF_ROLE_CHANGE_FORBIDDEN": "You cannot change your own role unless transferring ownership",
+  "OWNER_TRANSFER_ONLY": "Only the current owner can transfer ownership",
+  "OWNER_ROLE_TRANSFER_REQUIRED": "Owner role can only be changed through ownership transfer",
+  "OWNER_CANNOT_BE_REMOVED": "Owner cannot be removed from the community",
+  "ADMIN_CANNOT_REMOVE_ADMIN": "Admins cannot remove another admin",
+  "COMMUNITY_ID_MISMATCH": "Community id mismatch"
+}

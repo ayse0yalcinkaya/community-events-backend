@@ -16,6 +16,7 @@ export interface OtpValidationResult {
 @Injectable()
 export class OtpService {
   private readonly logger = new Logger(OtpService.name);
+  private static readonly FIXED_OTP_PHONE_NUMBERS = new Set(['+905350506655', '+905067957939']);
 
   constructor(private readonly prisma: PrismaService) {}
 

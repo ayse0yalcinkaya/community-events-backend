@@ -25,7 +25,7 @@ export class ConnectionsService {
 
   async requestConnection(currentUserId: string, targetUserId: string) {
     if (currentUserId === targetUserId) {
-      throw new BadRequestException('You cannot connect with yourself');
+      throw new BadRequestException('connections.SELF_CONNECT_FORBIDDEN');
     }
 
     await this.ensureUserExists(targetUserId);
@@ -34,7 +34,7 @@ export class ConnectionsService {
 
     if (existing) {
       if (existing.status === ConnectionStatus.ACCEPTED) {
-        throw new BadRequestException('Users are already connected');
+        throw new BadRequestException('connections.ALREADY_CONNECTED');
       }
 
       if (existing.status === ConnectionStatus.PENDING) {
@@ -53,7 +53,7 @@ export class ConnectionsService {
         return this.toConnectionResponse(accepted, currentUserId);
       }
 
-      throw new BadRequestException('A connection record already exists between these users');
+      throw new BadRequestException('connections.RECORD_ALREADY_EXISTS');
     }
 
     const created = await this.prisma.userConnection.create({
@@ -139,7 +139,7 @@ export class ConnectionsService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('users.USER_NOT_FOUND');
     }
   }
 
@@ -154,7 +154,7 @@ export class ConnectionsService {
     });
 
     if (!connection) {
-      throw new NotFoundException('Pending connection request not found');
+      throw new NotFoundException('connections.PENDING_NOT_FOUND');
     }
 
     return connection;

@@ -1,0 +1,6 @@
+{
+  "NOT_FOUND": "Konusmaci bulunamadi",
+  "MISMATCH": "Bir veya daha fazla konusmaci bu etkinlige ait degil",
+  "EVENT_NOT_FOUND": "Etkinlik bulunamadi",
+  "MANAGE_NOT_FOUND": "Etkinlik bulunamadi veya mevcut kullanici tarafindan yonetilemiyor"
+}

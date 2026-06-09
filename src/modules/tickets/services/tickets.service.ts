@@ -54,7 +54,7 @@ export class TicketsService {
     });
 
     if (!ticket) {
-      throw new NotFoundException('Ticket not found');
+      throw new NotFoundException('tickets.NOT_FOUND');
     }
 
     return this.toTicketResponse(ticket);
@@ -68,7 +68,7 @@ export class TicketsService {
     });
 
     if (!ticket) {
-      throw new NotFoundException('Ticket not found');
+      throw new NotFoundException('tickets.NOT_FOUND');
     }
 
     const updated = await this.prisma.eventTicket.update({
@@ -106,19 +106,19 @@ export class TicketsService {
     });
 
     if (!ticket) {
-      throw new NotFoundException('Ticket not found');
+      throw new NotFoundException('tickets.NOT_FOUND');
     }
 
     if (ticket.salesStart && ticket.salesStart > new Date()) {
-      throw new BadRequestException('Ticket sales have not started yet');
+      throw new BadRequestException('tickets.SALES_NOT_STARTED');
     }
 
     if (ticket.salesEnd && ticket.salesEnd < new Date()) {
-      throw new BadRequestException('Ticket sales have ended');
+      throw new BadRequestException('tickets.SALES_ENDED');
     }
 
     if (ticket.available < quantity) {
-      throw new BadRequestException('Not enough tickets available');
+      throw new BadRequestException('tickets.INSUFFICIENT_AVAILABILITY');
     }
 
     const totalPrice = Number(ticket.price ?? 0) * quantity;
@@ -130,7 +130,7 @@ export class TicketsService {
       });
 
       if (updatedTicket.available < 0) {
-        throw new BadRequestException('Not enough tickets available');
+        throw new BadRequestException('tickets.INSUFFICIENT_AVAILABILITY');
       }
 
       const createdPurchase = await tx.eventTicketPurchase.create({
@@ -183,11 +183,11 @@ export class TicketsService {
     });
 
     if (!purchase) {
-      throw new NotFoundException('Purchase not found');
+      throw new NotFoundException('tickets.PURCHASE_NOT_FOUND');
     }
 
     if (purchase.status === 'CANCELLED' || purchase.status === 'REFUNDED') {
-      throw new BadRequestException('Purchase is already cancelled or refunded');
+      throw new BadRequestException('tickets.PURCHASE_ALREADY_CANCELLED');
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -230,14 +230,14 @@ export class TicketsService {
     });
 
     if (!ticket) {
-      throw new NotFoundException('Ticket not found');
+      throw new NotFoundException('tickets.NOT_FOUND');
     }
 
     await this.prisma.eventTicket.delete({
       where: { id },
     });
 
-    return { message: 'Ticket deleted successfully' };
+    return { message: 'tickets.DELETED_SUCCESS' };
   }
 
   async reorder(eventId: string, userId: string, ticketOrders: { id: string; order: number }[]) {

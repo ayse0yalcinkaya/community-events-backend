@@ -1,0 +1,13 @@
+{
+  "NOT_FOUND": "Topluluk bulunamadi",
+  "LOGO_REQUIRED": "Logo dosyasi zorunludur",
+  "COVER_IMAGE_REQUIRED": "Kapak gorseli zorunludur",
+  "MEMBERSHIP_NOT_FOUND": "Topluluk uyeligi bulunamadi",
+  "OWNER_CANNOT_LEAVE": "Topluluk sahibi topluluktan ayrilamaz",
+  "SELF_ROLE_CHANGE_FORBIDDEN": "Mulk aktarimi disinda kendi rolunu degistiremezsin",
+  "OWNER_TRANSFER_ONLY": "Sahiplik sadece mevcut sahip tarafindan aktarilabilir",
+  "OWNER_ROLE_TRANSFER_REQUIRED": "Sahip rolunu degistirmek icin sahiplik aktarimi yapilmalidir",
+  "OWNER_CANNOT_BE_REMOVED": "Topluluk sahibi cikarilamaz",
+  "ADMIN_CANNOT_REMOVE_ADMIN": "Adminler baska bir admini cikarmaz",
+  "COMMUNITY_ID_MISMATCH": "Topluluk kimligi eslesmiyor"
+}

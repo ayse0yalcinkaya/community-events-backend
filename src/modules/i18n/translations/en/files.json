@@ -1,0 +1,8 @@
+{
+  "NO_FILES": "No files provided",
+  "UPLOAD_FAILED": "All file uploads failed. Please try again later.",
+  "SAVE_METADATA_FAILED": "Failed to save file metadata. Upload rolled back.",
+  "NOT_FOUND": "File not found",
+  "INSUFFICIENT_PERMISSIONS": "Insufficient permissions",
+  "DOWNLOAD_LINK_FAILED": "Unable to generate download link. Please try again later."
+}

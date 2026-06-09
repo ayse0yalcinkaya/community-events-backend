@@ -1,0 +1,8 @@
+{
+  "CREATE_FAILED": "Announcement could not be created",
+  "NOT_FOUND": "Announcement not found",
+  "FETCH_FAILED": "Announcements could not be fetched",
+  "UPDATE_FAILED": "Announcement could not be updated",
+  "DELETE_FAILED": "Announcement could not be deleted",
+  "INVALID_DATE_RANGE": "Start date cannot be after end date"
+}

@@ -1,0 +1,6 @@
+{
+  "NOT_FOUND": "Speaker not found",
+  "MISMATCH": "One or more speakers do not belong to this event",
+  "EVENT_NOT_FOUND": "Event not found",
+  "MANAGE_NOT_FOUND": "Event not found or not manageable by current user"
+}

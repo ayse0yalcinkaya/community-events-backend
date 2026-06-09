@@ -1,0 +1,9 @@
+{
+  "NOT_FOUND": "Ticket not found",
+  "SALES_NOT_STARTED": "Ticket sales have not started yet",
+  "SALES_ENDED": "Ticket sales have ended",
+  "INSUFFICIENT_AVAILABILITY": "Not enough tickets available",
+  "PURCHASE_NOT_FOUND": "Purchase not found",
+  "PURCHASE_ALREADY_CANCELLED": "Purchase is already cancelled or refunded",
+  "DELETED_SUCCESS": "Ticket deleted successfully"
+}

@@ -20,17 +20,12 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthUserResDto } from './dto/user-res.dto';
 import { VerifyPhoneDto } from './dto/verify-phone.dto';
 
-// Enums
-import { SmsType } from '../sms/enums/sms-type.enum';
-
 // Services
 import { PrismaService } from '../../database/prisma.service';
 import { OtpService } from './services/otp.service';
 import { TokenService } from './services/token.service';
 import { UserProviderService } from './services/user-provider.service';
-import { SmsService } from '../sms/services/sms.service';
-// Utils
-import { getOtpMessage } from '../../common/utils';
+import { WhatsAppCloudService } from '../sms/services/whatsapp-cloud.service';
 
 @Injectable()
 export class AuthService {
@@ -41,7 +36,7 @@ export class AuthService {
     private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
     private readonly userProviderService: UserProviderService,
-    private readonly smsService: SmsService,
+    private readonly whatsAppCloudService: WhatsAppCloudService,
     private readonly i18n: I18nService,
   ) {}
 
@@ -62,22 +57,22 @@ export class AuthService {
     this.logger.error(`${prefix} ${context} SMS to ${phoneNumber}: ${errorMessage}`, errorStack);
   }
 
-  private sendOtpSmsWithLogging(phoneNumber: string, message: string, context: string) {
+  private sendOtpWhatsAppWithLogging(phoneNumber: string, code: string, context: string) {
     try {
-      void this.smsService.sendSms(phoneNumber, message, SmsType.OTP).catch((error: unknown) => {
-        this.logSmsError(phoneNumber, context, error, 'Failed to send');
+      void this.whatsAppCloudService.sendOtpTemplate(phoneNumber, code).catch((error: unknown) => {
+        this.logSmsError(phoneNumber, context, error, 'Failed to send WhatsApp');
       });
     } catch (error: unknown) {
-      this.logSmsError(phoneNumber, context, error, 'Error sending');
+      this.logSmsError(phoneNumber, context, error, 'Error sending WhatsApp');
     }
   }
 
   private async throwOtpValidationError(reason?: string, unauthorized = false): Promise<never> {
     if (reason === 'EXPIRED') {
-      throw new BadRequestException('OTP has expired. Please request a new one.');
+      throw new BadRequestException('auth-extra.OTP_EXPIRED');
     }
     if (reason === 'MAX_ATTEMPTS') {
-      throw new BadRequestException('Maximum OTP attempts exceeded. Please request a new one.');
+      throw new BadRequestException('auth-extra.OTP_MAX_ATTEMPTS');
     }
 
     const message = await this.i18n.translate('auth.OTP_INVALID');
@@ -94,7 +89,7 @@ export class AuthService {
     const existingUser = await this.findUserByPhone(registerDto.phoneNumber);
 
     if (existingUser) {
-      throw new ConflictException(await this.i18n.translate('common.ERROR'));
+      throw new ConflictException(await this.i18n.translate('auth.PHONE_ALREADY_EXISTS'));
     }
 
     // 2. Create user and assign default role via UserRole in a transaction
@@ -169,9 +164,8 @@ export class AuthService {
     // 6. Generate and send OTP
     const otpCode = await this.otpService.generateOtp(user.id, 'phone-verification');
 
-    // Send SMS via FONIVA (Epic 5.1) - async fire-and-forget
-    const smsMessage = getOtpMessage(this.i18n, 'phone-verification', otpCode);
-    this.sendOtpSmsWithLogging(user.phoneNumber, smsMessage, 'verification');
+    // Send OTP via WhatsApp Cloud API - async fire-and-forget
+    this.sendOtpWhatsAppWithLogging(user.phoneNumber, otpCode, 'verification');
 
     // 7. Return sanitized user (exclude passwordHash)
     return plainToInstance(AuthUserResDto, user, {
@@ -319,9 +313,8 @@ export class AuthService {
     // 3. Generate OTP (6-digit, 5-minute expiry)
     const otpCode = await this.otpService.generateOtp(user.id, 'password-reset');
 
-    // 4. Send SMS via FONIVA (Epic 5.1) - async fire-and-forget
-    const smsMessage = getOtpMessage(this.i18n, 'password-reset', otpCode);
-    this.sendOtpSmsWithLogging(user.phoneNumber, smsMessage, 'password reset');
+    // 4. Send OTP via WhatsApp Cloud API - async fire-and-forget
+    this.sendOtpWhatsAppWithLogging(user.phoneNumber, otpCode, 'password reset');
 
     return {
       success: true,
@@ -466,9 +459,8 @@ export class AuthService {
     // 5. Generate OTP (purpose: login)
     const otpCode = await this.otpService.generateOtp(user.id, 'login');
 
-    // 6. Send SMS via FONIVA (Epic 5.1) - async fire-and-forget
-    const smsMessage = getOtpMessage(this.i18n, 'login', otpCode);
-    this.sendOtpSmsWithLogging(user.phoneNumber, smsMessage, 'login OTP');
+    // 6. Send OTP via WhatsApp Cloud API - async fire-and-forget
+    this.sendOtpWhatsAppWithLogging(user.phoneNumber, otpCode, 'login OTP');
 
     return {
       success: true,
@@ -568,8 +560,7 @@ export class AuthService {
     const otpCode = await this.otpService.generateOtp(user.id, 'phone-verification');
 
     // 5. Send SMS via FONIVA (Epic 5.1) - async fire-and-forget
-    const smsMessage = getOtpMessage(this.i18n, 'phone-verification', otpCode);
-    this.sendOtpSmsWithLogging(user.phoneNumber, smsMessage, 'verification');
+    this.sendOtpWhatsAppWithLogging(user.phoneNumber, otpCode, 'verification');
 
     return {
       success: true,

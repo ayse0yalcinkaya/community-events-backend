@@ -1,0 +1,4 @@
+{
+  "OTP_EXPIRED": "OTP has expired. Please request a new one.",
+  "OTP_MAX_ATTEMPTS": "Maximum OTP attempts exceeded. Please request a new one."
+}

@@ -1,0 +1,9 @@
+{
+  "NOT_FOUND": "Bilet bulunamadi",
+  "SALES_NOT_STARTED": "Bilet satisi henuz baslamadi",
+  "SALES_ENDED": "Bilet satisi sona erdi",
+  "INSUFFICIENT_AVAILABILITY": "Yeterli bilet kalmadi",
+  "PURCHASE_NOT_FOUND": "Satin alim bulunamadi",
+  "PURCHASE_ALREADY_CANCELLED": "Satin alim zaten iptal edilmis veya iade edilmis",
+  "DELETED_SUCCESS": "Bilet basariyla silindi"
+}

@@ -37,7 +37,7 @@ export class I18nValidationExceptionFilter extends BaseI18nValidationExceptionFi
       ) => {
         const ctx = host.switchToHttp();
         const request = ctx.getRequest<Request>();
-        const lang = (request as any).i18nLang || 'en';
+        const lang = (request as any).i18nLang || 'tr';
 
         // Translate property names and flatten to string array
         const errors = this.translateAndFlattenErrors(formattedErrors as I18nValidationError[], lang);

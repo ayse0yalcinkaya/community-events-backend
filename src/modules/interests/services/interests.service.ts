@@ -50,7 +50,7 @@ export class InterestsService {
     });
 
     if (interests.length !== interestIds.length) {
-      throw new BadRequestException('One or more interests are invalid');
+      throw new BadRequestException('interests.INVALID_SELECTION');
     }
 
     await this.prisma.$transaction(async (tx) => {

@@ -1,0 +1,4 @@
+{
+  "OTP_EXPIRED": "OTP suresi doldu. Lutfen yeni bir kod isteyin.",
+  "OTP_MAX_ATTEMPTS": "Maksimum OTP deneme sayisi asildi. Lutfen yeni bir kod isteyin."
+}

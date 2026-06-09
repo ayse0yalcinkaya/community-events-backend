@@ -42,7 +42,7 @@ export class CategoriesService {
     });
 
     if (!category || category.status !== 'ACTIVE') {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException('categories.NOT_FOUND');
     }
 
     return category;
@@ -57,7 +57,7 @@ export class CategoriesService {
     });
 
     if (!category || category.status !== 'ACTIVE') {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException('categories.NOT_FOUND');
     }
 
     const categoryIds = [category.id, ...category.children.map((child) => child.id)];

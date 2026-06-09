@@ -1,0 +1,6 @@
+{
+  "SELF_CONNECT_FORBIDDEN": "Kendinle baglanti kuramazsin",
+  "ALREADY_CONNECTED": "Kullanicilar zaten bagli",
+  "RECORD_ALREADY_EXISTS": "Bu kullanicilar arasinda zaten bir baglanti kaydi var",
+  "PENDING_NOT_FOUND": "Bekleyen baglanti istegi bulunamadi"
+}

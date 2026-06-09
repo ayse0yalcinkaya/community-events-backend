@@ -112,7 +112,7 @@ export class FilesController {
   ): Promise<FileResDto[]> {
     // Validate files array exists
     if (!files || files.length === 0) {
-      throw new BadRequestException('No files provided');
+      throw new BadRequestException('files.NO_FILES');
     }
 
     // Upload files to S3 and save metadata to database

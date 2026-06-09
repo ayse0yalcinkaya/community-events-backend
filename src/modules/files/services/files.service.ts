@@ -166,7 +166,7 @@ export class FilesService implements IFilesService {
   async uploadFiles(files: Express.Multer.File[], userID: string): Promise<File[]> {
     // Validate file count
     if (!files || files.length === 0) {
-      throw new BadRequestException('No files provided');
+      throw new BadRequestException('files.NO_FILES');
     }
 
     if (files.length > this.MAX_FILES_PER_REQUEST) {
@@ -218,7 +218,7 @@ export class FilesService implements IFilesService {
 
     // If all uploads failed, return 503 Service Unavailable
     if (uploadedFiles.length === 0) {
-      throw new ServiceUnavailableException('All file uploads failed. Please try again later.');
+      throw new ServiceUnavailableException('files.UPLOAD_FAILED');
     }
 
     // Log partial success if applicable
@@ -262,7 +262,7 @@ export class FilesService implements IFilesService {
 
       await this.cleanupS3Files(uploadedFiles.map((f) => f.s3Key));
 
-      throw new InternalServerErrorException('Failed to save file metadata. Upload rolled back.');
+      throw new InternalServerErrorException('files.SAVE_METADATA_FAILED');
     }
   }
 
@@ -388,13 +388,13 @@ export class FilesService implements IFilesService {
     // Check: File exists
     if (!file) {
       this.logger.warn(`File not found: ${fileId} (requested by user ${userID})`);
-      throw new NotFoundException('File not found');
+      throw new NotFoundException('files.NOT_FOUND');
     }
 
     // Check: Soft-delete filtering (exclude deleted files)
     if (file.deletedAt !== null) {
       this.logger.warn(`File access denied: soft-deleted - fileID: ${fileId}`);
-      throw new NotFoundException('File not found');
+      throw new NotFoundException('files.NOT_FOUND');
     }
 
     // Check: Authorization (owner OR has FILES.VIEW permission)
@@ -405,7 +405,7 @@ export class FilesService implements IFilesService {
       this.logger.warn(
         `File access denied: not authorized - fileID: ${fileId}, userID: ${userID}, isOwner: ${isOwner}, hasViewPermission: ${hasViewPermission}`,
       );
-      throw new ForbiddenException('Insufficient permissions');
+      throw new ForbiddenException('files.INSUFFICIENT_PERMISSIONS');
     }
 
     // Log successful file metadata retrieval
@@ -441,7 +441,7 @@ export class FilesService implements IFilesService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(`Failed to generate pre-signed URL: fileID: ${fileId}, error: ${err.message}`, err.stack);
-      throw new ServiceUnavailableException('Unable to generate download link. Please try again later.');
+      throw new ServiceUnavailableException('files.DOWNLOAD_LINK_FAILED');
     }
   }
 

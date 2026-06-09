@@ -14,6 +14,7 @@ import fonivaConfig from './config/foniva.config';
 import jwtConfig from './config/jwt.config';
 import mailConfig from './config/mail.config';
 import redisConfig from './config/redis.config';
+import whatsappConfig from './config/whatsapp.config';
 
 // Services
 import { AppService } from './app.service';
@@ -44,9 +45,16 @@ import { DiscoverModule } from './modules/discover/discover.module';
 import { SpeakersModule } from './modules/speakers/speakers.module';
 import { SponsorsModule } from './modules/sponsors/sponsors.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
-const translationsPath = path.join(__dirname, 'modules', 'i18n', 'translations');
-const fallbackTranslationsPath = path.join(process.cwd(), 'src', 'modules', 'i18n', 'translations');
-const i18nTranslationsPath = fs.existsSync(translationsPath) ? translationsPath : fallbackTranslationsPath;
+
+const i18nPathCandidates = [
+  path.join(__dirname, 'modules', 'i18n', 'translations'),
+  path.join(__dirname, 'src', 'modules', 'i18n', 'translations'),
+  path.join(process.cwd(), 'dist', 'modules', 'i18n', 'translations'),
+  path.join(process.cwd(), 'dist', 'src', 'modules', 'i18n', 'translations'),
+  path.join(process.cwd(), 'src', 'modules', 'i18n', 'translations'),
+];
+
+const i18nTranslationsPath = i18nPathCandidates.find((candidate) => fs.existsSync(candidate)) ?? i18nPathCandidates.at(-1)!;
 
 @Module({
   imports: [
@@ -60,11 +68,11 @@ const i18nTranslationsPath = fs.existsSync(translationsPath) ? translationsPath 
         abortEarly: false, // Show all validation errors at once
         allowUnknown: true, // Allow extra variables for future epics
       },
-      load: [appConfig, databaseConfig, jwtConfig, awsConfig, fonivaConfig, mailConfig, redisConfig], // Load config factory functions
+      load: [appConfig, databaseConfig, jwtConfig, awsConfig, fonivaConfig, whatsappConfig, mailConfig, redisConfig], // Load config factory functions
     }),
     // I18n module for multi-language support (Story 7.1)
     I18nModule.forRoot({
-      fallbackLanguage: 'en', // Default language when translation is missing
+      fallbackLanguage: 'tr', // Default language when translation is missing
       loaderOptions: {
         path: i18nTranslationsPath,
         watch: true, // Enable hot-reload in development

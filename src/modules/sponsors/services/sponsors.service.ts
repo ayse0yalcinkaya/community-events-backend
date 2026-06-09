@@ -49,7 +49,7 @@ export class SponsorsService {
     });
 
     if (!sponsor) {
-      throw new NotFoundException('Sponsor not found');
+      throw new NotFoundException('sponsors.NOT_FOUND');
     }
 
     return this.toSponsorResponse(sponsor);
@@ -63,7 +63,7 @@ export class SponsorsService {
     });
 
     if (!sponsor) {
-      throw new NotFoundException('Sponsor not found');
+      throw new NotFoundException('sponsors.NOT_FOUND');
     }
 
     const updated = await this.prisma.eventSponsor.update({
@@ -88,7 +88,7 @@ export class SponsorsService {
     });
 
     if (!sponsor) {
-      throw new NotFoundException('Sponsor not found');
+      throw new NotFoundException('sponsors.NOT_FOUND');
     }
 
     await this.prisma.eventSponsor.delete({
@@ -107,7 +107,7 @@ export class SponsorsService {
     });
 
     if (existingSponsors.length !== sponsorOrders.length) {
-      throw new BadRequestException('One or more sponsors do not belong to this event');
+      throw new BadRequestException('sponsors.MISMATCH');
     }
 
     await this.prisma.$transaction(
@@ -128,7 +128,7 @@ export class SponsorsService {
     });
 
     if (!event) {
-      throw new BadRequestException('Event not found');
+      throw new BadRequestException('sponsors.EVENT_NOT_FOUND');
     }
   }
 
@@ -160,7 +160,7 @@ export class SponsorsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found or not manageable by current user');
+      throw new NotFoundException('sponsors.MANAGE_NOT_FOUND');
     }
   }
 

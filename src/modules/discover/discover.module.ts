@@ -7,7 +7,11 @@ import { TrendingService } from './services/trending.service';
 
 // Controllers
 import { DiscoverController } from './controllers/discover.controller';
+
+// Modules
+import { PrismaModule } from '../../database/prisma.module';
 @Module({
+  imports: [PrismaModule],
   controllers: [DiscoverController],
   providers: [DiscoverService, TrendingService],
   exports: [DiscoverService, TrendingService],

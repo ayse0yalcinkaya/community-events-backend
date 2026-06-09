@@ -1,0 +1,6 @@
+{
+  "SESSION_END_BEFORE_START": "Session end time must be after start time",
+  "COVER_IMAGE_REQUIRED": "Cover image is required",
+  "NOT_FOUND": "Event not found",
+  "PUBLISHED_NOT_FOUND": "Published event not found"
+}

@@ -1,0 +1,8 @@
+{
+  "CREATE_FAILED": "Duyuru olusturulamadi",
+  "NOT_FOUND": "Duyuru bulunamadi",
+  "FETCH_FAILED": "Duyurular getirilemedi",
+  "UPDATE_FAILED": "Duyuru guncellenemedi",
+  "DELETE_FAILED": "Duyuru silinemedi",
+  "INVALID_DATE_RANGE": "Baslangic tarihi bitis tarihinden sonra olamaz"
+}

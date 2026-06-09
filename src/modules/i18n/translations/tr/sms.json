@@ -1,0 +1,11 @@
+{
+  "WHATSAPP_DISABLED": "WhatsApp OTP gonderimi devre disi",
+  "WHATSAPP_CONFIG_INCOMPLETE": "WhatsApp Cloud ayarlari eksik",
+  "WHATSAPP_INVALID_RESPONSE": "Gecersiz WhatsApp API yaniti",
+  "WHATSAPP_NETWORK_ERROR": "WhatsApp ag hatasi",
+  "WHATSAPP_AUTH_FAILED": "WhatsApp kimlik dogrulamasi basarisiz",
+  "WHATSAPP_API_ERROR": "WhatsApp API hatasi",
+  "WHATSAPP_SEND_FAILED": "WhatsApp gonderimi basarisiz",
+  "WHATSAPP_WEBHOOK_TOKEN_NOT_CONFIGURED": "WhatsApp webhook dogrulama tokeni ayarlanmamis",
+  "WHATSAPP_WEBHOOK_VERIFICATION_FAILED": "WhatsApp webhook dogrulamasi basarisiz"
+}

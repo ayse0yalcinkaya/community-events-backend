@@ -1,0 +1,6 @@
+{
+  "SESSION_END_BEFORE_START": "Oturum bitis saati baslangic saatinden sonra olmalidir",
+  "COVER_IMAGE_REQUIRED": "Kapak gorseli zorunludur",
+  "NOT_FOUND": "Etkinlik bulunamadi",
+  "PUBLISHED_NOT_FOUND": "Yayinlanmis etkinlik bulunamadi"
+}

@@ -1,0 +1,6 @@
+{
+  "SELF_CONNECT_FORBIDDEN": "You cannot connect with yourself",
+  "ALREADY_CONNECTED": "Users are already connected",
+  "RECORD_ALREADY_EXISTS": "A connection record already exists between these users",
+  "PENDING_NOT_FOUND": "Pending connection request not found"
+}

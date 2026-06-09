@@ -1,0 +1,8 @@
+{
+  "NO_FILES": "Dosya yuklenmedi",
+  "UPLOAD_FAILED": "Tum dosya yuklemeleri basarisiz oldu. Lutfen daha sonra tekrar deneyin.",
+  "SAVE_METADATA_FAILED": "Dosya metadatasi kaydedilemedi. Yukleme geri alindi.",
+  "NOT_FOUND": "Dosya bulunamadi",
+  "INSUFFICIENT_PERMISSIONS": "Yetersiz yetki",
+  "DOWNLOAD_LINK_FAILED": "Indirme baglantisi olusturulamadi. Lutfen daha sonra tekrar deneyin."
+}

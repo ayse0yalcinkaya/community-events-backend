@@ -94,7 +94,7 @@ export class EventsService {
 
     dto.sessions.forEach((session) => {
       if (session.startAt >= session.endAt) {
-        throw new BadRequestException('Session end time must be after start time');
+        throw new BadRequestException('events.SESSION_END_BEFORE_START');
       }
     });
 
@@ -193,7 +193,7 @@ export class EventsService {
 
   async updateCoverImage(eventId: string, userId: string, file?: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException('Cover image file is required');
+      throw new BadRequestException('events.COVER_IMAGE_REQUIRED');
     }
 
     await this.ensureEventManageAccess(eventId, userId);

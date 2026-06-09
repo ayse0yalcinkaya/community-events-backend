@@ -102,7 +102,7 @@ export class CommunitiesService {
     });
 
     if (!community) {
-      throw new NotFoundException('Community not found');
+      throw new NotFoundException('communities.NOT_FOUND');
     }
 
     return this.toCommunityResponse(community, userId);
@@ -131,7 +131,7 @@ export class CommunitiesService {
 
   async updateLogo(id: string, userId: string, file?: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException('Logo file is required');
+      throw new BadRequestException('communities.LOGO_REQUIRED');
     }
 
     await this.ensureManageAccess(id, userId);
@@ -147,7 +147,7 @@ export class CommunitiesService {
 
   async updateCoverImage(id: string, userId: string, file?: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException('Cover image file is required');
+      throw new BadRequestException('communities.COVER_IMAGE_REQUIRED');
     }
 
     await this.ensureManageAccess(id, userId);
@@ -200,11 +200,11 @@ export class CommunitiesService {
     });
 
     if (!membership) {
-      throw new NotFoundException('Community membership not found');
+      throw new NotFoundException('communities.MEMBERSHIP_NOT_FOUND');
     }
 
     if (membership.role === 'OWNER') {
-      throw new BadRequestException('Community owner cannot leave the community');
+      throw new BadRequestException('communities.OWNER_CANNOT_LEAVE');
     }
 
     await this.prisma.communityMember.update({
@@ -249,12 +249,12 @@ export class CommunitiesService {
     const membership = await this.ensureActiveMembership(id, memberId);
 
     if (membership.userID === currentUserId && role !== CommunityMemberRole.OWNER) {
-      throw new BadRequestException('You cannot change your own role unless transferring ownership');
+      throw new BadRequestException('communities.SELF_ROLE_CHANGE_FORBIDDEN');
     }
 
     if (role === CommunityMemberRole.OWNER) {
       if (manager.role !== CommunityMemberRole.OWNER && manager.community.createdByUserID !== currentUserId) {
-        throw new BadRequestException('Only the current owner can transfer ownership');
+        throw new BadRequestException('communities.OWNER_TRANSFER_ONLY');
       }
 
       await this.prisma.$transaction(async (tx) => {
@@ -288,7 +288,7 @@ export class CommunitiesService {
     }
 
     if (membership.role === CommunityMemberRole.OWNER) {
-      throw new BadRequestException('Owner role can only be changed through ownership transfer');
+      throw new BadRequestException('communities.OWNER_ROLE_TRANSFER_REQUIRED');
     }
 
     await this.prisma.communityMember.update({
@@ -309,11 +309,11 @@ export class CommunitiesService {
     const membership = await this.ensureActiveMembership(id, memberId);
 
     if (membership.role === CommunityMemberRole.OWNER) {
-      throw new BadRequestException('Owner cannot be removed from the community');
+      throw new BadRequestException('communities.OWNER_CANNOT_BE_REMOVED');
     }
 
     if (manager.role === CommunityMemberRole.ADMIN && membership.role === CommunityMemberRole.ADMIN) {
-      throw new BadRequestException('Admins cannot remove another admin');
+      throw new BadRequestException('communities.ADMIN_CANNOT_REMOVE_ADMIN');
     }
 
     await this.prisma.communityMember.update({
@@ -439,7 +439,7 @@ export class CommunitiesService {
     });
 
     if (!community) {
-      throw new NotFoundException('Community not found');
+      throw new NotFoundException('communities.NOT_FOUND');
     }
 
     const [upcomingEvents, recentAnnouncements, memberCount, galleryCount] = await Promise.all([
@@ -484,7 +484,7 @@ export class CommunitiesService {
     await this.ensureManageAccess(id, userId);
 
     if (dto.communityID !== id) {
-      throw new BadRequestException('Community id mismatch');
+      throw new BadRequestException('communities.COMMUNITY_ID_MISMATCH');
     }
 
     const announcement = await this.announcementsService.createCommunityAnnouncement(dto, userId);
