@@ -65,3 +65,6 @@ prisma/schema.prisma
 
 
 swagger.json
+
+# Keep the tracked S3 service even if a global gitignore excludes it.
+!src/modules/files/services/s3.service.ts
