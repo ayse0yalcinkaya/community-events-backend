@@ -1,13 +1,16 @@
 // Libraries
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { I18nService } from 'nestjs-i18n';
 import { UserTypeEnum } from '@/common/enums';
 
 // DTOs
 import { CreateUserDto } from '../dto/request/create-user.dto';
+import { QueryDiscoverPeopleDto } from '../dto/request/query-discover-people.dto';
 import { QueryUserDto } from '../dto/request/query-user.dto';
 import { UpdateProfileDto } from '../dto/request/update-profile.dto';
 import { UpdateUserDto } from '../dto/request/update-user.dto';
+import { DiscoverPersonResDto } from '../dto/response/discover-person-res.dto';
 
 // Enums
 import { NotificationChannel } from '../../notifications/enums/notification-channel.enum';
@@ -275,6 +278,174 @@ export class UsersService {
       currentUserAttendanceVisibility: event.attendances[0]?.visibility ?? null,
       isBookmarked: event.bookmarks.length > 0,
     }));
+  }
+
+  async discoverPeople(query: QueryDiscoverPeopleDto, currentUserId?: string) {
+    const page = Math.max(query.page ?? 1, 1);
+    const limit = Math.min(Math.max(query.limit ?? 12, 1), 50);
+    const skip = (page - 1) * limit;
+    const searchTerm = query.q?.trim();
+
+    const where: Prisma.UserWhereInput = {
+      deletedAt: null,
+      isActive: true,
+      ...(currentUserId ? { id: { not: currentUserId } } : {}),
+      ...(searchTerm
+        ? {
+            OR: [
+              { firstName: { contains: searchTerm, mode: 'insensitive' } },
+              { lastName: { contains: searchTerm, mode: 'insensitive' } },
+              { headline: { contains: searchTerm, mode: 'insensitive' } },
+              { bio: { contains: searchTerm, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...(query.city
+        ? {
+            OR: [
+              { city: { equals: query.city, mode: 'insensitive' } },
+              {
+                communityMemberships: {
+                  some: {
+                    status: 'ACTIVE',
+                    community: {
+                      city: { equals: query.city, mode: 'insensitive' },
+                      deletedAt: null,
+                      status: 'ACTIVE',
+                    },
+                  },
+                },
+              },
+              {
+                eventAttendances: {
+                  some: {
+                    status: AttendanceStatus.APPROVED,
+                    visibility: { in: ['PUBLIC', 'ATTENDEES_ONLY'] },
+                    event: {
+                      deletedAt: null,
+                      status: EventStatus.PUBLISHED,
+                      location: {
+                        city: { equals: query.city, mode: 'insensitive' },
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [users, count] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          headline: true,
+          bio: true,
+          city: true,
+          profileImageID: true,
+          eventAttendances: {
+            where: {
+              status: AttendanceStatus.APPROVED,
+              visibility: { in: ['PUBLIC', 'ATTENDEES_ONLY'] },
+              event: {
+                deletedAt: null,
+                status: EventStatus.PUBLISHED,
+              },
+            },
+            include: {
+              event: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  format: true,
+                  location: { select: { city: true } },
+                  sessions: {
+                    where: { startAt: { gte: new Date() } },
+                    orderBy: { startAt: 'asc' },
+                    take: 1,
+                    select: { startAt: true },
+                  },
+                },
+              },
+            },
+            orderBy: { registeredAt: 'desc' },
+            take: 3,
+          },
+          sentConnectionRequests: {
+            where: { status: 'ACCEPTED' },
+            select: { id: true },
+          },
+          receivedConnectionRequests: {
+            where: { status: 'ACCEPTED' },
+            select: { id: true },
+          },
+        },
+        orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    const userIds = users.map((user) => user.id);
+    let connections: Array<{ requesterUserID: string; addresseeUserID: string; status: string }> = [];
+
+    if (currentUserId && userIds.length) {
+      connections = await this.prisma.userConnection.findMany({
+        where: {
+          OR: [
+            { requesterUserID: currentUserId, addresseeUserID: { in: userIds } },
+            { addresseeUserID: currentUserId, requesterUserID: { in: userIds } },
+          ],
+        },
+        select: {
+          requesterUserID: true,
+          addresseeUserID: true,
+          status: true,
+        },
+      });
+    }
+
+    const connectionMap = new Map(
+      connections.map((connection) => [
+        connection.requesterUserID === currentUserId ? connection.addresseeUserID : connection.requesterUserID,
+        connection.status,
+      ]),
+    );
+
+    return {
+      items: users.map((user) =>
+        plainToInstance(
+          DiscoverPersonResDto,
+          {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            headline: user.headline,
+            bio: user.bio,
+            city: user.city,
+            profileImageID: user.profileImageID,
+            connectionStatus: connectionMap.get(user.id) ?? null,
+            totalConnections: user.sentConnectionRequests.length + user.receivedConnectionRequests.length,
+            publicEvents: user.eventAttendances.map(({ event }) => ({
+              id: event.id,
+              title: event.title,
+              slug: event.slug,
+              format: event.format,
+              city: event.location?.city ?? null,
+              nextSessionStartAt: event.sessions[0]?.startAt ?? null,
+            })),
+          },
+          { excludeExtraneousValues: true },
+        ),
+      ),
+      count,
+    };
   }
 
   async getMyAttendingEvents(userId: string) {

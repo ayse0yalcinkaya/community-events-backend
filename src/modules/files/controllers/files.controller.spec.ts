@@ -145,7 +145,7 @@ describe('FilesController', () => {
 
     it('should throw BadRequestException if no files provided', async () => {
       await expect(controller.uploadFiles([], mockUser)).rejects.toThrow(BadRequestException);
-      await expect(controller.uploadFiles([], mockUser)).rejects.toThrow('No files provided');
+      await expect(controller.uploadFiles([], mockUser)).rejects.toThrow('files.NO_FILES');
     });
 
     it('should throw BadRequestException if files array is null/undefined', async () => {

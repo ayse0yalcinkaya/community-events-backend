@@ -18,7 +18,9 @@ import { plainToInstance } from 'class-transformer';
 
 // DTOs
 import { QueryUpcomingEventsDto } from '../dto/request/query-upcoming-events.dto';
+import { QueryDiscoverPeopleDto } from '../dto/request/query-discover-people.dto';
 import { UpdateProfileDto } from '../dto/request/update-profile.dto';
+import { DiscoverPersonResDto } from '../dto/response/discover-person-res.dto';
 import { PublicProfileResDto } from '../dto/response/public-profile-res.dto';
 import { UserDashboardResDto } from '../dto/response/user-dashboard-res.dto';
 import { UserResDto } from '../dto/response/user-res.dto';
@@ -208,6 +210,17 @@ export class ProfileController {
     }
 
     return userDto;
+  }
+
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
+  @Get('discover')
+  @ApiEndpoint('Kisileri kesif listesinde getir', { type: DiscoverPersonResDto, isPublic: true, isPaginated: true })
+  async discoverPeople(
+    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryDiscoverPeopleDto,
+    @CurrentUser() user?: JwtPayload,
+  ) {
+    return this.usersService.discoverPeople(query, user?.sub);
   }
 
   @Public()

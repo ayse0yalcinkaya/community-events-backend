@@ -1,6 +1,6 @@
 // Libraries
 import { Injectable } from '@nestjs/common';
-import { EventStatus, EventVisibility, Prisma } from '@prisma/client';
+import { AttendanceStatus, AttendanceVisibility, ConnectionStatus, EventStatus, EventVisibility, Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 
 // DTOs
@@ -8,12 +8,55 @@ import { EventResDto } from '@/modules/events/dto/response/event-res.dto';
 import { QueryDiscoverSearchDto } from '../dto/query-discover-search.dto';
 import { DiscoverHomeResDto } from '../dto/response/discover-home-res.dto';
 import { DiscoverUnifiedSearchResDto } from '../dto/response/discover-unified-search-res.dto';
+import { QueryDiscoverPeopleDto } from '@/modules/users/dto/request/query-discover-people.dto';
+import { DiscoverPersonResDto } from '@/modules/users/dto/response/discover-person-res.dto';
 
 // Services
 import { PrismaService } from '@/database/prisma.service';
 @Injectable()
 export class DiscoverService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getCities() {
+    const [eventCities, communityCities, userCities] = await Promise.all([
+      this.prisma.eventLocation.findMany({
+        where: {
+          city: { not: null },
+          event: {
+            deletedAt: null,
+            status: EventStatus.PUBLISHED,
+            visibility: EventVisibility.PUBLIC,
+          },
+        },
+        select: { city: true },
+        distinct: ['city'],
+      }),
+      this.prisma.community.findMany({
+        where: {
+          deletedAt: null,
+          status: 'ACTIVE',
+          city: { not: null },
+        },
+        select: { city: true },
+        distinct: ['city'],
+      }),
+      this.prisma.user.findMany({
+        where: {
+          deletedAt: null,
+          isActive: true,
+          city: { not: null },
+        },
+        select: { city: true },
+        distinct: ['city'],
+      }),
+    ]);
+
+    return [...eventCities, ...communityCities, ...userCities]
+      .map((item) => item.city?.trim())
+      .filter((city): city is string => Boolean(city))
+      .filter((city, index, cities) => cities.findIndex((value) => value.toLocaleLowerCase('tr-TR') === city.toLocaleLowerCase('tr-TR')) === index)
+      .sort((a, b) => a.localeCompare(b, 'tr'));
+  }
 
   async getHome() {
     const now = new Date();
@@ -292,6 +335,172 @@ export class DiscoverService {
       count,
       page,
       limit,
+    };
+  }
+
+  async discoverPeople(query: QueryDiscoverPeopleDto, currentUserId?: string) {
+    const page = Math.max(query.page ?? 1, 1);
+    const limit = Math.min(Math.max(query.limit ?? 12, 1), 50);
+    const skip = (page - 1) * limit;
+    const searchTerm = query.q?.trim();
+
+    const where: Prisma.UserWhereInput = {
+      deletedAt: null,
+      isActive: true,
+      ...(currentUserId ? { id: { not: currentUserId } } : {}),
+      ...(searchTerm
+        ? {
+            OR: [
+              { firstName: { contains: searchTerm, mode: 'insensitive' } },
+              { lastName: { contains: searchTerm, mode: 'insensitive' } },
+              { headline: { contains: searchTerm, mode: 'insensitive' } },
+              { bio: { contains: searchTerm, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...(query.city
+        ? {
+            OR: [
+              { city: { equals: query.city, mode: 'insensitive' } },
+              {
+                communityMemberships: {
+                  some: {
+                    status: 'ACTIVE',
+                    community: {
+                      city: { equals: query.city, mode: 'insensitive' },
+                      deletedAt: null,
+                      status: 'ACTIVE',
+                    },
+                  },
+                },
+              },
+              {
+                eventAttendances: {
+                  some: {
+                    status: AttendanceStatus.APPROVED,
+                    visibility: { in: [AttendanceVisibility.PUBLIC, AttendanceVisibility.ATTENDEES_ONLY] },
+                    event: {
+                      deletedAt: null,
+                      status: EventStatus.PUBLISHED,
+                      visibility: EventVisibility.PUBLIC,
+                      location: {
+                        city: { equals: query.city, mode: 'insensitive' },
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [users, count] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          headline: true,
+          bio: true,
+          city: true,
+          profileImageID: true,
+          eventAttendances: {
+            where: {
+              status: AttendanceStatus.APPROVED,
+              visibility: { in: [AttendanceVisibility.PUBLIC, AttendanceVisibility.ATTENDEES_ONLY] },
+              event: {
+                deletedAt: null,
+                status: EventStatus.PUBLISHED,
+                visibility: EventVisibility.PUBLIC,
+              },
+            },
+            orderBy: { registeredAt: 'desc' },
+            take: 3,
+            select: {
+              event: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  format: true,
+                  location: { select: { city: true } },
+                  sessions: {
+                    where: { startAt: { gte: new Date() } },
+                    orderBy: { startAt: 'asc' },
+                    take: 1,
+                    select: { startAt: true },
+                  },
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              sentConnectionRequests: { where: { status: ConnectionStatus.ACCEPTED } },
+              receivedConnectionRequests: { where: { status: ConnectionStatus.ACCEPTED } },
+            },
+          },
+        },
+        orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    const userIds = users.map((user) => user.id);
+    const connectionStatusByUserId = new Map<string, ConnectionStatus>();
+
+    if (currentUserId && userIds.length) {
+      const connections = await this.prisma.userConnection.findMany({
+        where: {
+          OR: [
+            { requesterUserID: currentUserId, addresseeUserID: { in: userIds } },
+            { addresseeUserID: currentUserId, requesterUserID: { in: userIds } },
+          ],
+        },
+        select: {
+          requesterUserID: true,
+          addresseeUserID: true,
+          status: true,
+        },
+      });
+
+      connections.forEach((connection) => {
+        const otherUserId = connection.requesterUserID === currentUserId ? connection.addresseeUserID : connection.requesterUserID;
+        connectionStatusByUserId.set(otherUserId, connection.status);
+      });
+    }
+
+    return {
+      items: users.map((user) =>
+        plainToInstance(
+          DiscoverPersonResDto,
+          {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            headline: user.headline,
+            bio: user.bio,
+            city: user.city,
+            profileImageID: user.profileImageID,
+            connectionStatus: connectionStatusByUserId.get(user.id) ?? null,
+            totalConnections: user._count.sentConnectionRequests + user._count.receivedConnectionRequests,
+            publicEvents: user.eventAttendances.map(({ event }) => ({
+              id: event.id,
+              title: event.title,
+              slug: event.slug,
+              format: event.format,
+              city: event.location?.city ?? null,
+              nextSessionStartAt: event.sessions[0]?.startAt ?? null,
+            })),
+          },
+          { excludeExtraneousValues: true },
+        ),
+      ),
+      count,
     };
   }
 

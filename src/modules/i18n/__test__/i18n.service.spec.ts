@@ -72,7 +72,7 @@ describe('I18nService', () => {
         lang: 'en',
         args: { phone: '+905551234567' },
       });
-      expect(result).toBe('OTP sent to +905551234567');
+      expect(result).toBe('Verification code sent to +905551234567 via WhatsApp');
     });
 
     it('should replace variable in Turkish translation', async () => {
@@ -80,7 +80,7 @@ describe('I18nService', () => {
         lang: 'tr',
         args: { phone: '+905551234567' },
       });
-      expect(result).toBe('OTP +905551234567 numarasına gönderildi');
+      expect(result).toBe('Doğrulama kodu +905551234567 numarasına WhatsApp üzerinden gönderildi');
     });
 
     it('should handle missing variable gracefully', async () => {

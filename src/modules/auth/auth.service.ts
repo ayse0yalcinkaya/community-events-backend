@@ -103,6 +103,7 @@ export class AuthService {
           firstName: registerDto.firstName,
           lastName: registerDto.lastName,
           email: registerDto.email,
+          city: registerDto.city?.trim() || null,
           VKN: registerDto.VKN ?? null,
           legalEntityType,
           userType: 'USER', // Default to USER type for registration

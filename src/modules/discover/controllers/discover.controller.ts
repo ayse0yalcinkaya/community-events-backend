@@ -7,6 +7,8 @@ import { ApiEndpoint } from '@/common/decorators';
 import { DiscoverHomeResDto } from '../dto/response/discover-home-res.dto';
 import { DiscoverUnifiedSearchResDto } from '../dto/response/discover-unified-search-res.dto';
 import { QueryDiscoverSearchDto } from '../dto/query-discover-search.dto';
+import { DiscoverPersonResDto } from '@/modules/users/dto/response/discover-person-res.dto';
+import { QueryDiscoverPeopleDto } from '@/modules/users/dto/request/query-discover-people.dto';
 
 // Interfaces
 import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
@@ -39,6 +41,14 @@ export class DiscoverController {
     return this.discoverService.getHome();
   }
 
+  @Get('cities')
+  @ApiEndpoint('Kesif icin sehir seceneklerini getir', {
+    isPublic: true,
+  })
+  getCities() {
+    return this.discoverService.getCities();
+  }
+
   @Get('feed')
   @UseGuards(OptionalJwtAuthGuard)
   @ApiEndpoint('Kisisellestirilmis etkinlik akisi', {
@@ -64,6 +74,20 @@ export class DiscoverController {
   })
   unifiedSearch(@Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryDiscoverSearchDto) {
     return this.discoverService.unifiedSearch(query);
+  }
+
+  @Get('people')
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiEndpoint('Kisi kesif listesini getir', {
+    type: DiscoverPersonResDto,
+    isPublic: true,
+    isPaginated: true,
+  })
+  discoverPeople(
+    @Query(new ValidationPipe({ transform: true, whitelist: true })) query: QueryDiscoverPeopleDto,
+    @CurrentUser() user?: JwtPayload,
+  ) {
+    return this.discoverService.discoverPeople(query, user?.sub);
   }
 
   @Get('trending')

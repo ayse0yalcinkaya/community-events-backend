@@ -200,7 +200,7 @@ describe('FilesService', () => {
 
     it('should throw BadRequestException if no files provided', async () => {
       await expect(service.uploadFiles([], userID)).rejects.toThrow(BadRequestException);
-      await expect(service.uploadFiles([], userID)).rejects.toThrow('No files provided');
+      await expect(service.uploadFiles([], userID)).rejects.toThrow('files.NO_FILES');
     });
 
     it('should throw BadRequestException if > 10 files provided', async () => {
@@ -406,7 +406,7 @@ describe('FilesService', () => {
       mockPrismaService.file.findUnique.mockResolvedValue(null);
 
       await expect(service.getFileMetadata(fileId, userID, false)).rejects.toThrow(NotFoundException);
-      await expect(service.getFileMetadata(fileId, userID, false)).rejects.toThrow('File not found');
+      await expect(service.getFileMetadata(fileId, userID, false)).rejects.toThrow('files.NOT_FOUND');
     });
 
     it('should return file when found by id', async () => {
@@ -423,7 +423,7 @@ describe('FilesService', () => {
       mockPrismaService.file.findUnique.mockResolvedValue(deletedFile);
 
       await expect(service.getFileMetadata(fileId, userID, false)).rejects.toThrow(NotFoundException);
-      await expect(service.getFileMetadata(fileId, userID, false)).rejects.toThrow('File not found');
+      await expect(service.getFileMetadata(fileId, userID, false)).rejects.toThrow('files.NOT_FOUND');
     });
 
     it('should throw ForbiddenException if user is not owner and has no FILES.VIEW permission', async () => {
@@ -432,7 +432,7 @@ describe('FilesService', () => {
       mockPrismaService.file.findUnique.mockResolvedValue(mockFile);
 
       await expect(service.getFileMetadata(fileId, otherUserID, false)).rejects.toThrow(ForbiddenException);
-      await expect(service.getFileMetadata(fileId, otherUserID, false)).rejects.toThrow('Insufficient permissions');
+      await expect(service.getFileMetadata(fileId, otherUserID, false)).rejects.toThrow('files.INSUFFICIENT_PERMISSIONS');
     });
   });
 
@@ -474,9 +474,7 @@ describe('FilesService', () => {
       mockS3Service.getPresignedUrl.mockRejectedValue(new Error('S3 service error'));
 
       await expect(service.generateDownloadUrl(fileId, userID, true)).rejects.toThrow(ServiceUnavailableException);
-      await expect(service.generateDownloadUrl(fileId, userID, true)).rejects.toThrow(
-        'Unable to generate download link',
-      );
+      await expect(service.generateDownloadUrl(fileId, userID, true)).rejects.toThrow('files.DOWNLOAD_LINK_FAILED');
     });
 
     it('should validate access before generating URL (file not found)', async () => {
@@ -555,7 +553,7 @@ describe('FilesService', () => {
       mockPrismaService.file.findUnique.mockResolvedValue(null);
 
       await expect(service.deleteFile(fileId, userID, false)).rejects.toThrow(NotFoundException);
-      await expect(service.deleteFile(fileId, userID, false)).rejects.toThrow('File not found');
+      await expect(service.deleteFile(fileId, userID, false)).rejects.toThrow('files.NOT_FOUND');
 
       // File update should NOT be called if file not found
       expect(mockPrismaService.file.update).not.toHaveBeenCalled();
@@ -579,7 +577,7 @@ describe('FilesService', () => {
       mockPrismaService.file.findUnique.mockResolvedValue(deletedFile);
 
       await expect(service.deleteFile(fileId, userID, false)).rejects.toThrow(NotFoundException);
-      await expect(service.deleteFile(fileId, userID, false)).rejects.toThrow('File not found');
+      await expect(service.deleteFile(fileId, userID, false)).rejects.toThrow('files.NOT_FOUND');
 
       // File update should NOT be called if already deleted
       expect(mockPrismaService.file.update).not.toHaveBeenCalled();
@@ -591,7 +589,7 @@ describe('FilesService', () => {
       mockPrismaService.file.findUnique.mockResolvedValue(mockFile);
 
       await expect(service.deleteFile(fileId, otherUserID, false)).rejects.toThrow(ForbiddenException);
-      await expect(service.deleteFile(fileId, otherUserID, false)).rejects.toThrow('Insufficient permissions');
+      await expect(service.deleteFile(fileId, otherUserID, false)).rejects.toThrow('files.INSUFFICIENT_PERMISSIONS');
 
       // File update should NOT be called if unauthorized
       expect(mockPrismaService.file.update).not.toHaveBeenCalled();

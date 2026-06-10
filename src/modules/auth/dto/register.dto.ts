@@ -41,6 +41,11 @@ export class RegisterDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage('validation.IS_STRING') })
+  @MaxLength(100, { message: i18nValidationMessage('validation.MAX_LENGTH') })
+  city?: string;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage('validation.IS_STRING') })
   @Matches(/^\d{10,11}$/, { message: i18nValidationMessage('validation.MATCHES_VKN') })
   VKN?: string; // Turkish Tax ID (10-11 digits)
 }
